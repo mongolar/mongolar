@@ -23,35 +23,31 @@ type MongolarSiteConfig struct {
 
 // Wrapper type for entire server config structure
 type MongolarSites struct {
-	SiteConfigs map[string]*MongolarSiteConfig
+	SiteConfigs map[string]MongolarSiteConfig
 	Aliases     map[string]string
 }
 
+/*
+Ignore this stuff for now
 // Server Config
 type MongolarServerConfig struct {
 	Port int
 }
-
-// Wrapper to load all configs and aliases
+*/
+// Wrapper to load all site configurations
 func (ms *MongolarSites) BuildMongolarSiteConfigs() {
 	files := getSiteConfigFileNames()
 	for _, value := range files {
 		var site MongolarSiteConfig
 		site.getSiteConfig(value)
-		ms.SiteConfigs[value] = &site
+		ms.SiteConfigs[value] = site
 		spew.Dump(site)
 		spew.Dump(value)
 	}
 }
 
-// Get one site configuration and assign it to the structure
-func (s *MongolarSiteConfig) getSiteConfig(filename string) {
-	viper.SetConfigName(filename)
-	viper.AddConfigPath(SITES_DIRECTORY)
-	viper.ReadInConfig()
-	viper.Marshal(s)
-}
-
+/*
+Ignore this stuff for now
 // Set alias array
 func (s *MongolarSites) getAliasesArray(file string) {
 	for _, value := range s.SiteConfigs {
@@ -61,14 +57,26 @@ func (s *MongolarSites) getAliasesArray(file string) {
 		}
 	}
 }
-
+*/
 // Get server config
+
+// Get one site configuration and assign it to the structure
+func (s MongolarSiteConfig) getSiteConfig(filename string) {
+	viper.SetConfigName(filename)
+	viper.AddConfigPath(SITES_DIRECTORY)
+	viper.ReadInConfig()
+	viper.Marshal(&s)
+}
+
+/*
+Ignore this stuff for now
 func (s *MongolarServerConfig) getServerConfig() {
 	viper.SetConfigName("mongolar")
 	viper.AddConfigPath(SERVER_CONFIG)
 	viper.ReadInConfig()
 	viper.Marshal(&s)
 }
+*/
 
 //Get all enabled config file names
 func getSiteConfigFileNames() (files []string) {
