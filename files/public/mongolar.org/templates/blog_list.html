@@ -1,0 +1,12 @@
+<div class="container">
+    <div class="row row-centered">
+        <div ng-repeat="blog in mongular_content" class="col-md-10 col-md-offset-1">
+            <div ng-class-even="'blog-even'" class="blog-item">
+                <h3><a href="/blog/{{ blog.url }}">{{blog.title}}</a></h3>
+                <div>{{blog.author}} - {{blog.date_published | date:"MMMM/dd/yyyy"}}</div>
+                <div>{{blog.teaser}}</div>
+                <div><a href="/blog/{{ blog.url }}">Read More <i class="fa fa-angle-double-right"></i></a></div>
+            </div>
+        </div>
+    </div>
+</div>

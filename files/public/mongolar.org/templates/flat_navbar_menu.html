@@ -1,0 +1,17 @@
+<div class="navbar navbar-inverse navbar-fixed-{{ mongular_content.navbar_position}}">
+    <div class="container">
+        <div class="navbar-collapse collapse navbar-responsive-collapse">
+                <ul class="nav navbar-nav navbar-inverse navbar-left">
+                <li><a class="brand" href="/" id="site-name">Mongular</a></li>
+                <li ng-repeat="item in mongular_content.navbar_items">
+                    <a href="{{ item.url }}">{{ item.name }}</a>
+                </li>
+            </ul>
+                <ul class="nav navbar-nav navbar-inverse navbar-right">
+                <li ng-repeat="item in mongular_content.navbar_social_items">
+                    <a href="{{ item.url }}"><i class="fa {{ item.icon }}"></i></a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>

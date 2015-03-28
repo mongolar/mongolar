@@ -1,0 +1,8 @@
+MongoDb:
+        user: test2
+        db: test2
+Domain: test2.com
+Directory: /home/jason/test2site
+Aliases:
+        - test2-1.com
+

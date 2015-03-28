@@ -1,0 +1,37 @@
+body { padding-top: 81px; }
+html,body, #main-content{
+    height: 100%
+}
+#mongular-path, #mongular-path > .ng-scope{
+    height: 100%;
+}
+
+#site-name{
+    font-size: xx-large;
+}
+
+#wrapper {
+    min-height: 100%;
+}
+
+#main-content {
+    padding-bottom: 90px;
+}
+
+.blog-item{
+    padding: 5px 20px 20px 20px;
+}
+.blog-even{
+    background-color: #f1f1f1;
+}
+
+.footer {
+    position: relative;
+    margin-top: -60px;
+    margin-bottom: 0px;
+    height: 60px;
+    clear:both;
+}
+
+
+.navbar-nav>li>a:hover {  color: #18bc9c !important;  }
