@@ -1,10 +1,9 @@
 package configs
 
 import (
-	"github.com/davecgh/go-spew/spew"
+	//"github.com/davecgh/go-spew/spew"
 	"github.com/jasonrichardsmith/mongolar/configs/server"
 	"github.com/jasonrichardsmith/mongolar/configs/site"
-	//"github.com/jasonrichardsmith/mongolar/configs/sites"
 	"path/filepath"
 	"strings"
 )
@@ -14,14 +13,11 @@ const (
 	SERVER_CONFIG   = "/etc/mongolar/"
 )
 
-func GetAll() {
+func GetAll() (*server.MongolarServerConfig, map[string]*site.MongolarSiteConfig, map[string]string) {
 	server := GetServerConfig()
-	spew.Dump(server)
 	sites := GetSiteConfigs()
-	spew.Dump(sites)
 	aliases := GetAliasesArray(sites)
-	spew.Dump(aliases)
-
+	return server, sites, aliases
 }
 
 func GetServerConfig() *server.MongolarServerConfig {

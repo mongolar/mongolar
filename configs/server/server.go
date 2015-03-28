@@ -10,7 +10,7 @@ const (
 
 // Server Config
 type MongolarServerConfig struct {
-	Port int
+	Port string
 }
 
 // Constructor
