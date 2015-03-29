@@ -9,19 +9,19 @@ const (
 )
 
 // Server Config
-type MongolarServerConfig struct {
+type ServerConfig struct {
 	Port string
 }
 
 // Constructor
-func NewMongolarServerConfig() *MongolarServerConfig {
-	var s MongolarServerConfig
+func New() *ServerConfig {
+	var s ServerConfig
 	s.getServerConfig()
 	return &s
 }
 
 // Build from config
-func (s *MongolarServerConfig) getServerConfig() {
+func (s *ServerConfig) getServerConfig() {
 	viper.SetConfigName("mongolar")
 	viper.AddConfigPath(SERVER_CONFIG)
 	viper.ReadInConfig()

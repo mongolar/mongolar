@@ -13,35 +13,34 @@ const (
 	SERVER_CONFIG   = "/etc/mongolar/"
 )
 
-func GetAll() (*server.MongolarServerConfig, map[string]*site.MongolarSiteConfig, map[string]string) {
+func GetAll() (*server.ServerConfig, map[string]*site.SiteConfig, map[string]string) {
 	server := GetServerConfig()
 	sites := GetSiteConfigs()
 	aliases := GetAliasesArray(sites)
 	return server, sites, aliases
 }
 
-func GetServerConfig() *server.MongolarServerConfig {
-	return server.NewMongolarServerConfig()
+func GetServerConfig() *server.ServerConfig {
+	return server.New()
 }
 
-func GetSiteConfigs() map[string]*site.MongolarSiteConfig {
-	var Sites = make(map[string]*site.MongolarSiteConfig)
+func GetSiteConfigs() map[string]*site.SiteConfig {
+	var Sites = make(map[string]*site.SiteConfig)
 	fs := getSiteConfigFileNames()
 	for _, value := range fs {
-		s := site.NewMongolarSiteConfig(value)
+		s := site.New(value)
 		Sites[value] = s
 	}
 	return Sites
 }
 
 // Set alias array
-func GetAliasesArray(ms map[string]*site.MongolarSiteConfig) map[string]string {
+func GetAliasesArray(ms map[string]*site.SiteConfig) map[string]string {
 	a := make(map[string]string)
 	for k, s := range ms {
 		for _, alias := range s.Aliases {
 			a[alias] = k
 		}
-		a[s.Domain] = k
 	}
 	return a
 }

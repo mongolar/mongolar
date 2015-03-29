@@ -9,15 +9,15 @@ const (
 )
 
 // Individual Site Configuration Type
-type MongolarSiteConfig struct {
+type SiteConfig struct {
 	MongoDb   map[string]string
 	Domain    string
 	Directory string
 	Aliases   []string
 }
 
-func NewMongolarSiteConfig(file string) *MongolarSiteConfig {
-	s := MongolarSiteConfig{
+func New(file string) *SiteConfig {
+	s := SiteConfig{
 		MongoDb: make(map[string]string),
 	}
 	s.getSiteConfig(file)
@@ -25,7 +25,7 @@ func NewMongolarSiteConfig(file string) *MongolarSiteConfig {
 }
 
 // Get one site configuration and marshall it
-func (s *MongolarSiteConfig) getSiteConfig(file string) {
+func (s *SiteConfig) getSiteConfig(file string) {
 	v := viper.New()
 	v.SetConfigName(file)
 	v.AddConfigPath(SITES_DIRECTORY)
