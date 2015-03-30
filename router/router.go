@@ -1,6 +1,7 @@
 package router
 
 import (
+	//"github.com/davecgh/go-spew/spew"
 	"github.com/gorilla/context"
 	"github.com/jasonrichardsmith/mongolar/configs/site"
 	"github.com/julienschmidt/httprouter"
@@ -9,13 +10,18 @@ import (
 
 type HostSwitch map[string]http.Handler
 
-var Routers = make(map[string]*httprouter.Router)
+//var Switch HostSwitch
 var Switch = make(HostSwitch)
+
+var Routers = make(map[string]*httprouter.Router)
 var Aliases map[string]string
 var Sites map[string]*site.SiteConfig
 var HandlersMap map[string]httprouter.Handle
 
-func Build(Sites map[string]*site.SiteConfig, Aliases map[string]string, HandlersMap map[string]httprouter.Handle) (Switch *HostSwitch) {
+func Build(s map[string]*site.SiteConfig, a map[string]string, hm map[string]httprouter.Handle) HostSwitch {
+	Sites = s
+	Aliases = a
+	HandlersMap = hm
 	buildRouters()
 	buildHostSwitch()
 	return Switch
