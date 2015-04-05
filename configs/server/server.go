@@ -20,7 +20,7 @@ func New() *ServerConfig {
 	return &s
 }
 
-// Build from config
+// Build from config file
 func (s *ServerConfig) getServerConfig() {
 	viper.SetConfigName("mongolar")
 	viper.AddConfigPath(SERVER_CONFIG)

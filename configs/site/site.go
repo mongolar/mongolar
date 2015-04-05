@@ -16,6 +16,7 @@ type SiteConfig struct {
 	Aliases   []string
 }
 
+// Constructor for SiteConfig
 func New(file string) *SiteConfig {
 	s := SiteConfig{
 		MongoDb: make(map[string]string),
