@@ -53,7 +53,12 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		// Mongolar config js is generated dynamically because it gets passed values from site config and endpoint is variable
 		case "mongolar_config.js":
-			c := jsconfig.JSConfigs{APIEndPoint: ro.APIEndPoint, TemplateEndpoint: s.TemplateEndpoint, ForeignDomains: s.ForeignDomains, s.AngularModules}
+			c := jsconfig.JSConfigs{
+				APIEndPoint: ro.APIEndPoint,
+				TemplateEndpoint: s.TemplateEndpoint,
+				ForeignDomains: s.ForeignDomains,
+				s.AngularModules
+				}
 			c.Serve(w)
 		// All static assets bypass AngularJS and get served as files.
 		case "assets":
@@ -62,7 +67,7 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// If path is ApiEndPoint this is an API request.
 		case r.APIEndPoint:
 			if val, ok := ro.Controllers[pathvalues[1]]; ok {
-				content := ro.Controllers[pathvalues[1]].getContent(r, s)
+				ro.Controllers[pathvalues[1]](r, w, s)
 			} else {
 				http.Error(w, "Forbidden", 403)
 			}
