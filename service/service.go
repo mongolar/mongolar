@@ -5,5 +5,4 @@ import (
 )
 
 type Service interface {
-	getService() json.RawMessage
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/jasonrichardsmith/mongolar/router/apiend"
 	"github.com/jasonrichardsmith/mongolar/router/jsconfig"
 	"net/http"
+	"fmt"
 )
 
 // The Router should have everything needed to server multiple sites from one go instance
@@ -18,15 +19,17 @@ type Router struct {
 	Sites       map[string]*site.SiteConfig
 	Controllers map[string]*controller.Controller
 	APIEndPoint apiend.APIEndPoint
+	Session	    map[string]interface{}
 }
 
 // The Constructor for the Router structure
-func New(a map[string]string, s map[string]*SiteConfig, c map[string]*controller.Controller) *Router {
+func New(a map[string]string, s map[string]*SiteConfig, c map[string]*controller.Controller, map[string]*) *Router {
 	r = new(Router)
 	r.Aliases = a
 	r.Sites = s
 	r.Controllers = c
 	r.APIEndPoint = apiend.New()
+	r.Session = 
 	return r
 }
 
@@ -59,11 +62,16 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			http.FileServer(http.Dir(directory + "/assets"))
 		// If path is ApiEndPoint this is an API request.
 		case r.APIEndPoint:
+			w.Header().Set("Content-Type", "application/json")
+			fmt.Print('[')
 			if val, ok := ro.Controllers[pathvalues[1]]; ok {
 				ro.Controllers[pathvalues[1]](r, w, s)
 			} else {
 				http.Error(w, "Forbidden", 403)
+				return
 			}
+
+			fmt.Print(']')
 		// All other traffic will be handled by the AngularJs router
 		default:
 			directory := ro.Sites[r.Aliases[ro.Host]].Directory
@@ -74,6 +82,7 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// Domain was not found
 		http.Error(w, "Not Found", 404) // Or Redirect?
 	}
+	return
 
 }
 

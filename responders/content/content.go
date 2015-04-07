@@ -2,6 +2,8 @@ package content
 
 import (
 	"encoding/json"
+	"github.com/jasonrichardsmith/mongolar/responders"
+	"net/http"
 )
 
 type Content struct {
@@ -15,7 +17,6 @@ func New(c map[string]interface{}) {
 }
 
 func (mc Content) Serve(w http.ResponseWriter) {
-	//ToDo Marshall and serve
-	j := json.Marshal(mc)
+	responders.ServeJson(mc)
 
 }
