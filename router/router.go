@@ -36,22 +36,14 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Does domain exist
 	if val, ok := ro.Alias[r.Host]; ok {
 
-		// Split the path values
-		urlpath = split("\\", r.URL.Path)
-
-		// Map the values as key store values
-		pathvalues := make([]string, len(urlpath))
-		i := 0
-		for k := range mymap {
-			pathvalues[i] = k
-			i++
-		}
+		pathvalues := UrlToMap(r.URL.Path)
 
 		// Set the the site config to an easy to use value.
 		s := ro.Sites[r.Aliases[r.Host]]
 		switch pathvalues[0] {
 
 		// Mongolar config js is generated dynamically because it gets passed values from site config and endpoint is variable
+		// TODO move this to a controller
 		case "mongolar_config.js":
 			c := jsconfig.JSConfigs{
 				APIEndPoint: ro.APIEndPoint,
@@ -61,6 +53,7 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				}
 			c.Serve(w)
 		// All static assets bypass AngularJS and get served as files.
+		// TODO Move this to a controller
 		case "assets":
 			directory := s.Directory
 			http.FileServer(http.Dir(directory + "/assets"))
@@ -82,4 +75,18 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Not Found", 404) // Or Redirect?
 	}
 
+}
+
+func UrlToMap( u string ) map[int]string {
+	// Split the path values
+	urlpath = split("\\", u)
+
+	// Map the values as key store values
+	pathvalues := make([]string, len(urlpath))
+	i := 0
+	for k := range mymap {
+		pathvalues[i] = k
+		i++
+	}
+	return pathvalues
 }
