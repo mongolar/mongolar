@@ -2,9 +2,9 @@ package session
 
 import (
 	"errors"
-	"github.com/jasonrichardsmith/mongolar/configs/site"
 	"github.com/jasonrichardsmith/mongolar/wrapper"
 	"gopkg.in/mgo.v2"
+	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"time"
 )

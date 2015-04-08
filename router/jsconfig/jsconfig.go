@@ -1,7 +1,6 @@
 package jsconfig
 
 import (
-	"github.com/jasonrichardsmith/mongolar/router/apiend"
 	"net/http"
 	"text/template"
 )
@@ -35,15 +34,15 @@ const (
 
 // Current available values.  This may be reconfigured if it gets too large.
 type JsConfigs struct {
-	APIEndPoint      APIEndPoint
+	APIEndPoint      string
 	TemplateEndpoint string
 	ForeignDomains   []string
 	AngularModules   []string
 }
 
 // Serve the config
-func (c *JsConfigs) Serve(c JSConfigs, w http.ResponseWriter) {
+func (c *JsConfigs) Serve(w http.ResponseWriter) {
 	t := template.New("Mongolar Config JS")
-	t, err := t.Parse(ConfigScript)
-	err = t.Execute(w, c)
+	t.Parse(ConfigScript)
+	t.Execute(w, c)
 }

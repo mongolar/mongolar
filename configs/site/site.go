@@ -1,8 +1,10 @@
 package site
 
 import (
+	"fmt"
 	"github.com/spf13/viper"
 	"gopkg.in/mgo.v2"
+	"os"
 )
 
 const (
@@ -15,16 +17,16 @@ type SiteConfig struct {
 	Directory string
 	Aliases   []string
 	DbSession *mgo.Session
-	Session	  string
+	Session   string
 }
 
 // Constructor for SiteConfig
-func New(file string) *SiteConfig {
+func New(f string) *SiteConfig {
 	s := SiteConfig{
 		MongoDb: make(map[string]string),
 	}
-	s.getSiteConfig(file)
-	s.getDbConnection(file)
+	s.getSiteConfig(f)
+	s.getDbConnection(f)
 	return &s
 }
 
@@ -37,11 +39,12 @@ func (s *SiteConfig) getSiteConfig(file string) {
 	v.Marshal(s)
 }
 
-func (s *SiteConfig) getDbConnection(file) {
-	u := "mongodb://" + s.MongoDb.user + ":" + s.MongoDb.password + "@" + s.MongoDb.host + "/" + s.MongoDb.db
-	s.Db, err := mgo.Dial(uri)
+func (s *SiteConfig) getDbConnection(f string) {
+	u := "mongodb://" + s.MongoDb["user"] + ":" + s.MongoDb["password"] + "@" + s.MongoDb["host"] + "/" + s.MongoDb["db"]
+	var err error
+	s.DbSession, err = mgo.Dial(u)
 	if err != nil {
-		fmt.Printf("Can't connect to mongodb server for %v, go error %v\n", file, err)
+		fmt.Printf("Can't connect to mongodb server for %v, go error %v\n", f, err)
 		os.Exit(1)
 	}
 }

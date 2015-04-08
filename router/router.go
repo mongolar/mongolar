@@ -3,6 +3,7 @@ package router
 import (
 	//"github.com/davecgh/go-spew/spew"
 	"github.com/jasonrichardsmith/mongolar/configs/site"
+	"github.com/jasonrichardsmith/mongolar/wrapper"
 	"github.com/jasonrichardsmith/mongolar/session"
 	"github.com/jasonrichardsmith/mongolar/controller"
 	"github.com/jasonrichardsmith/mongolar/router/apiend"
@@ -19,11 +20,11 @@ type Router struct {
 	Aliases     map[string]string
 	Sites       map[string]*site.SiteConfig
 	Controllers map[string]*controller.Controller
-	APIEndPoint apiend.APIEndPoint
+	APIEndPoint string
 }
 
 // The Constructor for the Router structure
-func New(a map[string]string, s map[string]*SiteConfig, c map[string]*controller.Controller, map[string]*) *Router {
+func New(a map[string]string, s map[string]*SiteConfig, c map[string]*controller.Controller) *Router {
 	r = new(Router)
 	r.Aliases = a
 	r.Sites = s
@@ -62,13 +63,13 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// If path is ApiEndPoint this is an API request.
 		case r.APIEndPoint:
 			w.Header().Set("Content-Type", "application/json")
+			wr = wrapper.New(r, w, s)
 			if val, ok := ro.Controllers[pathvalues[1]]; ok {
-				ro.Controllers[pathvalues[1]](r, w, s)
+				ro.Controllers[pathvalues[1]](wr)
 			} else {
 				http.Error(w, "Forbidden", 403)
 				return
 			}
-			//TODO Process Services Here
 		// All other traffic will be handled by the AngularJs router
 		default:
 			directory := ro.Sites[r.Aliases[ro.Host]].Directory

@@ -1,14 +1,12 @@
 package path
 
 import (
-	"github.com/jasonrichardsmith/mongolar/configs/site"
-	"github.com/jasonrichardsmith/mongolar/controller"
-	"net/http"
+	"github.com/jasonrichardsmith/mongolar/wrapper"
 )
-func Serve(w http.ResponseWriter, r *http.Request, s *site.SiteConfig) {
+func Serve(w *wrapper.Wrapper) {
 	v := make(map[string]string)
 	v['test'] = "Test"
-	c = content.New(v)
-	c.Serve()
+	w.SetContent(v)
+	w.Serve()
 	return
 }
