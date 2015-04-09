@@ -13,11 +13,12 @@ const (
 
 // Individual Site Configuration Type
 type SiteConfig struct {
-	MongoDb   map[string]string
-	Directory string
-	Aliases   []string
-	DbSession *mgo.Session
-	Session   string
+	MongoDb           map[string]string
+	Directory         string
+	Aliases           []string
+	SessionExpiration int64
+	DbSession         *mgo.Session
+	Session           string
 }
 
 // Constructor for SiteConfig

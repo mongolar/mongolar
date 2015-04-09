@@ -26,36 +26,36 @@ type SessionData struct {
 
 //Builds the session
 func New(w *wrapper.Wrapper) {
-	s = new(Session)
-	var duration time.Duration = int64(s.SiteConfig.SessionExpiration) * time.Day
+	s := new(Session)
+	var duration time.Duration = int(w.SiteConfig.SessionExpiration) * time.Hour
 	expire := time.Now().Add(0, 0, duration)
-	var c http.Cookie
 	c, err := w.Request.Cookie("m_session_id")
 	if c == nil {
+		id := getSessionID()
 		c := http.Cookie{
 			Name:     "m_session_id",
-			Value:    getSessionID(),
+			Value:    id,
 			Path:     "/",
 			Domain:   w.Request.Host,
 			MaxAge:   0,
 			Secure:   true,
 			HttpOnly: true,
-			Raw:      "m_session_id=" + v,
-			UnParsed: []string{"m_session_id=" + v},
+			Raw:      "m_session_id=" + id,
+			//			UnParsed: []string{"m_session_id=" + id},
 		}
 	}
 	c.Expires = expire
 	c.RawExpires = expire
 	http.SetCookie(w.Writer, c)
 
-	s.data = SessionData{
+	s.data = &SessionData{
 		SessionId: c.Value,
 		Data:      make(map[string]interface{}),
 	}
 	s.setDbSession()
 	s.Id = c.Value
 	s.dbSession = w.SiteConfig.DbSession.Copy()
-	s.getQuery()
+	s.getQuery(duration)
 }
 
 func (s Session) getQuery(d time.Duration) {
