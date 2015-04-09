@@ -5,11 +5,12 @@ import (
 	"github.com/jasonrichardsmith/mongolar/controller"
 	"github.com/jasonrichardsmith/mongolar/controller/domain"
 	//	"github.com/jasonrichardsmith/mongolar/router"
+	"github.com/davecgh/go-spew/spew"
 )
 
 func main() {
 	cm := controller.NewMap()
-	cm['test'] := domain.Serve()
+	cm["test"] = domain.Serve
 	Serve(cm)
 }
 

@@ -4,7 +4,7 @@ import (
 	"github.com/jasonrichardsmith/mongolar/wrapper"
 )
 
-type ControllerMap map[string]Controller
+type ControllerMap map[string]func(*wrapper.Wrapper)
 
 func NewMap() ControllerMap {
 	return make(ControllerMap)

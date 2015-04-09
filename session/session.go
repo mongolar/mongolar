@@ -1,7 +1,10 @@
 package session
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
+	"fmt"
 	"github.com/jasonrichardsmith/mongolar/wrapper"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -27,12 +30,13 @@ type SessionData struct {
 //Builds the session
 func New(w *wrapper.Wrapper) {
 	s := new(Session)
-	var duration time.Duration = int(w.SiteConfig.SessionExpiration) * time.Hour
-	expire := time.Now().Add(0, 0, duration)
+	var duration time.Duration = time.Duration(w.SiteConfig.SessionExpiration) * time.Hour
+	expire := time.Now().Add(duration)
 	c, err := w.Request.Cookie("m_session_id")
+	fmt.Print(err)
 	if c == nil {
 		id := getSessionID()
-		c := http.Cookie{
+		c = &http.Cookie{
 			Name:     "m_session_id",
 			Value:    id,
 			Path:     "/",
@@ -41,11 +45,11 @@ func New(w *wrapper.Wrapper) {
 			Secure:   true,
 			HttpOnly: true,
 			Raw:      "m_session_id=" + id,
-			//			UnParsed: []string{"m_session_id=" + id},
+			Unparsed: []string{"m_session_id=" + id},
 		}
 	}
 	c.Expires = expire
-	c.RawExpires = expire
+	c.RawExpires = expire.Format(time.RFC3339)
 	http.SetCookie(w.Writer, c)
 
 	s.data = &SessionData{
@@ -59,7 +63,7 @@ func New(w *wrapper.Wrapper) {
 }
 
 func (s Session) getQuery(d time.Duration) {
-	c := s.dbSession.D().C("sessions")
+	c := s.dbSession.DB("").C("sessions")
 	setCollection(c, d)
 	s.query = c.Find(bson.M{"session_id": s.Id})
 }
@@ -75,12 +79,12 @@ func (s Session) setDbSession() {
 	s.getData()
 }
 
-func (s Session) getData() interface{} {
+func (s Session) getData() {
 	s.query.One(&s.data)
 }
 
 func (s Session) Close() {
-	s.DbSession.Close()
+	s.dbSession.Close()
 }
 
 func (s Session) Get(n string) (v interface{}, err error) {
@@ -103,14 +107,14 @@ func getSessionID() string {
 	raw := make([]byte, 30)
 	_, err := rand.Read(raw)
 	if err != nil {
-		return err
+		fmt.Print(err)
 	}
 	return hex.EncodeToString(raw)
 
 }
 
 func setCollection(c *mgo.Collection, d time.Duration) {
-	i := Index{
+	i := mgo.Index{
 		Key:         []string{"SessionId"},
 		Unique:      true,
 		DropDups:    true,
@@ -119,4 +123,5 @@ func setCollection(c *mgo.Collection, d time.Duration) {
 		ExpireAfter: d,
 	}
 	err := c.EnsureIndex(i)
+	fmt.Print(err)
 }

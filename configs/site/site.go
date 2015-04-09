@@ -19,6 +19,10 @@ type SiteConfig struct {
 	SessionExpiration int64
 	DbSession         *mgo.Session
 	Session           string
+	TemplateEndpoint  string
+	ForeignDomains    []string
+	AngularModules    []string
+	PublicValues      map[string]string
 }
 
 // Constructor for SiteConfig

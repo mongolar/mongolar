@@ -6,9 +6,9 @@ import (
 )
 
 func Serve(w *wrapper.Wrapper) {
-	p := router.URLtoMap(w.Request.URL.Path)
-	v := make(map[string]string)
+	p := router.UrlToMap(w.Request.URL.Path)
+	v := make(map[string]interface{})
 	v[p[1]] = w.SiteConfig.PublicValues[p[1]]
-	c = w.setContent(v)
-	w.Serve(w)
+	w.SetContent(v)
+	w.Serve()
 }

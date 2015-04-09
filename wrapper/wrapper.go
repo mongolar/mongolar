@@ -22,11 +22,11 @@ func New(w http.ResponseWriter, r *http.Request, s *site.SiteConfig) *Wrapper {
 	return &wr
 }
 
-func (w *Wrapper) setContent(c map[string]interface{}) {
-	w.setPayload("content", c)
+func (w *Wrapper) SetContent(c map[string]interface{}) {
+	w.SetPayload("content", c)
 }
 
-func (w *Wrapper) setPayload(n string, v map[string]interface{}) {
+func (w *Wrapper) SetPayload(n string, v map[string]interface{}) {
 	w.Payload[n] = v
 }
 

@@ -2,14 +2,14 @@ package router
 
 import (
 	//"github.com/davecgh/go-spew/spew"
+	//"fmt"
 	"github.com/jasonrichardsmith/mongolar/configs/site"
-	"github.com/jasonrichardsmith/mongolar/wrapper"
-	"github.com/jasonrichardsmith/mongolar/session"
 	"github.com/jasonrichardsmith/mongolar/controller"
 	"github.com/jasonrichardsmith/mongolar/router/apiend"
 	"github.com/jasonrichardsmith/mongolar/router/jsconfig"
+	"github.com/jasonrichardsmith/mongolar/wrapper"
 	"net/http"
-	"fmt"
+	"strings"
 )
 
 // The Router should have everything needed to server multiple sites from one go instance
@@ -19,13 +19,13 @@ import (
 type Router struct {
 	Aliases     map[string]string
 	Sites       map[string]*site.SiteConfig
-	Controllers map[string]*controller.Controller
+	Controllers controller.ControllerMap
 	APIEndPoint string
 }
 
 // The Constructor for the Router structure
-func New(a map[string]string, s map[string]*SiteConfig, c map[string]*controller.Controller) *Router {
-	r = new(Router)
+func New(a map[string]string, s map[string]*site.SiteConfig, c controller.ControllerMap) *Router {
+	r := new(Router)
 	r.Aliases = a
 	r.Sites = s
 	r.Controllers = c
@@ -37,42 +37,45 @@ func New(a map[string]string, s map[string]*SiteConfig, c map[string]*controller
 func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Does domain exist
-	if val, ok := ro.Alias[r.Host]; ok {
+	if d, ok := ro.Aliases[r.Host]; ok {
 
 		pathvalues := UrlToMap(r.URL.Path)
 
 		// Set the the site config to an easy to use value.
-		s := ro.Sites[r.Aliases[r.Host]]
+		s := ro.Sites[d]
 		switch pathvalues[0] {
 
 		// Mongolar config js is generated dynamically because it gets passed values from site config and endpoint is variable
 		// TODO move this to a controller
 		case "mongolar_config.js":
-			c := jsconfig.JSConfigs{
-				APIEndPoint: ro.APIEndPoint,
+			c := jsconfig.JsConfigs{
+				APIEndPoint:      ro.APIEndPoint,
 				TemplateEndpoint: s.TemplateEndpoint,
-				ForeignDomains: s.ForeignDomains,
-				s.AngularModules
-				}
+				ForeignDomains:   s.ForeignDomains,
+				AngularModules:   s.AngularModules,
+			}
 			c.Serve(w)
+
 		// All static assets bypass AngularJS and get served as files.
 		// TODO Move this to a controller
 		case "assets":
 			directory := s.Directory
 			http.FileServer(http.Dir(directory + "/assets"))
+
 		// If path is ApiEndPoint this is an API request.
-		case r.APIEndPoint:
+		case ro.APIEndPoint:
 			w.Header().Set("Content-Type", "application/json")
-			wr = wrapper.New(r, w, s)
-			if val, ok := ro.Controllers[pathvalues[1]]; ok {
-				ro.Controllers[pathvalues[1]](wr)
+			wr := wrapper.New(w, r, s)
+			if c, ok := ro.Controllers[pathvalues[1]]; ok {
+				c(wr)
 			} else {
 				http.Error(w, "Forbidden", 403)
 				return
 			}
+
 		// All other traffic will be handled by the AngularJs router
 		default:
-			directory := ro.Sites[r.Aliases[ro.Host]].Directory
+			directory := s.Directory
 			http.ServeFile(w, r, directory+"/index.html")
 		}
 
@@ -84,14 +87,14 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func UrlToMap( u string ) map[int]string {
+func UrlToMap(u string) map[int]string {
 	// Split the path values
-	urlpath = split("\\", u)
+	urlpath := strings.Split(u, "/")
 
 	// Map the values as key store values
-	pathvalues := make([]string, len(urlpath))
+	pathvalues := make(map[int]string, len(urlpath))
 	i := 0
-	for k := range mymap {
+	for _, k := range urlpath {
 		pathvalues[i] = k
 		i++
 	}
