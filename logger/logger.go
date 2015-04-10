@@ -20,7 +20,7 @@ func New(s *mgo.Session) LogChannel {
 	l := make(LogChannel)
 	ns := s.Copy()
 	c := ns.DB("").C("logs")
-	dbWriter(l, c)
+	go dbWriter(l, c)
 	return l
 }
 
