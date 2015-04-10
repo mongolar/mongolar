@@ -3,7 +3,7 @@ package wrapper
 import (
 	"encoding/json"
 	"github.com/jasonrichardsmith/mongolar/configs/site"
-	//	"github.com/jasonrichardsmith/mongolar/session"
+	"github.com/jasonrichardsmith/mongolar/session"
 	"net/http"
 )
 
@@ -11,13 +11,13 @@ type Wrapper struct {
 	Writer     http.ResponseWriter
 	Request    *http.Request
 	SiteConfig *site.SiteConfig
-	//	Session    *session.Session
-	Payload map[string]interface{}
+	Session    *session.Session
+	Payload    map[string]interface{}
 }
 
 func New(w http.ResponseWriter, r *http.Request, s *site.SiteConfig) *Wrapper {
 	wr := Wrapper{Writer: w, Request: r, SiteConfig: s}
-	//	session.New(&wr)
+	wr.Session = session.New(w, r, s)
 	wr.Payload = make(map[string]interface{})
 	return &wr
 }

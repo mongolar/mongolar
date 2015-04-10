@@ -2,6 +2,7 @@ package site
 
 import (
 	"fmt"
+	"github.com/jasonrichardsmith/mongolar/logger"
 	"github.com/spf13/viper"
 	"gopkg.in/mgo.v2"
 	"os"
@@ -17,12 +18,12 @@ type SiteConfig struct {
 	Directory         string
 	Aliases           []string
 	SessionExpiration int64
-	DbSession         *mgo.Session
-	Session           string
 	TemplateEndpoint  string
 	ForeignDomains    []string
 	AngularModules    []string
 	PublicValues      map[string]string
+	Logger            logger.LogChannel
+	DbSession         *mgo.Session
 }
 
 // Constructor for SiteConfig
@@ -32,6 +33,7 @@ func New(f string) *SiteConfig {
 	}
 	s.getSiteConfig(f)
 	s.getDbConnection(f)
+	s.getLogger()
 	return &s
 }
 
@@ -52,4 +54,8 @@ func (s *SiteConfig) getDbConnection(f string) {
 		fmt.Printf("Can't connect to mongodb server for %v, go error %v\n", f, err)
 		os.Exit(1)
 	}
+}
+
+func (s *SiteConfig) getLogger() {
+	s.Logger = logger.New(s.DbSession)
 }

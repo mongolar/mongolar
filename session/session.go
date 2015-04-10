@@ -5,7 +5,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/jasonrichardsmith/mongolar/wrapper"
+	"github.com/jasonrichardsmith/mongolar/configs/site"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
@@ -28,11 +28,11 @@ type SessionData struct {
 }
 
 //Builds the session
-func New(w *wrapper.Wrapper) {
-	s := new(Session)
-	var duration time.Duration = time.Duration(w.SiteConfig.SessionExpiration) * time.Hour
+func New(w http.ResponseWriter, r *http.Request, s *site.SiteConfig) *Session {
+	se := new(Session)
+	var duration time.Duration = time.Duration(s.SessionExpiration) * time.Hour
 	expire := time.Now().Add(duration)
-	c, err := w.Request.Cookie("m_session_id")
+	c, err := r.Cookie("m_session_id")
 	fmt.Print(err)
 	if c == nil {
 		id := getSessionID()
@@ -40,7 +40,7 @@ func New(w *wrapper.Wrapper) {
 			Name:     "m_session_id",
 			Value:    id,
 			Path:     "/",
-			Domain:   w.Request.Host,
+			Domain:   r.Host,
 			MaxAge:   0,
 			Secure:   true,
 			HttpOnly: true,
@@ -50,16 +50,17 @@ func New(w *wrapper.Wrapper) {
 	}
 	c.Expires = expire
 	c.RawExpires = expire.Format(time.RFC3339)
-	http.SetCookie(w.Writer, c)
+	http.SetCookie(w, c)
 
-	s.data = &SessionData{
+	se.data = &SessionData{
 		SessionId: c.Value,
 		Data:      make(map[string]interface{}),
 	}
-	s.setDbSession()
-	s.Id = c.Value
-	s.dbSession = w.SiteConfig.DbSession.Copy()
-	s.getQuery(duration)
+	se.Id = c.Value
+	se.dbSession = s.DbSession.Copy()
+	se.getQuery(duration)
+	se.setDbSession()
+	return se
 }
 
 func (s Session) getQuery(d time.Duration) {
