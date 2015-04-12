@@ -26,7 +26,7 @@ func (w *Wrapper) SetContent(c map[string]interface{}) {
 	w.SetPayload("content", c)
 }
 
-func (w *Wrapper) SetPayload(n string, v map[string]interface{}) {
+func (w *Wrapper) SetPayload(n string, v interface{}) {
 	w.Payload[n] = v
 }
 

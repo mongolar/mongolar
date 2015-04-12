@@ -1,11 +1,11 @@
 package redirect
 
-type Redirect 
-	Path string
-}
+import (
+	"github.com/jasonrichardsmith/mongolar/wrapper"
+)
 
-func New(p string) *Redirect{
-	r = new(Redirect)
-	r.Path = r
-	return *r
+func redirect(r string, w *wrapper.Wrapper) {
+	v := make(map[string]interface{})
+	v["value"] = r
+	w.SetPayload("redirect", v)
 }

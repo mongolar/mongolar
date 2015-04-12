@@ -1,16 +1,15 @@
-package dynamicload
+package message
 
 import (
 	"github.com/jasonrichardsmith/mongolar/wrapper"
 )
 
-type DynamicLoad{
+type Message{
 	Target string
 	Controller string
 	Id	string
 	Template string
 }
 
-func dynamic(d DynamicLoad, w *wrapper.Wrapper) {
-	w.SetPayload("dynamic", d)
+func set(m Message, w *wrapper.Wrapper) {
 }

@@ -22,6 +22,7 @@ type SiteConfig struct {
 	ForeignDomains    []string
 	AngularModules    []string
 	PublicValues      map[string]string
+	Misc              map[string]interface{}
 	Logger            logger.LogChannel
 	DbSession         *mgo.Session
 }
