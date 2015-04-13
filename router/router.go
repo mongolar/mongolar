@@ -1,9 +1,10 @@
 package router
 
 import (
-	//"github.com/davecgh/go-spew/spew"
+	"github.com/davecgh/go-spew/spew"
 	//"fmt"
-	"github.com/jasonrichardsmith/mongolar/configs/site"
+	"github.com/jasonrichardsmith/mongolar/configs/aliases"
+	"github.com/jasonrichardsmith/mongolar/configs/sites"
 	"github.com/jasonrichardsmith/mongolar/controller"
 	"github.com/jasonrichardsmith/mongolar/router/apiend"
 	"github.com/jasonrichardsmith/mongolar/router/jsconfig"
@@ -17,14 +18,14 @@ import (
 // Sites will have all the individual configurations with their key that relates to a Alias
 // APIEndPoint is a random string that generates each time a server boots
 type Router struct {
-	Aliases     map[string]string
-	Sites       map[string]*site.SiteConfig
+	Aliases     aliases.Aliases
+	Sites       sites.SitesMap
 	Controllers controller.ControllerMap
 	APIEndPoint string
 }
 
 // The Constructor for the Router structure
-func New(a map[string]string, s map[string]*site.SiteConfig, c controller.ControllerMap) *Router {
+func New(a aliases.Aliases, s sites.SitesMap, c controller.ControllerMap) *Router {
 	r := new(Router)
 	r.Aliases = a
 	r.Sites = s
@@ -38,6 +39,7 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Does domain exist
 	if d, ok := ro.Aliases[r.Host]; ok {
+		spew.Dump(d)
 
 		pathvalues := UrlToMap(r.URL.Path)
 

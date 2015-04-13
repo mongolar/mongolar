@@ -9,8 +9,8 @@ import (
 
 type Configs struct {
 	Server   *server.Server
-	SitesMap *sites.SitesMap
-	Aliases  *aliases.Aliases
+	SitesMap sites.SitesMap
+	Aliases  aliases.Aliases
 }
 
 func New() *Configs {

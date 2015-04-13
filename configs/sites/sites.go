@@ -7,11 +7,11 @@ import (
 
 type SitesMap map[string]*site.SiteConfig
 
-func New() *SitesMap {
+func New() SitesMap {
 	s := make(SitesMap)
 	f := sitefiles.New()
 	s.getSiteConfigs(f)
-	return &s
+	return s
 }
 
 func (s SitesMap) getSiteConfigs(f sitefiles.SiteFiles) {

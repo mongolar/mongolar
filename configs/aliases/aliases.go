@@ -6,10 +6,10 @@ import (
 
 type Aliases map[string]string
 
-func New(sm *sites.SitesMap) *Aliases {
+func New(sm sites.SitesMap) Aliases {
 	a := make(Aliases)
-	a.setAliases(sm)
-	return &a
+	a.setAliases(&sm)
+	return a
 }
 
 // Set alias array

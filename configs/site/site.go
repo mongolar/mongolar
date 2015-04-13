@@ -49,6 +49,7 @@ func (s *SiteConfig) getSiteConfig(file string) {
 
 func (s *SiteConfig) getDbConnection(f string) {
 	u := "mongodb://" + s.MongoDb["user"] + ":" + s.MongoDb["password"] + "@" + s.MongoDb["host"] + "/" + s.MongoDb["db"]
+	fmt.Println(u)
 	var err error
 	s.DbSession, err = mgo.Dial(u)
 	if err != nil {
