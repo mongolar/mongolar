@@ -1,8 +1,6 @@
 package router
 
 import (
-	"github.com/davecgh/go-spew/spew"
-	//"fmt"
 	"github.com/jasonrichardsmith/mongolar/configs/aliases"
 	"github.com/jasonrichardsmith/mongolar/configs/sites"
 	"github.com/jasonrichardsmith/mongolar/controller"
@@ -16,7 +14,8 @@ import (
 // The Router should have everything needed to server multiple sites from one go instance
 // Aliases will have all domain aliases with the key for the site configuration
 // Sites will have all the individual configurations with their key that relates to a Alias
-// APIEndPoint is a random string that generates each time a server boots
+// APIEndPoint is a random string that generates each time a server boots and defines
+// where all API calls will take place.
 type Router struct {
 	Aliases     aliases.Aliases
 	Sites       sites.SitesMap
@@ -39,13 +38,12 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	// Does domain exist
 	if d, ok := ro.Aliases[r.Host]; ok {
-		spew.Dump(d)
 
 		pathvalues := UrlToMap(r.URL.Path)
 
 		// Set the the site config to an easy to use value.
 		s := ro.Sites[d]
-		switch pathvalues[1] {
+		switch pathvalues[0] {
 
 		// Mongolar config js is generated dynamically because it gets passed values from site config and endpoint is variable
 		// TODO move this to a controller
@@ -67,7 +65,9 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// If path is ApiEndPoint this is an API request.
 		case ro.APIEndPoint:
 			w.Header().Set("Content-Type", "application/json")
+			// Build a wrapper for the controller
 			wr := wrapper.New(w, r, s)
+			//If the controller exists call it
 			if c, ok := ro.Controllers[pathvalues[1]]; ok {
 				c(wr)
 			} else {
@@ -89,16 +89,20 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// Basic function to break a url to a map
 func UrlToMap(u string) map[int]string {
 	// Split the path values
 	urlpath := strings.Split(u, "/")
 
 	// Map the values as key store values
-	pathvalues := make(map[int]string, len(urlpath))
+	pathvalues := make(map[int]string)
 	i := 0
 	for _, k := range urlpath {
-		pathvalues[i] = k
-		i++
+		// The first value always evaluates to empty string so we can disregard
+		if k != "" {
+			pathvalues[i] = k
+			i++
+		}
 	}
 	return pathvalues
 }

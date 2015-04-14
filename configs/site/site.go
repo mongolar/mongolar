@@ -1,12 +1,10 @@
 package site
 
 import (
-	"fmt"
 	"github.com/jasonrichardsmith/mongolar/logger"
 	"github.com/spf13/viper"
 	"gopkg.in/mgo.v2"
 	"log"
-	"os"
 )
 
 const (
@@ -23,7 +21,7 @@ type SiteConfig struct {
 	ForeignDomains    []string               // This will whitelist domains for loading assets from other domains
 	AngularModules    []string               // A slice of angularjs modules to load
 	PublicValues      map[string]string      // These values can be directly invoked from the domain controller
-	Misc              map[string]interface{} // Where you can store anything not defined here
+	Misc              map[string]interface{} // Where you can store any other value not defined here
 	Logger            logger.LogChannel      // A channeel for writing Logs
 	DbSession         *mgo.Session           // The master MongoDb session that gets copied
 }

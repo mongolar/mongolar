@@ -1,15 +1,17 @@
+// Messages allows the user to pass growl style messages back to the browser. 
+
 package message
 
 import (
 	"github.com/jasonrichardsmith/mongolar/wrapper"
 )
 
+// The basic required Message structure required for messaging.
 type Message{
-	Target string
-	Controller string
-	Id	string
-	Template string
+	Text string
+	Severity string
 }
 
-func set(m Message, w *wrapper.Wrapper) {
+func Add(m Message, w *wrapper.Wrapper) {
+	//TODO grab a slice of values and add to the slices
 }
