@@ -4,6 +4,7 @@ package wrapper
 
 import (
 	"encoding/json"
+	"errors"
 	"github.com/jasonrichardsmith/mongolar/configs/site"
 	"github.com/jasonrichardsmith/mongolar/session"
 	"net/http"
@@ -36,6 +37,15 @@ func (w *Wrapper) SetContent(c map[string]interface{}) {
 // Sets payload based on a keyvalue
 func (w *Wrapper) SetPayload(n string, v interface{}) {
 	w.Payload[n] = v
+}
+
+// Gets payload based on a keyvalue
+func (w *Wrapper) GetPayload(n string) (interface{}, error) {
+	if v, ok := w.Payload[n]; ok {
+		return v, nil
+	}
+	err := errors.New("Payload value not set")
+	return nil, err
 }
 
 // The final serve function.  This will marshall the payload and serve it to the user.
