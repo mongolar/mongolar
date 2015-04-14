@@ -45,7 +45,7 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		// Set the the site config to an easy to use value.
 		s := ro.Sites[d]
-		switch pathvalues[0] {
+		switch pathvalues[1] {
 
 		// Mongolar config js is generated dynamically because it gets passed values from site config and endpoint is variable
 		// TODO move this to a controller

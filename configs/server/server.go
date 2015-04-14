@@ -8,7 +8,7 @@ const (
 	SERVER_CONFIG = "/etc/mongolar/"
 )
 
-// Server Config
+// Server Config, only port setting right now, but it will probably grow
 type Server struct {
 	Port string
 }
