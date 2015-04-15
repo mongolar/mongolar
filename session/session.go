@@ -1,5 +1,6 @@
 // Session will establish a user session where developers can store arbitrary user session data
 // All session data will be stored in the sessions collection.
+// TODO: This package need more development and testing
 package session
 
 import (
@@ -92,14 +93,17 @@ func (s Session) setDbSession() {
 	s.getData()
 }
 
+// Get current session data
 func (s Session) getData() {
 	s.query.One(&s.data)
 }
 
+// Close the current session
 func (s Session) Close() {
 	s.dbSession.Close()
 }
 
+// Get a session value by key.
 func (s Session) Get(n string) (v interface{}, err error) {
 	s.getData()
 	if v, ok := s.data.Data[n]; ok {
@@ -110,12 +114,14 @@ func (s Session) Get(n string) (v interface{}, err error) {
 	}
 }
 
+// Set value by key
 func (s Session) Set(n string, v interface{}) {
 	s.getData()
 	s.data.Data[n] = v
 	s.setDbSession()
 }
 
+// Generate a random session key.
 func getSessionID() string {
 	raw := make([]byte, 30)
 	_, err := rand.Read(raw)
@@ -126,6 +132,7 @@ func getSessionID() string {
 
 }
 
+// Set the parameters for the Mongodb collection
 func setCollection(c *mgo.Collection, d time.Duration) {
 	i := mgo.Index{
 		Key:         []string{"SessionId"},

@@ -40,12 +40,17 @@ func (w *Wrapper) SetPayload(n string, v interface{}) {
 }
 
 // Gets payload based on a keyvalue
-func (w *Wrapper) GetPayload(n string) (interface{}, error) {
+func (w *Wrapper) GetAPayload(n string) (interface{}, error) {
 	if v, ok := w.Payload[n]; ok {
 		return v, nil
 	}
 	err := errors.New("Payload value not set")
 	return nil, err
+}
+
+// Gets entire payload
+func (w *Wrapper) GetPayload() map[string]interface{} {
+	return w.Payload
 }
 
 // The final serve function.  This will marshall the payload and serve it to the user.
