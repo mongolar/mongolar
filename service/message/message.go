@@ -1,4 +1,4 @@
-// Messages allows the user to pass growl style messages back to the browser. 
+// Messages allows the user to pass growl style messages back to the browser.
 
 package message
 
@@ -7,25 +7,25 @@ import (
 )
 
 // The basic required Message structure required for messaging.
-type Message{
-	Text string
+type Message struct {
+	Text     string
 	Severity string
 }
 
 // Add a message to be served
 func Add(m Message, w *wrapper.Wrapper) {
 	v, err := w.GetPayload("messages")
-	if err != nil{
+	if err != nil {
 		v := make([]Message)
 	}
-	v[] = m
+	v := append(v, m)
 	w.SetPayload(v)
 }
 
 // Get all current messages
-func Get(w *wrapper.Wrapper) ([]Message) {
+func Get(w *wrapper.Wrapper) []Message {
 	v, err := w.GetPayload("messages")
-	if err != nil{
+	if err != nil {
 		v := make([]Message)
 	}
 	return v
@@ -33,7 +33,7 @@ func Get(w *wrapper.Wrapper) ([]Message) {
 }
 
 // Clears all messages
-func Clear(w *wrapper.Wrapper){
+func Clear(w *wrapper.Wrapper) {
 	v := make([]Message)
 	w.SetPayload("messages", v)
 }
