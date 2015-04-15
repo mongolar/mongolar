@@ -16,6 +16,6 @@ type DynamicLoad struct {
 
 // Once the above structure is created it can be passed to the dynamic function
 // to be added to the payload.  It takes the DynamicLoad struct and the wrapper from the controller
-func dynamic(d DynamicLoad, w *wrapper.Wrapper) {
+func Set(d DynamicLoad, w *wrapper.Wrapper) {
 	w.SetPayload("dynamic", d)
 }
