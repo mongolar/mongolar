@@ -1,4 +1,5 @@
 // The domain controller will return values in the PublicValues map of the site configuration.
+// This is invoked without a database call.
 package domain
 
 import (
