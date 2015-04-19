@@ -1,11 +1,10 @@
 package site
 
 import (
-	"fmt"
 	"github.com/jasonrichardsmith/mongolar/logger"
 	"github.com/spf13/viper"
 	"gopkg.in/mgo.v2"
-	"os"
+	"log"
 )
 
 const (
@@ -14,17 +13,17 @@ const (
 
 // Individual Site Configuration Type
 type SiteConfig struct {
-	MongoDb           map[string]string
-	Directory         string
-	Aliases           []string
-	SessionExpiration int64
-	TemplateEndpoint  string
-	ForeignDomains    []string
-	AngularModules    []string
-	PublicValues      map[string]string
-	Misc              map[string]interface{}
-	Logger            logger.LogChannel
-	DbSession         *mgo.Session
+	MongoDb           map[string]string      //Configuration for MongoDB Connection
+	Directory         string                 // Directory for html and assets
+	Aliases           []string               // Site Aliases/Domains
+	SessionExpiration int64                  // When to expire a users Session
+	TemplateEndpoint  string                 // URL where will be stored
+	ForeignDomains    []string               // This will whitelist domains for loading assets from other domains
+	AngularModules    []string               // A slice of angularjs modules to load
+	PublicValues      map[string]string      // These values can be directly invoked from the domain controller
+	Misc              map[string]interface{} // Where you can store any other value not defined here
+	Logger            logger.LogChannel      // A channeel for writing Logs
+	DbSession         *mgo.Session           // The master MongoDb session that gets copied
 }
 
 // Constructor for SiteConfig
@@ -47,17 +46,17 @@ func (s *SiteConfig) getSiteConfig(file string) {
 	v.Marshal(s)
 }
 
+// Establish a Database connection and attach it to the site configuration
 func (s *SiteConfig) getDbConnection(f string) {
 	u := "mongodb://" + s.MongoDb["user"] + ":" + s.MongoDb["password"] + "@" + s.MongoDb["host"] + "/" + s.MongoDb["db"]
-	fmt.Println(u)
 	var err error
 	s.DbSession, err = mgo.Dial(u)
 	if err != nil {
-		fmt.Printf("Can't connect to mongodb server for %v, go error %v\n", f, err)
-		os.Exit(1)
+		log.Fatal(err)
 	}
 }
 
+// Attach a logger channel to log errors predictably.
 func (s *SiteConfig) getLogger() {
 	s.Logger = logger.New(s.DbSession)
 }
