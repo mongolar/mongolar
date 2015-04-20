@@ -27,10 +27,10 @@ func NewMap() ControllerMap {
 //The designated structure for all elements
 type Element struct {
 	MongoId          bson.ObjectId          `bson:"_id,omitempty"`
-	ControllerValues map[string]interface{} `bson:"controller_values"`
+	ControllerValues map[string]interface{} `bson:"controller_values,omitempty"`
 	Controller       string                 `bson:"controller"`
 	Template         string                 `bson:"template"`
-	DynamicId        string                 `bson:"dynamic_id"`
+	DynamicId        string                 `bson:"dynamic_id,omitempty"`
 }
 
 // Constructor for elements
@@ -104,7 +104,7 @@ func PathValues(w *wrapper.Wrapper) {
 
 	}
 	w.Writer.Header().Add("QueryParameters", qp)
-	w.SetContent(p)
+	w.SetContent(p.Elements)
 	w.Serve()
 }
 
@@ -117,7 +117,6 @@ func (p *Path) pathMatch(u string, c *mgo.Collection) (string, error) {
 		b := bson.M{"path": u, "wildcard": w}
 		err = c.Find(b).One(p)
 		w = true
-		spew.Dump(err)
 		// If query doesnt return anything
 		if err != nil {
 			rejects = append([]string{path.Base(u)}, rejects...)
@@ -139,5 +138,45 @@ func DomainPublicValue(w *wrapper.Wrapper) {
 	v := make(map[string]interface{})
 	v[p[1]] = w.SiteConfig.PublicValues[p[1]]
 	w.SetContent(v)
+	w.Serve()
+}
+
+// The controller function for Values found directly in the controller values of the element
+func BasicContentValue(w *wrapper.Wrapper) {
+	u := url.UrlToMap(w.Request.URL.Path)
+	e := NewElement()
+	err := e.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
+	//TODO: Log Errors here
+	w.SetTemplate(e.Template)
+	w.SetDynamicId(e.DynamicId)
+	w.SetContent(e.ControllerValues)
+	w.Serve()
+}
+
+// The controller function for Values found directly in the controller values of the element
+func BasicContentValue(w *wrapper.Wrapper) {
+	u := url.UrlToMap(w.Request.URL.Path)
+	e := NewElement()
+	err := e.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
+	//TODO: Log Errors here
+	w.SetTemplate(e.Template)
+	w.SetDynamicId(e.DynamicId)
+	w.SetContent(e.ControllerValues)
+	w.Serve()
+}
+
+// The controller function for elements that are context specific
+func SlugValue(w *wrapper.Wrapper) {
+	u := url.UrlToMap(w.Request.URL.Path)
+	es := NewElement()
+	err := es.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
+	//TODO: Log Errors here
+	i = es.ControllerValues[w.Request.Header.Get("QueryParameter")]
+	e := NewElement()
+	err := e.GetById(i, w.SiteConfig.DbSession)
+	//TODO: Log Errors here
+	w.SetTemplate(e.Template)
+	w.SetDynamicId(e.DynamicId)
+	w.SetContent(e.ControllerValues)
 	w.Serve()
 }

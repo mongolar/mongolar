@@ -34,6 +34,16 @@ func (w *Wrapper) SetContent(c interface{}) {
 	w.SetPayload("content", c)
 }
 
+// Helper function for the controller to easily add its final content to the Payload
+func (w *Wrapper) SetTemplate(t string) {
+	w.SetPayload("template", t)
+}
+
+// Helper function for the controller to easily add its final content to the Payload
+func (w *Wrapper) SetDynamicId(i string) {
+	w.SetPayload("dynamic_id", i)
+}
+
 // Sets payload based on a keyvalue
 func (w *Wrapper) SetPayload(n string, v interface{}) {
 	w.Payload[n] = v
