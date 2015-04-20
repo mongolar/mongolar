@@ -6,17 +6,17 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/jasonrichardsmith/mongolar/configs/site"
-	//	"github.com/jasonrichardsmith/mongolar/session"
+	"github.com/jasonrichardsmith/mongolar/session"
 	"net/http"
 )
 
 // Wrapper structure required to be passed back to the Controller
 type Wrapper struct {
-	Writer     http.ResponseWriter // The response writer
-	Request    *http.Request       // The request
-	SiteConfig *site.SiteConfig    // The configuration for the site being accessed
-	//	Session    *session.Session       // Session for user
-	Payload map[string]interface{} // This is the sum of the payload that will be returned to the user
+	Writer     http.ResponseWriter    // The response writer
+	Request    *http.Request          // The request
+	SiteConfig *site.SiteConfig       // The configuration for the site being accessed
+	Session    *session.Session       // Session for user
+	Payload    map[string]interface{} // This is the sum of the payload that will be returned to the user
 }
 
 //Constructor for the Wrapper

@@ -6,7 +6,7 @@
 package controller
 
 import (
-	"github.com/davecgh/go-spew/spew"
+	//	"github.com/davecgh/go-spew/spew"
 	"github.com/jasonrichardsmith/mongolar/service/redirect"
 	"github.com/jasonrichardsmith/mongolar/url"
 	"github.com/jasonrichardsmith/mongolar/wrapper"
@@ -153,27 +153,15 @@ func BasicContentValue(w *wrapper.Wrapper) {
 	w.Serve()
 }
 
-// The controller function for Values found directly in the controller values of the element
-func BasicContentValue(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
-	e := NewElement()
-	err := e.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
-	//TODO: Log Errors here
-	w.SetTemplate(e.Template)
-	w.SetDynamicId(e.DynamicId)
-	w.SetContent(e.ControllerValues)
-	w.Serve()
-}
-
 // The controller function for elements that are context specific
 func SlugValue(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	es := NewElement()
 	err := es.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
 	//TODO: Log Errors here
-	i = es.ControllerValues[w.Request.Header.Get("QueryParameter")]
+	i := es.ControllerValues[w.Request.Header.Get("QueryParameter")]
 	e := NewElement()
-	err := e.GetById(i, w.SiteConfig.DbSession)
+	err = e.GetById(i.(string), w.SiteConfig.DbSession)
 	//TODO: Log Errors here
 	w.SetTemplate(e.Template)
 	w.SetDynamicId(e.DynamicId)
