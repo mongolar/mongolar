@@ -4,14 +4,14 @@ import (
 	"github.com/davecgh/go-spew/spew"
 	"github.com/jasonrichardsmith/mongolar/configs"
 	"github.com/jasonrichardsmith/mongolar/controller"
-	"github.com/jasonrichardsmith/mongolar/controller/domain"
 	"github.com/jasonrichardsmith/mongolar/router"
 	"net/http"
 )
 
 func main() {
 	cm := controller.NewMap()
-	cm["test"] = domain.Serve
+	cm["test"] = controller.DomainPublicValue
+	cm["path"] = controller.PathValues
 	Serve(cm)
 }
 

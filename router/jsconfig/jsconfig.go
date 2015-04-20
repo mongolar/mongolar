@@ -9,7 +9,7 @@ import (
 // template with different values passed from the site config
 const (
 	ConfigScript = `
-		var mongular = angular.module('mongular', 
+		var mongolar = angular.module('mongolar', 
 			[
 				{{ range .AngularModules }}
      					'{{.}}',
@@ -17,11 +17,11 @@ const (
 			]
 		);
 
-		mongular.constant('mongularConfig', {
-    			mongular_url: '/{{ .APIEndPoint }}/',
+		mongolar.constant('mongolarConfig', {
+    			mongolar_url: '/{{ .APIEndPoint }}/',
     			templates_url: '/{{ .TemplateEndpoint }}'}
 		);
-		mongular.config(function($sceDelegateProvider) {
+		mongolar.config(function($sceDelegateProvider) {
    			$sceDelegateProvider.resourceUrlWhitelist([
      				// Allow same origin resource loads.
      				'self',
@@ -44,5 +44,6 @@ type JsConfigs struct {
 func (c *JsConfigs) Serve(w http.ResponseWriter) {
 	t := template.New("Mongolar Config JS")
 	t.Parse(ConfigScript)
+	w.Header().Set("Content-Type", "application/javascript")
 	t.Execute(w, c)
 }

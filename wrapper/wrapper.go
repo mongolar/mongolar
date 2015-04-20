@@ -6,31 +6,31 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/jasonrichardsmith/mongolar/configs/site"
-	"github.com/jasonrichardsmith/mongolar/session"
+	//	"github.com/jasonrichardsmith/mongolar/session"
 	"net/http"
 )
 
 // Wrapper structure required to be passed back to the Controller
 type Wrapper struct {
-	Writer     http.ResponseWriter    // The response writer
-	Request    *http.Request          // The request
-	SiteConfig *site.SiteConfig       // The configuration for the site being accessed
-	Session    *session.Session       // Session for user
-	Payload    map[string]interface{} // This is the sum of the payload that will be returned to the user
+	Writer     http.ResponseWriter // The response writer
+	Request    *http.Request       // The request
+	SiteConfig *site.SiteConfig    // The configuration for the site being accessed
+	//	Session    *session.Session       // Session for user
+	Payload map[string]interface{} // This is the sum of the payload that will be returned to the user
 }
 
 //Constructor for the Wrapper
 func New(w http.ResponseWriter, r *http.Request, s *site.SiteConfig) *Wrapper {
 	wr := Wrapper{Writer: w, Request: r, SiteConfig: s}
 	// Get session
-	wr.Session = session.New(w, r, s)
+	//	wr.Session = session.New(w, r, s)
 	// Define payload
 	wr.Payload = make(map[string]interface{})
 	return &wr
 }
 
 // Helper function for the controller to easily add its final content to the Payload
-func (w *Wrapper) SetContent(c map[string]interface{}) {
+func (w *Wrapper) SetContent(c interface{}) {
 	w.SetPayload("content", c)
 }
 

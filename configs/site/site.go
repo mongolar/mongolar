@@ -24,6 +24,7 @@ type SiteConfig struct {
 	Misc              map[string]interface{} // Where you can store any other value not defined here
 	Logger            logger.LogChannel      // A channeel for writing Logs
 	DbSession         *mgo.Session           // The master MongoDb session that gets copied
+	FourOFour         string
 }
 
 // Constructor for SiteConfig

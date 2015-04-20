@@ -6,9 +6,14 @@
 package controller
 
 import (
+	"github.com/davecgh/go-spew/spew"
+	"github.com/jasonrichardsmith/mongolar/service/redirect"
+	"github.com/jasonrichardsmith/mongolar/url"
 	"github.com/jasonrichardsmith/mongolar/wrapper"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"path"
+	"strings"
 )
 
 // The map structure for Controllers
@@ -30,8 +35,8 @@ type Element struct {
 
 // Constructor for elements
 func NewElement() Element {
-	e := make(Element)
-	e.ControllerValues = make(map[string]interface{})
+	cv := make(map[string]interface{})
+	e := Element{ControllerValues: cv}
 	return e
 }
 
@@ -47,7 +52,7 @@ func (e Element) getElement(b bson.M, s *mgo.Session) error {
 // Get one element given an id
 func (e Element) GetById(i string, s *mgo.Session) error {
 	b := bson.M{"session_id": i}
-	err := getElement(b, s)
+	err := e.getElement(b, s)
 	return err
 
 }
@@ -55,31 +60,84 @@ func (e Element) GetById(i string, s *mgo.Session) error {
 // Get one element by id and controller path, most common query because you should validate your controller against the id
 func (e Element) GetValidElement(i string, c string, s *mgo.Session) error {
 	b := bson.M{"session_id": i, "controller": c}
-	err := getElement(b, s)
+	err := e.getElement(b, s)
 	return err
 }
 
 //The designated structure for all elements
 type Path struct {
-	MongoId  bson.ObjectId     `bson:"_id,omitempty"`
-	Path     string            `bson:"path"`
-	Path     bool              `bson:"wildcard"`
-	Elements map[string]string `bson:"elements"`
-	Template string            `bson:"template"`
+	MongoId  bson.ObjectId `bson:"_id,omitempty"`
+	Path     string        `bson:"path"`
+	Wildcard bool          `bson:"wildcard"`
+	Elements []string      `bson:"elements"`
+	Template string        `bson:"template"`
 }
 
 // Constructor for elements
 func NewPath() Path {
-	p := make(Path)
-	p.Elements = make(map[string]string)
+	e := make([]string, 1)
+	p := Path{Elements: e}
 	return p
 }
 
-func (p Path) GetPath(p string, w bool) error {
-	se := s.Copy()
-	defer se.Close()
-	c := s.DB("").C("elements")
-	b := bson.M{"path": p, "wildcard": w}
-	err := c.Find(b).One(&p)
-	return err
+// The controller function to retrieve elements ids from the path
+func PathValues(w *wrapper.Wrapper) {
+	p := NewPath()
+	s := w.SiteConfig.DbSession.Copy()
+	defer s.Close()
+	c := s.DB("").C("paths")
+	u := w.Request.Header.Get("CurrentPath")
+	u = "test/path"
+	qp, err := p.pathMatch(u, c)
+	if err != nil {
+		if err.Error() == "not found" {
+			if w.SiteConfig.FourOFour != u {
+				redirect.Set(w.SiteConfig.FourOFour, w)
+				w.Serve()
+				return
+			} else {
+				//TODO: Log error for missing 404 path
+				return
+			}
+
+		}
+
+	}
+	w.Writer.Header().Add("QueryParameters", qp)
+	w.SetContent(p)
+	w.Serve()
+}
+
+// Path matching query
+func (p *Path) pathMatch(u string, c *mgo.Collection) (string, error) {
+	var rejects []string
+	w := false
+	var err error
+	for {
+		b := bson.M{"path": u, "wildcard": w}
+		err = c.Find(b).One(p)
+		w = true
+		spew.Dump(err)
+		// If query doesnt return anything
+		if err != nil {
+			rejects = append([]string{path.Base(u)}, rejects...)
+			u = path.Dir(u)
+			if u == "." {
+				break
+			}
+			continue
+		}
+		break
+	}
+	return strings.Join(rejects, "/"), err
+}
+
+// The controller function for Values found in the Site Configuration
+func DomainPublicValue(w *wrapper.Wrapper) {
+	// Get second value in url path
+	p := url.UrlToMap(w.Request.URL.Path)
+	v := make(map[string]interface{})
+	v[p[1]] = w.SiteConfig.PublicValues[p[1]]
+	w.SetContent(v)
+	w.Serve()
 }

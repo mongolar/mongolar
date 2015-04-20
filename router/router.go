@@ -6,9 +6,9 @@ import (
 	"github.com/jasonrichardsmith/mongolar/controller"
 	"github.com/jasonrichardsmith/mongolar/router/apiend"
 	"github.com/jasonrichardsmith/mongolar/router/jsconfig"
+	"github.com/jasonrichardsmith/mongolar/url"
 	"github.com/jasonrichardsmith/mongolar/wrapper"
 	"net/http"
-	"strings"
 )
 
 // The Router should have everything needed to server multiple sites from one go instance
@@ -39,12 +39,11 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Does domain exist
 	if d, ok := ro.Aliases[r.Host]; ok {
 
-		pathvalues := UrlToMap(r.URL.Path)
+		pathvalues := url.UrlToMap(r.URL.Path)
 
-		spew.Dump(pathvalues[1])
 		// Set the the site config to an easy to use value.
 		s := ro.Sites[d]
-		switch pathvalues[1] {
+		switch pathvalues[0] {
 
 		// Mongolar config js is generated dynamically because it gets passed values from site config and endpoint is variable
 		// TODO move this to a controller
@@ -60,8 +59,8 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// All static assets bypass AngularJS and get served as files.
 		// TODO Move this to a controller
 		case "assets":
-			directory := s.Directory
-			http.FileServer(http.Dir(directory + "/assets"))
+			d := s.Directory
+			http.ServeFile(w, r, d+"/"+r.URL.Path[1:])
 
 		// If path is ApiEndPoint this is an API request.
 		case ro.APIEndPoint:
@@ -88,22 +87,4 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	return
 
-}
-
-// Basic function to break a url to a map
-func UrlToMap(u string) map[int]string {
-	// Split the path values
-	urlpath := strings.Split(u, "/")
-
-	// Map the values as key store values
-	pathvalues := make(map[int]string)
-	i := 0
-	for _, k := range urlpath {
-		// The first value always evaluates to empty string so we can disregard
-		if k != "" {
-			pathvalues[i] = k
-			i++
-		}
-	}
-	return pathvalues
 }

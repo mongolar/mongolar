@@ -7,5 +7,5 @@ import (
 
 // Set will take a string of the page to redirect to and the wrapper
 func Set(r string, w *wrapper.Wrapper) {
-	w.SetPayload("redirect", string)
+	w.SetPayload("redirect", r)
 }
