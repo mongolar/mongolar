@@ -14,6 +14,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"path"
 	"strings"
+	"time"
 )
 
 // The map structure for Controllers
@@ -167,4 +168,63 @@ func SlugValue(w *wrapper.Wrapper) {
 	w.SetDynamicId(e.DynamicId)
 	w.SetContent(e.ControllerValues)
 	w.Serve()
+}
+
+type PostData map[string]interface{}
+
+type FormSubmission struct {
+	Submitted time.Time         `bson:"submitted"`
+	SessionId string            `bson:"session_id"`
+	Values    map[string]string `bson:"values"`
+}
+
+func Form(w *wrapper.Wrapper) {
+	if w.Request.Method == "POST" {
+		p, err := formPostData(w.Request)
+	} else {
+		u := url.UrlToMap(w.Request.URL.Path)
+		e := NewElement()
+		err := e.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
+		//TODO: Log Errors here
+		err := RegisterForm(e.ControllerValues["form"], w.Session.Id, e.ControllerValues["handler"], w.SiteConfig.DbSession)
+		//TODO: Log Errors here
+		w.SetTemplate(e.Template)
+		w.SetDynamicId(e.DynamicId)
+		w.SetContent(e.ControllerValues["form"])
+		w.Serve()
+	}
+
+}
+
+func formPostData(r http.Request) (PostData, error) {
+	b := make([]byte, r.ContentLength)
+	_, err := this.Ctx.Request.Body.Read(b)
+	p := make(PostData)
+	if err == nil {
+		errj := json.Unmarshal(b, &p)
+		return p, errj
+	}
+	return p, err
+}
+
+type FormRegister struct {
+	SessionId string   `bson:"session_id,omitempty"`
+	Required  []string `bson:"required"`
+	Handler   string   `bson:"handler"`
+}
+
+func RegisterForm(f map[string]interface{}, id string, h string, s mgo.Session) {
+	se := s.Copy()
+	defer se.Close()
+	c := s.DB("").C("registered_forms")
+	r := make([]string, 1)
+	for k, s := range f {
+		if _, ok := k["required"]; ok {
+			r = append(r, s)
+		}
+	}
+	fr := FormRegister{SessionId: id, Required: r, Handler: h}
+	err := c.Insert(fr)
+	//TODO Log error
+	return err
 }
