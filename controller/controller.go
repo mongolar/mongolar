@@ -170,36 +170,20 @@ func SlugValue(w *wrapper.Wrapper) {
 	w.Serve()
 }
 
-type PostData map[string]interface{}
-
+// Everything below here needs to be refactored!!!
+// POST loading needs to be added to the wrapper.
+// Registration function needs to be available in the controller class and be optional.
+// Have Controller decide how it should handle post and form request.
 type FormSubmission struct {
 	Submitted time.Time         `bson:"submitted"`
 	SessionId string            `bson:"session_id"`
 	Values    map[string]string `bson:"values"`
 }
 
-func Form(w *wrapper.Wrapper) {
-	if w.Request.Method == "POST" {
-		p, err := formPostData(w.Request)
-	} else {
-		u := url.UrlToMap(w.Request.URL.Path)
-		e := NewElement()
-		err := e.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
-		//TODO: Log Errors here
-		err := RegisterForm(e.ControllerValues["form"], w.Session.Id, e.ControllerValues["handler"], w.SiteConfig.DbSession)
-		//TODO: Log Errors here
-		w.SetTemplate(e.Template)
-		w.SetDynamicId(e.DynamicId)
-		w.SetContent(e.ControllerValues["form"])
-		w.Serve()
-	}
-
-}
-
-func formPostData(r http.Request) (PostData, error) {
+func formPostData(r http.Request) (map[string]string, error) {
 	b := make([]byte, r.ContentLength)
 	_, err := this.Ctx.Request.Body.Read(b)
-	p := make(PostData)
+	p := make(map[string]string)
 	if err == nil {
 		errj := json.Unmarshal(b, &p)
 		return p, errj
@@ -208,6 +192,7 @@ func formPostData(r http.Request) (PostData, error) {
 }
 
 type FormRegister struct {
+	MongoId   string   `bson:"_id"`
 	SessionId string   `bson:"session_id,omitempty"`
 	Required  []string `bson:"required"`
 	Handler   string   `bson:"handler"`
