@@ -55,7 +55,6 @@ func (e Element) GetById(i string, s *mgo.Session) error {
 	b := bson.M{"session_id": i}
 	err := e.getElement(b, s)
 	return err
-
 }
 
 // Get one element by id and controller path, most common query because you should validate your controller against the id
@@ -64,6 +63,7 @@ func (e Element) GetValidElement(i string, c string, s *mgo.Session) error {
 	err := e.getElement(b, s)
 	return err
 }
+
 
 //The designated structure for all elements
 type Path struct {
@@ -104,8 +104,19 @@ func PathValues(w *wrapper.Wrapper) {
 		}
 
 	}
+	v := make([]map[string][string], 1)
+	for _, eid := range f {
+		ev := make(map[string]string)
+		e := NewElement()
+		//TODO handle error here
+		err = e.GetById(eid, w.SiteConfig.DbSession)
+		ev['template'] = e.ControllerValues['template']
+		ev['controller'] = e.Controller
+		ev['id'] = eid
+		v = append(v, ev)
+	}
 	w.Writer.Header().Add("QueryParameters", qp)
-	w.SetContent(p.Elements)
+	w.SetContent({'elements' : v})
 	w.Serve()
 }
 
@@ -170,26 +181,6 @@ func SlugValue(w *wrapper.Wrapper) {
 	w.Serve()
 }
 
-// Everything below here needs to be refactored!!!
-// POST loading needs to be added to the wrapper.
-// Registration function needs to be available in the controller class and be optional.
-// Have Controller decide how it should handle post and form request.
-type FormSubmission struct {
-	Submitted time.Time         `bson:"submitted"`
-	SessionId string            `bson:"session_id"`
-	Values    map[string]string `bson:"values"`
-}
-
-func formPostData(r http.Request) (map[string]string, error) {
-	b := make([]byte, r.ContentLength)
-	_, err := this.Ctx.Request.Body.Read(b)
-	p := make(map[string]string)
-	if err == nil {
-		errj := json.Unmarshal(b, &p)
-		return p, errj
-	}
-	return p, err
-}
 
 type FormRegister struct {
 	MongoId   string   `bson:"_id"`
