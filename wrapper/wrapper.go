@@ -5,7 +5,7 @@ package wrapper
 import (
 	"encoding/json"
 	"errors"
-	"github.com/jasonrichardsmith/mongolar/configs/site"
+	"github.com/jasonrichardsmith/mongolar/configs"
 	"github.com/jasonrichardsmith/mongolar/session"
 	"net/http"
 )
@@ -14,13 +14,13 @@ import (
 type Wrapper struct {
 	Writer     http.ResponseWriter    // The response writer
 	Request    *http.Request          // The request
-	SiteConfig *site.SiteConfig       // The configuration for the site being accessed
+	SiteConfig *configs.SiteConfig    // The configuration for the site being accessed
 	Session    *session.Session       // Session for user
 	Payload    map[string]interface{} // This is the sum of the payload that will be returned to the user
 }
 
 //Constructor for the Wrapper
-func New(w http.ResponseWriter, r *http.Request, s *site.SiteConfig) *Wrapper {
+func New(w http.ResponseWriter, r *http.Request, s *configs.SiteConfig) *Wrapper {
 	wr := Wrapper{Writer: w, Request: r, SiteConfig: s}
 	// Get session
 	//	wr.Session = session.New(w, r, s)

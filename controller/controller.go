@@ -7,6 +7,7 @@ package controller
 
 import (
 	//	"github.com/davecgh/go-spew/spew"
+	"fmt"
 	"github.com/jasonrichardsmith/mongolar/service/redirect"
 	"github.com/jasonrichardsmith/mongolar/url"
 	"github.com/jasonrichardsmith/mongolar/wrapper"
@@ -146,6 +147,7 @@ func BasicContentValue(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	e := NewElement()
 	err := e.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
+	fmt.Println(err)
 	//TODO: Log Errors here
 	w.SetTemplate(e.Template)
 	w.SetDynamicId(e.DynamicId)
@@ -158,10 +160,12 @@ func SlugValue(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	es := NewElement()
 	err := es.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
+	fmt.Println(err)
 	//TODO: Log Errors here
 	i := es.ControllerValues[w.Request.Header.Get("QueryParameter")]
 	e := NewElement()
 	err = e.GetById(i.(string), w.SiteConfig.DbSession)
+	fmt.Println(err)
 	//TODO: Log Errors here
 	w.SetTemplate(e.Template)
 	w.SetDynamicId(e.DynamicId)
