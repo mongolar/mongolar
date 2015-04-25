@@ -14,7 +14,8 @@ import (
 type Wrapper struct {
 	Writer     http.ResponseWriter    // The response writer
 	Request    *http.Request          // The request
-	SiteConfig *configs.SiteConfig    // The configuration for the site being accessed
+	Post       map[string]string      // Post data from AngularJS
+	SiteConfig *site.SiteConfig       // The configuration for the site being accessed
 	Session    *session.Session       // Session for user
 	Payload    map[string]interface{} // This is the sum of the payload that will be returned to the user
 }
@@ -22,11 +23,25 @@ type Wrapper struct {
 //Constructor for the Wrapper
 func New(w http.ResponseWriter, r *http.Request, s *configs.SiteConfig) *Wrapper {
 	wr := Wrapper{Writer: w, Request: r, SiteConfig: s}
+	var err error
+	wr.Post, err = formPostData(r)
 	// Get session
 	//	wr.Session = session.New(w, r, s)
 	// Define payload
 	wr.Payload = make(map[string]interface{})
 	return &wr
+}
+
+// Load post data from AngulaJS
+func formPostData(r http.Request) (map[string]string, error) {
+	b := make([]byte, r.ContentLength)
+	_, err := this.Ctx.Request.Body.Read(b)
+	p := make(map[string]string)
+	if err == nil {
+		errj := json.Unmarshal(b, &p)
+		return p, errj
+	}
+	return p, err
 }
 
 // Helper function for the controller to easily add its final content to the Payload

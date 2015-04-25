@@ -15,6 +15,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"path"
 	"strings"
+	"time"
 )
 
 // The map structure for Controllers
@@ -55,7 +56,6 @@ func (e Element) GetById(i string, s *mgo.Session) error {
 	b := bson.M{"session_id": i}
 	err := e.getElement(b, s)
 	return err
-
 }
 
 // Get one element by id and controller path, most common query because you should validate your controller against the id
@@ -64,6 +64,7 @@ func (e Element) GetValidElement(i string, c string, s *mgo.Session) error {
 	err := e.getElement(b, s)
 	return err
 }
+
 
 //The designated structure for all elements
 type Path struct {
@@ -104,8 +105,19 @@ func PathValues(w *wrapper.Wrapper) {
 		}
 
 	}
+	v := make([]map[string][string], 1)
+	for _, eid := range f {
+		ev := make(map[string]string)
+		e := NewElement()
+		//TODO handle error here
+		err = e.GetById(eid, w.SiteConfig.DbSession)
+		ev['template'] = e.ControllerValues['template']
+		ev['controller'] = e.Controller
+		ev['id'] = eid
+		v = append(v, ev)
+	}
 	w.Writer.Header().Add("QueryParameters", qp)
-	w.SetContent(p.Elements)
+	w.SetContent({'elements' : v})
 	w.Serve()
 }
 
@@ -172,3 +184,44 @@ func SlugValue(w *wrapper.Wrapper) {
 	w.SetContent(e.ControllerValues)
 	w.Serve()
 }
+
+
+type Form struct {
+	MongoId   string   `bson:"_id"`
+	SessionId string   `bson:"session_id"`
+	Required  []string `bson:"required"`
+}
+
+func NewForm(f map[string]interface{}, s string) Form {
+	i := bson.NewObjectId()
+	r := make([]string, 1)
+	for k, s := range f {
+		if _, ok := k["required"]; ok {
+			r = append(r, s)
+		}
+	}
+	fo := Form{ MongoId: i, SessionId: s, Required: r }
+
+}
+
+func (f Form) Register(s *mgo.Session) {
+	se := s.Copy()
+	defer se.Close()
+	c := s.DB("").C("forms")
+	err := c.Insert(s)
+	//TODO Log error
+	return err
+}
+
+func GetRegisteredForm (i string, s *mgo.Session) (Form, error) {
+	f = make(Form)
+	se := s.Copy()
+	defer se.Close()
+	c := s.DB("").C("forms")
+	err := c.Find(b).One(&f)
+	return f, err
+}
+
+
+
+
