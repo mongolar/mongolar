@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"errors"
 	log "github.com/Sirupsen/logrus"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/jasonrichardsmith/mongolar/configs"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -34,7 +35,7 @@ type SessionData struct {
 func New(w http.ResponseWriter, r *http.Request, s *configs.SiteConfig) *Session {
 	se := new(Session)
 	// Duration of expiration, needs to be worked out between cookies and db
-	var duration time.Duration = time.Duration(s.SessionExpiration) * time.Hour
+	var duration time.Duration = time.Duration(time.Duration(s.SessionExpiration) * time.Hour)
 	expire := time.Now().Add(duration)
 	// Set the cookies
 	c, err := r.Cookie("m_session_id")
@@ -49,15 +50,10 @@ func New(w http.ResponseWriter, r *http.Request, s *configs.SiteConfig) *Session
 			s.Logger.WithFields(log.Fields{"Remote": r.RemoteAddr}).Warn(err.Error())
 		}
 		c = &http.Cookie{
-			Name:  "m_session_id",
-			Value: id,
-			//Path:   "/",
-			//Domain: r.Host,
-			//MaxAge: 0,
-			//Secure:   true,
-			//HttpOnly: true,
-			//Raw:      "m_session_id=" + id,
-			//Unparsed: []string{"m_session_id=" + id},
+			Name:   "m_session_id",
+			Value:  id,
+			Path:   "/",
+			Domain: r.Host,
 		}
 	}
 	//  New or reused cookies will have their expiration refreshed
@@ -77,10 +73,14 @@ func New(w http.ResponseWriter, r *http.Request, s *configs.SiteConfig) *Session
 	if err != nil {
 		s.Logger.WithFields(log.Fields{"Remote": r.RemoteAddr}).Error(err.Error())
 	}
+	http.SetCookie(w, se.Cookie)
+
 	err = se.getData()
 	if err != nil {
 		se.setSession()
 	}
+	spew.Dump(s.SessionExpiration)
+	spew.Dump(err)
 	return se
 }
 

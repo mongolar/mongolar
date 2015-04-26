@@ -5,7 +5,6 @@ package wrapper
 import (
 	"encoding/json"
 	"errors"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/jasonrichardsmith/mongolar/configs"
 	"github.com/jasonrichardsmith/mongolar/session"
 	"net/http"
@@ -33,8 +32,6 @@ func New(w http.ResponseWriter, r *http.Request, s *configs.SiteConfig) *Wrapper
 	}
 	//Get session
 	wr.Session = session.New(w, r, s)
-	spew.Dump(wr.Session.Cookie)
-	http.SetCookie(w, wr.Session.Cookie)
 	// Define payload
 	wr.Payload = make(map[string]interface{})
 	return &wr
