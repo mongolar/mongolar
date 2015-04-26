@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"github.com/Sirupsen/logrus"
 	//"github.com/davecgh/go-spew/spew"
 	"fmt"
 	"github.com/jasonrichardsmith/mongolar/logger"
@@ -14,6 +15,7 @@ import (
 const (
 	SERVER_CONFIG   = "/etc/mongolar/"
 	SITES_DIRECTORY = "/etc/mongolar/enabled/"
+	LOG_DIRECTORY   = "/var/log/mongolar/"
 )
 
 type Configs struct {
@@ -82,7 +84,7 @@ type SiteConfig struct {
 	AngularModules    []string               // A slice of angularjs modules to load
 	PublicValues      map[string]string      // These values can be directly invoked from the domain controller
 	Misc              map[string]interface{} // Where you can store any other value not defined here
-	Logger            logger.LogChannel      // A channeel for writing Logs
+	Logger            *logrus.Logger         // Logrus logger
 	DbSession         *mgo.Session           // The master MongoDb session that gets copied
 	FourOFour         string
 }
@@ -94,7 +96,7 @@ func NewSiteConfig(f string) *SiteConfig {
 	}
 	s.getSiteConfig(f)
 	s.getDbConnection(f)
-	s.getLogger()
+	s.getLogger(f)
 	return &s
 }
 
@@ -118,8 +120,8 @@ func (s *SiteConfig) getDbConnection(f string) {
 }
 
 // Attach a logger channel to log errors predictably.
-func (s *SiteConfig) getLogger() {
-	s.Logger = logger.New(s.DbSession)
+func (s *SiteConfig) getLogger(f string) {
+	s.Logger = logger.New(LOG_DIRECTORY + f)
 }
 
 // The map to load site files

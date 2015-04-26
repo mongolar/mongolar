@@ -15,7 +15,6 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"path"
 	"strings"
-	"time"
 )
 
 // The map structure for Controllers
@@ -65,7 +64,6 @@ func (e Element) GetValidElement(i string, c string, s *mgo.Session) error {
 	return err
 }
 
-
 //The designated structure for all elements
 type Path struct {
 	MongoId  bson.ObjectId `bson:"_id,omitempty"`
@@ -105,19 +103,19 @@ func PathValues(w *wrapper.Wrapper) {
 		}
 
 	}
-	v := make([]map[string][string], 1)
-	for _, eid := range f {
+	var v []map[string]string
+	for _, eid := range p.Elements {
 		ev := make(map[string]string)
 		e := NewElement()
 		//TODO handle error here
 		err = e.GetById(eid, w.SiteConfig.DbSession)
-		ev['template'] = e.ControllerValues['template']
-		ev['controller'] = e.Controller
-		ev['id'] = eid
+		ev["template"] = e.ControllerValues["template"].(string)
+		ev["controller"] = e.Controller
+		ev["id"] = eid
 		v = append(v, ev)
 	}
 	w.Writer.Header().Add("QueryParameters", qp)
-	w.SetContent({'elements' : v})
+	w.SetContent(v)
 	w.Serve()
 }
 
@@ -152,6 +150,7 @@ func DomainPublicValue(w *wrapper.Wrapper) {
 	v[p[1]] = w.SiteConfig.PublicValues[p[1]]
 	w.SetContent(v)
 	w.Serve()
+	return
 }
 
 // The controller function for Values found directly in the controller values of the element
@@ -172,6 +171,7 @@ func SlugValue(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	es := NewElement()
 	err := es.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
+
 	fmt.Println(err)
 	//TODO: Log Errors here
 	i := es.ControllerValues[w.Request.Header.Get("QueryParameter")]
@@ -185,26 +185,25 @@ func SlugValue(w *wrapper.Wrapper) {
 	w.Serve()
 }
 
-
 type Form struct {
-	MongoId   string   `bson:"_id"`
-	SessionId string   `bson:"session_id"`
-	Required  []string `bson:"required"`
+	MongoId   bson.ObjectId `bson:"_id"`
+	SessionId string        `bson:"session_id"`
+	Required  []string      `bson:"required"`
 }
 
-func NewForm(f map[string]interface{}, s string) Form {
+func NewForm(f map[string]map[string]interface{}, s string) Form {
 	i := bson.NewObjectId()
 	r := make([]string, 1)
-	for k, s := range f {
-		if _, ok := k["required"]; ok {
-			r = append(r, s)
+	for k, ff := range f {
+		if _, ok := ff["required"]; ok {
+			r = append(r, k)
 		}
 	}
-	fo := Form{ MongoId: i, SessionId: s, Required: r }
-
+	fo := Form{MongoId: i, SessionId: s, Required: r}
+	return fo
 }
 
-func (f Form) Register(s *mgo.Session) {
+func (f Form) Register(s *mgo.Session) error {
 	se := s.Copy()
 	defer se.Close()
 	c := s.DB("").C("forms")
@@ -213,15 +212,12 @@ func (f Form) Register(s *mgo.Session) {
 	return err
 }
 
-func GetRegisteredForm (i string, s *mgo.Session) (Form, error) {
-	f = make(Form)
+func GetRegisteredForm(i string, s *mgo.Session) (*Form, error) {
+	f := new(Form)
 	se := s.Copy()
 	defer se.Close()
 	c := s.DB("").C("forms")
-	err := c.Find(b).One(&f)
+	b := bson.M{"_id": i}
+	err := c.Find(b).One(f)
 	return f, err
 }
-
-
-
-

@@ -1,8 +1,7 @@
 package router
 
 import (
-	"github.com/jasonrichardsmith/mongolar/configs/aliases"
-	"github.com/jasonrichardsmith/mongolar/configs/sites"
+	"github.com/jasonrichardsmith/mongolar/configs"
 	"github.com/jasonrichardsmith/mongolar/controller"
 	"github.com/jasonrichardsmith/mongolar/router/apiend"
 	"github.com/jasonrichardsmith/mongolar/router/jsconfig"
@@ -17,14 +16,14 @@ import (
 // APIEndPoint is a random string that generates each time a server boots and defines
 // where all API calls will take place.
 type Router struct {
-	Aliases     aliases.Aliases
-	Sites       sites.SitesMap
+	Aliases     configs.Aliases
+	Sites       configs.SitesMap
 	Controllers controller.ControllerMap
 	APIEndPoint string
 }
 
 // The Constructor for the Router structure
-func New(a aliases.Aliases, s sites.SitesMap, c controller.ControllerMap) *Router {
+func New(a configs.Aliases, s configs.SitesMap, c controller.ControllerMap) *Router {
 	r := new(Router)
 	r.Aliases = a
 	r.Sites = s
