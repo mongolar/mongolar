@@ -6,8 +6,8 @@
 package controller
 
 import (
-	//	"github.com/davecgh/go-spew/spew"
 	"fmt"
+	//"github.com/davecgh/go-spew/spew"
 	"github.com/jasonrichardsmith/mongolar/service/redirect"
 	"github.com/jasonrichardsmith/mongolar/url"
 	"github.com/jasonrichardsmith/mongolar/wrapper"
@@ -42,24 +42,24 @@ func NewElement() Element {
 }
 
 // Query one element
-func (e Element) getElement(b bson.M, s *mgo.Session) error {
+func (e *Element) getElement(b bson.M, s *mgo.Session) error {
 	se := s.Copy()
 	defer se.Close()
-	c := s.DB("").C("elements")
+	c := se.DB("").C("elements")
 	err := c.Find(b).One(&e)
 	return err
 }
 
 // Get one element given an id
-func (e Element) GetById(i string, s *mgo.Session) error {
-	b := bson.M{"session_id": i}
+func (e *Element) GetById(i string, s *mgo.Session) error {
+	b := bson.M{"_id": bson.ObjectIdHex(i)}
 	err := e.getElement(b, s)
 	return err
 }
 
 // Get one element by id and controller path, most common query because you should validate your controller against the id
-func (e Element) GetValidElement(i string, c string, s *mgo.Session) error {
-	b := bson.M{"session_id": i, "controller": c}
+func (e *Element) GetValidElement(i string, c string, s *mgo.Session) error {
+	b := bson.M{"_id": bson.ObjectIdHex(i), "controller": c}
 	err := e.getElement(b, s)
 	return err
 }
@@ -109,7 +109,7 @@ func PathValues(w *wrapper.Wrapper) {
 		e := NewElement()
 		//TODO handle error here
 		err = e.GetById(eid, w.SiteConfig.DbSession)
-		ev["template"] = e.ControllerValues["template"].(string)
+		ev["template"] = e.Template
 		ev["controller"] = e.Controller
 		ev["id"] = eid
 		v = append(v, ev)
@@ -163,6 +163,32 @@ func BasicContentValue(w *wrapper.Wrapper) {
 	w.SetTemplate(e.Template)
 	w.SetDynamicId(e.DynamicId)
 	w.SetContent(e.ControllerValues)
+	w.Serve()
+}
+
+// The controller function for Values found directly in the controller values of the element
+func WrapperValue(w *wrapper.Wrapper) {
+	u := url.UrlToMap(w.Request.URL.Path)
+	e := NewElement()
+	err := e.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
+	fmt.Println(err)
+	//TODO: Log Errors here
+	w.SetTemplate(e.Template)
+	w.SetDynamicId(e.DynamicId)
+	type es []string
+	var v []map[string]string
+	for _, eid := range e.ControllerValues["elements"].(es) {
+		ev := make(map[string]string)
+		e := NewElement()
+		//TODO handle error here
+		err = e.GetById(eid, w.SiteConfig.DbSession)
+		fmt.Println(err)
+		ev["template"] = e.Template
+		ev["controller"] = e.Controller
+		ev["id"] = eid
+		v = append(v, ev)
+	}
+	w.SetContent(v)
 	w.Serve()
 }
 
