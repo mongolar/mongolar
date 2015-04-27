@@ -35,7 +35,7 @@ type SessionData struct {
 func New(w http.ResponseWriter, r *http.Request, s *configs.SiteConfig) *Session {
 	se := new(Session)
 	// Duration of expiration, needs to be worked out between cookies and db
-	var duration time.Duration = time.Duration(time.Duration(s.SessionExpiration) * time.Hour)
+	var duration time.Duration = time.Duration(s.SessionExpiration * time.Hour)
 	expire := time.Now().Add(duration)
 	// Set the cookies
 	c, err := r.Cookie("m_session_id")

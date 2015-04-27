@@ -10,6 +10,7 @@ import (
 	"log"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 const (
@@ -78,7 +79,7 @@ type SiteConfig struct {
 	MongoDb           map[string]string      //Configuration for MongoDB Connection
 	Directory         string                 // Directory for html and assets
 	Aliases           []string               // Site Aliases/Domains
-	SessionExpiration int64                  // When to expire a users Session
+	SessionExpiration time.Duration          // When to expire a users Session
 	TemplateEndpoint  string                 // URL where will be stored
 	ForeignDomains    []string               // This will whitelist domains for loading assets from other domains
 	AngularModules    []string               // A slice of angularjs modules to load
