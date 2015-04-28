@@ -71,6 +71,7 @@ type Path struct {
 	Wildcard bool          `bson:"wildcard"`
 	Elements []string      `bson:"elements"`
 	Template string        `bson:"template"`
+	Status   string        `bson:"status"`
 }
 
 // Constructor for elements
@@ -78,6 +79,20 @@ func NewPath() Path {
 	e := make([]string, 1)
 	p := Path{Elements: e}
 	return p
+}
+
+// Get all Paths
+func PathList(d *mgo.Session) {
+	pl := make([]Path)
+	s := w.SiteConfigDbSession.Copy()
+	defer s.Close()
+	c := s.DB("").C("paths")
+	i := c..Find(nil).Limit(50).Iter()
+	err := i.All(&pl)
+	if err != nil {
+	    return nil, err
+	}
+	return pl, nil
 }
 
 // The controller function to retrieve elements ids from the path
@@ -154,7 +169,7 @@ func DomainPublicValue(w *wrapper.Wrapper) {
 }
 
 // The controller function for Values found directly in the controller values of the element
-func BasicContentValue(w *wrapper.Wrapper) {
+func ContentValue(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	e := NewElement()
 	err := e.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
@@ -162,7 +177,7 @@ func BasicContentValue(w *wrapper.Wrapper) {
 	//TODO: Log Errors here
 	w.SetTemplate(e.Template)
 	w.SetDynamicId(e.DynamicId)
-	w.SetContent(e.ControllerValues)
+	w.SetContent(e.ControllerValues['content'])
 	w.Serve()
 }
 
@@ -243,7 +258,7 @@ func GetRegisteredForm(i string, s *mgo.Session) (*Form, error) {
 	se := s.Copy()
 	defer se.Close()
 	c := s.DB("").C("forms")
-	b := bson.M{"_id": i}
+	b := bson.M{bson.ObjectIdHex("_id"): i}
 	err := c.Find(b).One(f)
 	return f, err
 }
