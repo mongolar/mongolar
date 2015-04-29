@@ -226,39 +226,3 @@ func SlugValue(w *wrapper.Wrapper) {
 	w.Serve()
 }
 
-type Form struct {
-	MongoId   bson.ObjectId `bson:"_id"`
-	SessionId string        `bson:"session_id"`
-	Required  []string      `bson:"required"`
-}
-
-func NewForm(f map[string]map[string]interface{}, s string) Form {
-	i := bson.NewObjectId()
-	r := make([]string, 1)
-	for k, ff := range f {
-		if _, ok := ff["required"]; ok {
-			r = append(r, k)
-		}
-	}
-	fo := Form{MongoId: i, SessionId: s, Required: r}
-	return fo
-}
-
-func (f Form) Register(s *mgo.Session) error {
-	se := s.Copy()
-	defer se.Close()
-	c := s.DB("").C("forms")
-	err := c.Insert(s)
-	//TODO Log error
-	return err
-}
-
-func GetRegisteredForm(i string, s *mgo.Session) (*Form, error) {
-	f := new(Form)
-	se := s.Copy()
-	defer se.Close()
-	c := s.DB("").C("forms")
-	b := bson.M{bson.ObjectIdHex("_id"): i}
-	err := c.Find(b).One(f)
-	return f, err
-}

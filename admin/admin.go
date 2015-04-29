@@ -2,6 +2,7 @@ package admin
 
 import {
 	"github.com/jasonrichardsmith/mongolar/controller"
+	"github.com/jasonrichardsmith/mongolar/form"
 	"github.com/jasonrichardsmith/mongolar/url"
 	"github.com/jasonrichardsmith/mongolar/session"
 }
@@ -47,7 +48,7 @@ func PathList(w *wrapper.Wrapper) {
 	w.SetTemplate("admin/pathlist")
 	pl, err := controller.PathList(w.SiteConfig.DbSession)
 	if err != nil {
-		w.SiteConfig.Logger.Error("Error getting path list")
+		w.SiteConfig.Logger.Error("Error getting path list: " + err.Error())
 	}
 	else {
 		w.SetContent(e.ControllerValues)
@@ -57,7 +58,20 @@ func PathList(w *wrapper.Wrapper) {
 
 
 func EditPath(w *wrapper.Wrapper) {
+	op := {"published", "unpublished"}
+	f = form.NewForm()
+	f.AddText("path").AddLabel("Path")
+	f.AddCheckBox("wildcard").AddLabel("Wildcard")
+	f.AddText("template").AddLabel("Template")
+	o := make([]map[string]string)
 
+	f.AddRadio("wildcard").AddLabel("Status")
+
+	Path     string        `bson:"path"`
+	Wildcard bool          `bson:"wildcard"`
+	Elements []string      `bson:"elements"`
+	Template string        `bson:"template"`
+	Status   string        `bson:"status"`
 }
 
 func ElementEditor(w *wrapper.Wrapper) {
