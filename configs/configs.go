@@ -88,6 +88,7 @@ type SiteConfig struct {
 	Logger            *logrus.Logger         // Logrus logger
 	DbSession         *mgo.Session           // The master MongoDb session that gets copied
 	FourOFour         string
+	APIEndPoint       string
 }
 
 // Constructor for SiteConfig

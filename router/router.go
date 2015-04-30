@@ -3,7 +3,7 @@ package router
 import (
 	"github.com/jasonrichardsmith/mongolar/configs"
 	"github.com/jasonrichardsmith/mongolar/controller"
-	"github.com/jasonrichardsmith/mongolar/router/apiend"
+	//	"github.com/jasonrichardsmith/mongolar/router/apiend"
 	"github.com/jasonrichardsmith/mongolar/router/jsconfig"
 	"github.com/jasonrichardsmith/mongolar/url"
 	"github.com/jasonrichardsmith/mongolar/wrapper"
@@ -19,7 +19,7 @@ type Router struct {
 	Aliases     configs.Aliases
 	Sites       configs.SitesMap
 	Controllers controller.ControllerMap
-	APIEndPoint string
+	//	APIEndPoint string
 }
 
 // The Constructor for the Router structure
@@ -28,7 +28,7 @@ func New(a configs.Aliases, s configs.SitesMap, c controller.ControllerMap) *Rou
 	r.Aliases = a
 	r.Sites = s
 	r.Controllers = c
-	r.APIEndPoint = apiend.New()
+	//	r.APIEndPoint = apiend.New()
 	return r
 }
 
@@ -48,7 +48,7 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// TODO move this to a controller
 		case "mongolar_config.js":
 			c := jsconfig.JsConfigs{
-				APIEndPoint:      ro.APIEndPoint,
+				APIEndPoint:      s.APIEndPoint,
 				TemplateEndpoint: s.TemplateEndpoint,
 				ForeignDomains:   s.ForeignDomains,
 				AngularModules:   s.AngularModules,
@@ -62,7 +62,7 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			http.ServeFile(w, r, d+"/"+r.URL.Path[1:])
 
 		// If path is ApiEndPoint this is an API request.
-		case ro.APIEndPoint:
+		case s.APIEndPoint:
 			w.Header().Set("Content-Type", "application/json")
 			// Build a wrapper for the controller
 			wr := wrapper.New(w, r, s)

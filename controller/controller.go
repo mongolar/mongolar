@@ -81,16 +81,25 @@ func NewPath() Path {
 	return p
 }
 
+// Get Path by Id
+func (p *Path) GetById(i string, s *mgo.Session) error {
+	se := s.Copy()
+	defer se.Close()
+	c := se.DB("").C("elements")
+	err := c.FindId(bson.ObjectIdHex(i)).One(&p)
+	return err
+}
+
 // Get all Paths
-func PathList(d *mgo.Session) {
-	pl := make([]Path)
-	s := w.SiteConfigDbSession.Copy()
+func PathList(w *wrapper.Wrapper) ([]Path, error) {
+	pl := make([]Path, 1)
+	s := w.SiteConfig.DbSession.Copy()
 	defer s.Close()
 	c := s.DB("").C("paths")
-	i := c..Find(nil).Limit(50).Iter()
+	i := c.Find(nil).Limit(50).Iter()
 	err := i.All(&pl)
 	if err != nil {
-	    return nil, err
+		return nil, err
 	}
 	return pl, nil
 }
@@ -169,7 +178,7 @@ func DomainPublicValue(w *wrapper.Wrapper) {
 }
 
 // The controller function for Values found directly in the controller values of the element
-func ContentValue(w *wrapper.Wrapper) {
+func ContentValues(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	e := NewElement()
 	err := e.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
@@ -177,12 +186,12 @@ func ContentValue(w *wrapper.Wrapper) {
 	//TODO: Log Errors here
 	w.SetTemplate(e.Template)
 	w.SetDynamicId(e.DynamicId)
-	w.SetContent(e.ControllerValues['content'])
+	w.SetContent(e.ControllerValues["content"])
 	w.Serve()
 }
 
 // The controller function for Values found directly in the controller values of the element
-func WrapperValue(w *wrapper.Wrapper) {
+func WrapperValues(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	e := NewElement()
 	err := e.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
@@ -208,7 +217,7 @@ func WrapperValue(w *wrapper.Wrapper) {
 }
 
 // The controller function for elements that are context specific
-func SlugValue(w *wrapper.Wrapper) {
+func SlugValues(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	es := NewElement()
 	err := es.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
@@ -225,4 +234,3 @@ func SlugValue(w *wrapper.Wrapper) {
 	w.SetContent(e.ControllerValues)
 	w.Serve()
 }
-

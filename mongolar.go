@@ -10,8 +10,11 @@ import (
 
 func main() {
 	cm := controller.NewMap()
-	cm["test"] = controller.DomainPublicValue
+	cm["domian_public_value"] = controller.DomainPublicValue
 	cm["path"] = controller.PathValues
+	cm["content"] = controller.ContentValues
+	cm["wrapper"] = controller.WrapperValues
+	cm["slug"] = controller.SlugValues
 	Serve(cm)
 }
 

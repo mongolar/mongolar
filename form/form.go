@@ -94,6 +94,16 @@ func GetRegisteredForm(i string, s *mgo.Session) (*FormRegister, error) {
 	return fr, err
 }
 
+func GetValidRegForm(i string, se session.Session, s *mgo.Session) (*FormRegister, error) {
+	fr := new(FormRegister)
+	se := s.Copy()
+	defer se.Close()
+	c := se.DB("").C("form_register")
+	b := bson.M{"session_id": se, "_id": bson.ObjectIdHex(i)}
+	err = c.Find(b).One(fr)
+	return fr, err
+}
+
 type Field struct {
 	Type            string                 `json: "type"`
 	Key             string                 `json: "key"`
