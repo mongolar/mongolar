@@ -2,9 +2,9 @@ package main
 
 import (
 	"github.com/davecgh/go-spew/spew"
-	"github.com/jasonrichardsmith/mongolar/configs"
-	"github.com/jasonrichardsmith/mongolar/controller"
-	"github.com/jasonrichardsmith/mongolar/router"
+	"github.com/mongolar/mongolar/configs"
+	"github.com/mongolar/mongolar/controller"
+	"github.com/mongolar/mongolar/router"
 	"net/http"
 )
 

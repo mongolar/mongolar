@@ -9,7 +9,7 @@ import (
 	"errors"
 	log "github.com/Sirupsen/logrus"
 	"github.com/davecgh/go-spew/spew"
-	"github.com/jasonrichardsmith/mongolar/configs"
+	"github.com/mongolar/mongolar/configs"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"

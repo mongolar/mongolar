@@ -2,7 +2,7 @@
 package redirect
 
 import (
-	"github.com/jasonrichardsmith/mongolar/wrapper"
+	"github.com/mongolar/mongolar/wrapper"
 )
 
 // Set will take a string of the page to redirect to and the wrapper

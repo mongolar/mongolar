@@ -1,12 +1,12 @@
 package router
 
 import (
-	"github.com/jasonrichardsmith/mongolar/configs"
-	"github.com/jasonrichardsmith/mongolar/controller"
-	//	"github.com/jasonrichardsmith/mongolar/router/apiend"
-	"github.com/jasonrichardsmith/mongolar/router/jsconfig"
-	"github.com/jasonrichardsmith/mongolar/url"
-	"github.com/jasonrichardsmith/mongolar/wrapper"
+	"github.com/mongolar/mongolar/configs"
+	"github.com/mongolar/mongolar/controller"
+	//	"github.com/mongolar/mongolar/router/apiend"
+	"github.com/mongolar/mongolar/router/jsconfig"
+	"github.com/mongolar/mongolar/url"
+	"github.com/mongolar/mongolar/wrapper"
 	"net/http"
 )
 

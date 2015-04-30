@@ -3,7 +3,7 @@
 package dynamicload
 
 import (
-	"github.com/jasonrichardsmith/mongolar/wrapper"
+	"github.com/mongolar/mongolar/wrapper"
 )
 
 // The DynamicLoad struct will be marshalled and added to you controller return payload.

@@ -3,7 +3,7 @@
 package message
 
 import (
-	"github.com/jasonrichardsmith/mongolar/wrapper"
+	"github.com/mongolar/mongolar/wrapper"
 )
 
 // The basic required Message structure required for messaging.

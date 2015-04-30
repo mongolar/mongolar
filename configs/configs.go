@@ -4,7 +4,7 @@ import (
 	"github.com/Sirupsen/logrus"
 	//"github.com/davecgh/go-spew/spew"
 	"fmt"
-	"github.com/jasonrichardsmith/mongolar/logger"
+	"github.com/mongolar/mongolar/logger"
 	"github.com/spf13/viper"
 	"gopkg.in/mgo.v2"
 	"log"

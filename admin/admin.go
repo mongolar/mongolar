@@ -1,11 +1,11 @@
 package admin
 
 import {
-	"github.com/jasonrichardsmith/mongolar/controller"
-	"github.com/jasonrichardsmith/mongolar/form"
-	"github.com/jasonrichardsmith/mongolar/url"
-	"github.com/jasonrichardsmith/mongolar/session"
-	"github.com/jasonrichardsmith/mongolar/service/messages"
+	"github.com/mongolar/mongolar/controller"
+	"github.com/mongolar/mongolar/form"
+	"github.com/mongolar/mongolar/url"
+	"github.com/mongolar/mongolar/session"
+	"github.com/mongolar/mongolar/service/messages"
 }
 
 type AdminMap struct controller.ControllerMap

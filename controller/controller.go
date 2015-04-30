@@ -8,9 +8,9 @@ package controller
 import (
 	"fmt"
 	//"github.com/davecgh/go-spew/spew"
-	"github.com/jasonrichardsmith/mongolar/service/redirect"
-	"github.com/jasonrichardsmith/mongolar/url"
-	"github.com/jasonrichardsmith/mongolar/wrapper"
+	"github.com/mongolar/mongolar/service/redirect"
+	"github.com/mongolar/mongolar/url"
+	"github.com/mongolar/mongolar/wrapper"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"path"

@@ -5,8 +5,8 @@ package wrapper
 import (
 	"encoding/json"
 	"errors"
-	"github.com/jasonrichardsmith/mongolar/configs"
-	"github.com/jasonrichardsmith/mongolar/session"
+	"github.com/mongolar/mongolar/configs"
+	"github.com/mongolar/mongolar/session"
 	"net/http"
 )
 
