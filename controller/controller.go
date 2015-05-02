@@ -7,13 +7,14 @@ package controller
 
 import (
 	"fmt"
-	//"github.com/davecgh/go-spew/spew"
-	"github.com/mongolar/mongolar/service/redirect"
+	//	"github.com/davecgh/go-spew/spew"
+	"github.com/mongolar/mongolar/services"
 	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"path"
+	"reflect"
 	"strings"
 )
 
@@ -42,7 +43,7 @@ func NewElement() Element {
 }
 
 // Query one element
-func (e *Element) getElement(b bson.M, s *mgo.Session) error {
+func (e *Element) GetElement(b bson.M, s *mgo.Session) error {
 	se := s.Copy()
 	defer se.Close()
 	c := se.DB("").C("elements")
@@ -53,14 +54,14 @@ func (e *Element) getElement(b bson.M, s *mgo.Session) error {
 // Get one element given an id
 func (e *Element) GetById(i string, s *mgo.Session) error {
 	b := bson.M{"_id": bson.ObjectIdHex(i)}
-	err := e.getElement(b, s)
+	err := e.GetElement(b, s)
 	return err
 }
 
 // Get one element by id and controller path, most common query because you should validate your controller against the id
 func (e *Element) GetValidElement(i string, c string, s *mgo.Session) error {
 	b := bson.M{"_id": bson.ObjectIdHex(i), "controller": c}
-	err := e.getElement(b, s)
+	err := e.GetElement(b, s)
 	return err
 }
 
@@ -116,7 +117,7 @@ func PathValues(w *wrapper.Wrapper) {
 	if err != nil {
 		if err.Error() == "not found" {
 			if w.SiteConfig.FourOFour != u {
-				redirect.Set(w.SiteConfig.FourOFour, w)
+				services.Redirect(w.SiteConfig.FourOFour, w)
 				w.Serve()
 				return
 			} else {
@@ -171,7 +172,7 @@ func DomainPublicValue(w *wrapper.Wrapper) {
 	// Get second value in url path
 	p := url.UrlToMap(w.Request.URL.Path)
 	v := make(map[string]interface{})
-	v[p[1]] = w.SiteConfig.PublicValues[p[1]]
+	v[p[2]] = w.SiteConfig.PublicValues[p[2]]
 	w.SetContent(v)
 	w.Serve()
 	return
@@ -181,27 +182,43 @@ func DomainPublicValue(w *wrapper.Wrapper) {
 func ContentValues(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	e := NewElement()
-	err := e.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
-	fmt.Println(err)
+	err := e.GetValidElement(u[2], u[1], w.SiteConfig.DbSession)
+	if err != nil {
+		w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
+		m := services.Message{Text: "There was a problem loading some content on your page.", Severity: "Error"}
+		m.Add(w)
+		w.Serve()
+		return
+	}
 	//TODO: Log Errors here
-	w.SetTemplate(e.Template)
-	w.SetDynamicId(e.DynamicId)
-	w.SetContent(e.ControllerValues["content"])
+	if val, ok := e.ControllerValues["content"]; ok {
+		w.SetTemplate(e.Template)
+		w.SetDynamicId(e.DynamicId)
+		w.SetContent(val)
+		w.Serve()
+		return
+	}
+	w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
+	m := services.Message{Text: "There was a problem loading some content on your page.", Severity: "Error"}
+	m.Add(w)
 	w.Serve()
+	return
 }
 
 // The controller function for Values found directly in the controller values of the element
 func WrapperValues(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	e := NewElement()
-	err := e.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
+	err := e.GetValidElement(u[2], u[1], w.SiteConfig.DbSession)
 	fmt.Println(err)
 	//TODO: Log Errors here
 	w.SetTemplate(e.Template)
 	w.SetDynamicId(e.DynamicId)
-	type es []string
 	var v []map[string]string
-	for _, eid := range e.ControllerValues["elements"].(es) {
+	es := reflect.ValueOf(e.ControllerValues["elements"])
+	for i := 0; i < es.Len(); i++ {
+		el := es.Index(i)
+		eid := el.Interface().(string)
 		ev := make(map[string]string)
 		e := NewElement()
 		//TODO handle error here
