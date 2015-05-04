@@ -3,7 +3,6 @@ package router
 import (
 	"github.com/mongolar/mongolar/configs"
 	"github.com/mongolar/mongolar/controller"
-	//	"github.com/mongolar/mongolar/router/apiend"
 	"github.com/mongolar/mongolar/router/jsconfig"
 	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
@@ -19,7 +18,6 @@ type Router struct {
 	Aliases     configs.Aliases
 	Sites       configs.SitesMap
 	Controllers controller.ControllerMap
-	//	APIEndPoint string
 }
 
 // The Constructor for the Router structure
@@ -28,7 +26,6 @@ func New(a configs.Aliases, s configs.SitesMap, c controller.ControllerMap) *Rou
 	r.Aliases = a
 	r.Sites = s
 	r.Controllers = c
-	//	r.APIEndPoint = apiend.New()
 	return r
 }
 
@@ -43,7 +40,6 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// Set the the site config to an easy to use value.
 		s := ro.Sites[d]
 		switch pathvalues[0] {
-
 		// Mongolar config js is generated dynamically because it gets passed values from site config and endpoint is variable
 		// TODO move this to a controller
 		case "mongolar_config.js":
@@ -69,6 +65,7 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			//If the controller exists call it
 			if c, ok := ro.Controllers[pathvalues[1]]; ok {
 				c(wr)
+				return
 			} else {
 				http.Error(w, "Forbidden", 403)
 				return
@@ -76,8 +73,9 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		// All other traffic will be handled by the AngularJs router
 		default:
-			directory := s.Directory
-			http.ServeFile(w, r, directory+"/index.html")
+			d := s.Directory
+			http.ServeFile(w, r, d)
+			return
 		}
 
 	} else {

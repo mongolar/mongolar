@@ -56,12 +56,12 @@ func (w *Wrapper) SetContent(c interface{}) {
 
 // Helper function for the controller to easily add its final content to the Payload
 func (w *Wrapper) SetTemplate(t string) {
-	w.SetPayload("template", t)
+	w.SetPayload("mongolartemplate", t)
 }
 
 // Helper function for the controller to easily add its final content to the Payload
 func (w *Wrapper) SetDynamicId(i string) {
-	w.SetPayload("dynamic_id", i)
+	w.SetPayload("mongolardyn", i)
 }
 
 // Sets payload based on a keyvalue
@@ -76,6 +76,11 @@ func (w *Wrapper) GetAPayload(n string) (interface{}, error) {
 	}
 	err := errors.New("Payload value not set")
 	return nil, err
+}
+
+// Gets payload based on a keyvalue
+func (w *Wrapper) DeleteAPayload(n string) {
+	delete(w.Payload, n)
 }
 
 // Gets entire payload

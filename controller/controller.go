@@ -7,7 +7,7 @@ package controller
 
 import (
 	"fmt"
-	//	"github.com/davecgh/go-spew/spew"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/services"
 	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
@@ -112,16 +112,22 @@ func PathValues(w *wrapper.Wrapper) {
 	defer s.Close()
 	c := s.DB("").C("paths")
 	u := w.Request.Header.Get("CurrentPath")
-	u = "test/path"
 	qp, err := p.pathMatch(u, c)
 	if err != nil {
 		if err.Error() == "not found" {
-			if w.SiteConfig.FourOFour != u {
-				services.Redirect(w.SiteConfig.FourOFour, w)
+			spew.Dump(u)
+			if "/"+w.SiteConfig.FourOFour != u {
+				services.Redirect("/"+w.SiteConfig.FourOFour, w)
 				w.Serve()
 				return
 			} else {
 				//TODO: Log error for missing 404 path
+				m := services.Message{
+					Text:     "There was a problem with the system.",
+					Severity: "Error",
+				}
+				m.Add(w)
+				w.Serve()
 				return
 			}
 
@@ -134,14 +140,16 @@ func PathValues(w *wrapper.Wrapper) {
 		e := NewElement()
 		//TODO handle error here
 		err = e.GetById(eid, w.SiteConfig.DbSession)
-		ev["template"] = e.Template
-		ev["controller"] = e.Controller
-		ev["id"] = eid
+		ev["mongolartemplate"] = e.Template
+		ev["mongolartype"] = e.Controller
+		ev["mongolarid"] = eid
 		v = append(v, ev)
 	}
 	w.Writer.Header().Add("QueryParameters", qp)
 	w.SetContent(v)
+	w.SetTemplate(p.Template)
 	w.Serve()
+	return
 }
 
 // Path matching query
@@ -157,7 +165,7 @@ func (p *Path) pathMatch(u string, c *mgo.Collection) (string, error) {
 		if err != nil {
 			rejects = append([]string{path.Base(u)}, rejects...)
 			u = path.Dir(u)
-			if u == "." {
+			if u == "/" {
 				break
 			}
 			continue
@@ -224,9 +232,9 @@ func WrapperValues(w *wrapper.Wrapper) {
 		//TODO handle error here
 		err = e.GetById(eid, w.SiteConfig.DbSession)
 		fmt.Println(err)
-		ev["template"] = e.Template
-		ev["controller"] = e.Controller
-		ev["id"] = eid
+		ev["mongolartemplate"] = e.Template
+		ev["mongolartype"] = e.Controller
+		ev["mongolarid"] = eid
 		v = append(v, ev)
 	}
 	w.SetContent(v)
@@ -237,7 +245,7 @@ func WrapperValues(w *wrapper.Wrapper) {
 func SlugValues(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	es := NewElement()
-	err := es.GetValidElement(u[1], u[0], w.SiteConfig.DbSession)
+	err := es.GetValidElement(u[2], u[1], w.SiteConfig.DbSession)
 
 	fmt.Println(err)
 	//TODO: Log Errors here

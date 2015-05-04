@@ -1,7 +1,6 @@
 package main
 
 import (
-	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/configs"
 	"github.com/mongolar/mongolar/controller"
 	"github.com/mongolar/mongolar/router"
@@ -23,6 +22,5 @@ func Serve(cm controller.ControllerMap) {
 	c := configs.New()
 	//	spew.Dump(c)
 	HostSwitch := router.New(c.Aliases, c.SitesMap, cm)
-	err := http.ListenAndServe(":"+c.Server.Port, HostSwitch)
-	spew.Dump(err)
+	http.ListenAndServe(":"+c.Server.Port, HostSwitch)
 }

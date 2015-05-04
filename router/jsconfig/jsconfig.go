@@ -19,7 +19,7 @@ const (
 
 		mongolar.constant('mongolarConfig', {
     			mongolar_url: '/{{ .APIEndPoint }}/',
-    			templates_url: '/{{ .TemplateEndpoint }}'}
+    			templates_url: '/{{ .TemplateEndpoint }}/'}
 		);
 		mongolar.config(function($sceDelegateProvider) {
    			$sceDelegateProvider.resourceUrlWhitelist([

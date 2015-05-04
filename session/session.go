@@ -8,7 +8,6 @@ import (
 	"encoding/hex"
 	"errors"
 	log "github.com/Sirupsen/logrus"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/configs"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -79,8 +78,6 @@ func New(w http.ResponseWriter, r *http.Request, s *configs.SiteConfig) *Session
 	if err != nil {
 		se.setSession()
 	}
-	spew.Dump(s.SessionExpiration)
-	spew.Dump(err)
 	return se
 }
 
