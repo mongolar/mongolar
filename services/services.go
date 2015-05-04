@@ -4,14 +4,10 @@ import (
 	"github.com/mongolar/mongolar/wrapper"
 )
 
-// The basic required Message structure required for messaging.
-type Message struct {
-	Text     string `json: "text"`
-	Severity string `json: "severity"`
-}
 
 // Add a message to be served
-func (m Message) Add(w *wrapper.Wrapper) {
+func AddMessage(t string, s string, w *wrapper.Wrapper) {
+	m = map[string]string{'text': t, 'severity': s}
 	w.SetPayload("mongolar_messages", m)
 }
 
