@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 )
 
+// Wrapper for builidng logrus logger
 func New(f string) *logrus.Logger {
 	d := filepath.Dir(f)
 	_, err := os.Stat(d)
