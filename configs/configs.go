@@ -13,18 +13,21 @@ import (
 	"time"
 )
 
+// Location of configuration files
 const (
 	SERVER_CONFIG   = "/etc/mongolar/"
 	SITES_DIRECTORY = "/etc/mongolar/enabled/"
 	LOG_DIRECTORY   = "/var/log/mongolar/"
 )
 
+// Wrapper structure for SitesMap and Server
 type Configs struct {
 	Server   *Server
 	SitesMap SitesMap
 	Aliases  Aliases
 }
 
+// Constructor for Configs structure
 func New() *Configs {
 	c := new(Configs)
 	c.Server = NewServer()
@@ -59,7 +62,7 @@ type Server struct {
 	Port string
 }
 
-// Constructor
+// Constructor for server config
 func NewServer() *Server {
 	s := new(Server)
 	s.getServerConfig()
@@ -70,8 +73,14 @@ func NewServer() *Server {
 func (s *Server) getServerConfig() {
 	viper.SetConfigName("mongolar")
 	viper.AddConfigPath(SERVER_CONFIG)
-	viper.ReadInConfig()
-	viper.Marshal(s)
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+	err := viper.Marshal(s)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // Individual Site Configuration Type
@@ -107,8 +116,14 @@ func (s *SiteConfig) getSiteConfig(file string) {
 	v := viper.New()
 	v.SetConfigName(file)
 	v.AddConfigPath(SITES_DIRECTORY)
-	v.ReadInConfig()
-	v.Marshal(s)
+	err := viper.ReadInConfig()
+	if err != nil {
+		log.Fatal(err)
+	}
+	err := viper.Marshal(s)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 // Establish a Database connection and attach it to the site configuration
