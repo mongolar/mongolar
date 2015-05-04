@@ -6,7 +6,6 @@
 package controller
 
 import (
-	"fmt"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/services"
 	"github.com/mongolar/mongolar/url"
@@ -121,12 +120,7 @@ func PathValues(w *wrapper.Wrapper) {
 				w.Serve()
 				return
 			} else {
-				//TODO: Log error for missing 404 path
-				m := services.Message{
-					Text:     "There was a problem with the system.",
-					Severity: "Error",
-				}
-				m.Add(w)
+				services.AddMessage("There was a problem with the system.", "Error", w)
 				w.Serve()
 				return
 			}
@@ -138,8 +132,10 @@ func PathValues(w *wrapper.Wrapper) {
 	for _, eid := range p.Elements {
 		ev := make(map[string]string)
 		e := NewElement()
-		//TODO handle error here
 		err = e.GetById(eid, w.SiteConfig.DbSession)
+		if err != nil {
+			w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
+		}
 		ev["mongolartemplate"] = e.Template
 		ev["mongolartype"] = e.Controller
 		ev["mongolarid"] = eid
@@ -193,12 +189,10 @@ func ContentValues(w *wrapper.Wrapper) {
 	err := e.GetValidElement(u[2], u[1], w.SiteConfig.DbSession)
 	if err != nil {
 		w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
-		m := services.Message{Text: "There was a problem loading some content on your page.", Severity: "Error"}
-		m.Add(w)
+		services.AddMessage("There was a problem loading some content on your page.", "Error", w)
 		w.Serve()
 		return
 	}
-	//TODO: Log Errors here
 	if val, ok := e.ControllerValues["content"]; ok {
 		w.SetTemplate(e.Template)
 		w.SetDynamicId(e.DynamicId)
@@ -207,8 +201,7 @@ func ContentValues(w *wrapper.Wrapper) {
 		return
 	}
 	w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
-	m := services.Message{Text: "There was a problem loading some content on your page.", Severity: "Error"}
-	m.Add(w)
+	services.AddMessage("There was a problem loading some content on your page.", "Error", w)
 	w.Serve()
 	return
 }
@@ -218,8 +211,12 @@ func WrapperValues(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	e := NewElement()
 	err := e.GetValidElement(u[2], u[1], w.SiteConfig.DbSession)
-	fmt.Println(err)
-	//TODO: Log Errors here
+	if err != nil {
+		w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
+		services.AddMessage("There was a problem loading some content on your page.", "Error", w)
+		w.Serve()
+		return
+	}
 	w.SetTemplate(e.Template)
 	w.SetDynamicId(e.DynamicId)
 	var v []map[string]string
@@ -229,13 +226,15 @@ func WrapperValues(w *wrapper.Wrapper) {
 		eid := el.Interface().(string)
 		ev := make(map[string]string)
 		e := NewElement()
-		//TODO handle error here
 		err = e.GetById(eid, w.SiteConfig.DbSession)
-		fmt.Println(err)
-		ev["mongolartemplate"] = e.Template
-		ev["mongolartype"] = e.Controller
-		ev["mongolarid"] = eid
-		v = append(v, ev)
+		if err != nil {
+			w.SiteConfig.Logger.Error("Content not found " + eid + " by " + w.Request.Host)
+		} else {
+			ev["mongolartemplate"] = e.Template
+			ev["mongolartype"] = e.Controller
+			ev["mongolarid"] = eid
+			v = append(v, ev)
+		}
 	}
 	w.SetContent(v)
 	w.Serve()
@@ -246,14 +245,21 @@ func SlugValues(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	es := NewElement()
 	err := es.GetValidElement(u[2], u[1], w.SiteConfig.DbSession)
-
-	fmt.Println(err)
-	//TODO: Log Errors here
+	if err != nil {
+		w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
+		services.AddMessage("There was a problem loading some content on your page.", "Error", w)
+		w.Serve()
+		return
+	}
 	i := es.ControllerValues[w.Request.Header.Get("QueryParameter")]
 	e := NewElement()
 	err = e.GetById(i.(string), w.SiteConfig.DbSession)
-	fmt.Println(err)
-	//TODO: Log Errors here
+	if err != nil {
+		w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
+		services.AddMessage("There was a problem loading some content on your page.", "Error", w)
+		w.Serve()
+		return
+	}
 	w.SetTemplate(e.Template)
 	w.SetDynamicId(e.DynamicId)
 	w.SetContent(e.ControllerValues)
