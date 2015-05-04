@@ -6,7 +6,7 @@
 package controller
 
 import (
-	"github.com/davecgh/go-spew/spew"
+	//	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/services"
 	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
@@ -114,7 +114,6 @@ func PathValues(w *wrapper.Wrapper) {
 	qp, err := p.pathMatch(u, c)
 	if err != nil {
 		if err.Error() == "not found" {
-			spew.Dump(u)
 			if "/"+w.SiteConfig.FourOFour != u {
 				services.Redirect("/"+w.SiteConfig.FourOFour, w)
 				w.Serve()
