@@ -1,6 +1,7 @@
 package form
 
 import (
+	"github.com/mongolar/mongolar/session"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -15,60 +16,60 @@ type Form struct {
 // Constructor for form
 func NewForm() *Form {
 	fd := make(map[string]string)
-	fi := make([]Field, 1)
+	fi := make([]*Field, 1)
 	f := Form{
 		Fields:   fi,
 		FormData: fd,
 		FormId:   bson.NewObjectId().String(),
 	}
-	return f
+	return &f
 }
 
 // Add a text field to form
 func (f *Form) AddText(k string, t string) *Field {
 	to := map[string]interface{}{"type": t}
-	fi := Field{
+	fi := &Field{
 		Type:            "text",
 		Key:             k,
 		TemplateOptions: to,
 	}
-	f.Fields = merge(f.Fields, fi)
+	f.Fields = append(f.Fields, fi)
 	return fi
 }
 
 // Add a text are to form
 func (f *Form) AddTextArea(k string) *Field {
 	to := make(map[string]interface{})
-	fi := Field{
+	fi := &Field{
 		Type:            "textarea",
 		Key:             k,
 		TemplateOptions: to,
 	}
-	f.Fields = merge(f.Fields, fi)
+	f.Fields = append(f.Fields, fi)
 	return fi
 }
 
 // Add a checkbox to form
 func (f *Form) AddCheckBox(k string) *Field {
 	to := make(map[string]interface{})
-	fi := Field{
+	fi := &Field{
 		Type:            "checkbox",
 		Key:             k,
 		TemplateOptions: to,
 	}
-	f.Fields = merge(f.Fields, fi)
+	f.Fields = append(f.Fields, fi)
 	return fi
 }
 
 // Add a radio button to form
 func (f *Form) AddRadio(k string, o []map[string]string) *Field {
 	to := map[string]interface{}{"options": o}
-	fi := Field{
+	fi := &Field{
 		Type:            "radio",
 		Key:             k,
 		TemplateOptions: to,
 	}
-	f.Fields = merge(f.Fields, fi)
+	f.Fields = append(f.Fields, fi)
 	return fi
 }
 
@@ -88,7 +89,7 @@ func (f *Form) Register(s session.Session, ds *mgo.Session) error {
 
 // Structure for form registration
 type FormRegister struct {
-	FormFields Form          `bson: "fields"`
+	FormFields []*Field      `bson: "fields"`
 	FormId     bson.ObjectId `bson: "_id"`
 	SessionId  string        `bson: "session_id"`
 }
@@ -104,13 +105,13 @@ func GetRegisteredForm(i string, s *mgo.Session) (*FormRegister, error) {
 }
 
 // Retrieve valid form based on id and session id
-func GetValidRegForm(i string, se session.Session, s *mgo.Session) (*FormRegister, error) {
+func GetValidRegForm(i string, ses *session.Session, s *mgo.Session) (*FormRegister, error) {
 	fr := new(FormRegister)
 	se := s.Copy()
 	defer se.Close()
 	c := se.DB("").C("form_register")
-	b := bson.M{"session_id": se, "_id": bson.ObjectIdHex(i)}
-	err = c.Find(b).One(fr)
+	b := bson.M{"session_id": ses, "_id": bson.ObjectIdHex(i)}
+	err := c.Find(b).One(fr)
 	return fr, err
 }
 
@@ -122,29 +123,29 @@ type Field struct {
 }
 
 // Add label to field
-func (f *Field) AddLabel(l string) {
+func (f *Field) AddLabel(l string) *Field {
 	f.TemplateOptions["label"] = l
 	return f
 }
 
 // Add
-func (f *Field) AddPlaceHolder(p string) {
+func (f *Field) AddPlaceHolder(p string) *Field {
 	f.TemplateOptions["placeholder"] = p
 	return f
 }
 
-func (f *Field) AddRowsCols(r int, c int) {
+func (f *Field) AddRowsCols(r int, c int) *Field {
 	f.TemplateOptions["rows"] = r
 	f.TemplateOptions["cols"] = c
 	return f
 }
 
-func (f *Field) Required() {
+func (f *Field) Required() *Field {
 	f.TemplateOptions["required"] = true
 	return f
 }
 
-func (f *Field) Hidden() {
+func (f *Field) Hidden() *Field {
 	f.TemplateOptions["hidden"] = true
 	return f
 }

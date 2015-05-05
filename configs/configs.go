@@ -1,9 +1,9 @@
 package configs
 
 import (
+	"fmt"
 	"github.com/Sirupsen/logrus"
 	//"github.com/davecgh/go-spew/spew"
-	"fmt"
 	"github.com/mongolar/mongolar/logger"
 	"github.com/spf13/viper"
 	"gopkg.in/mgo.v2"
@@ -77,7 +77,7 @@ func (s *Server) getServerConfig() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	err := viper.Marshal(s)
+	err = viper.Marshal(s)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -116,11 +116,11 @@ func (s *SiteConfig) getSiteConfig(file string) {
 	v := viper.New()
 	v.SetConfigName(file)
 	v.AddConfigPath(SITES_DIRECTORY)
-	err := viper.ReadInConfig()
+	err := v.ReadInConfig()
 	if err != nil {
 		log.Fatal(err)
 	}
-	err := viper.Marshal(s)
+	err = v.Marshal(s)
 	if err != nil {
 		log.Fatal(err)
 	}

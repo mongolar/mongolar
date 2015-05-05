@@ -66,12 +66,12 @@ func (e *Element) GetValidElement(i string, c string, s *mgo.Session) error {
 
 //The designated structure for all elements
 type Path struct {
-	MongoId  bson.ObjectId `bson:"_id,omitempty"`
-	Path     string        `bson:"path"`
-	Wildcard bool          `bson:"wildcard"`
-	Elements []string      `bson:"elements"`
-	Template string        `bson:"template"`
-	Status   string        `bson:"status"`
+	MongoId  bson.ObjectId `bson:"_id,omitempty" json:"id"`
+	Path     string        `bson:"path" json:"path"`
+	Wildcard bool          `bson:"wildcard" json:"wildcard"`
+	Elements []string      `bson:"elements" json:"elements"`
+	Template string        `bson:"template" json:"template"`
+	Status   string        `bson:"status" json:"status"`
 }
 
 // Constructor for elements
@@ -133,7 +133,7 @@ func PathValues(w *wrapper.Wrapper) {
 		e := NewElement()
 		err = e.GetById(eid, w.SiteConfig.DbSession)
 		if err != nil {
-			w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
+			w.SiteConfig.Logger.Error("Content not found " + eid + " by " + w.Request.Host)
 		}
 		ev["mongolartemplate"] = e.Template
 		ev["mongolartype"] = e.Controller
