@@ -27,11 +27,12 @@ func NewMap() ControllerMap {
 
 //The designated structure for all elements
 type Element struct {
-	MongoId          bson.ObjectId          `bson:"_id,omitempty"`
-	ControllerValues map[string]interface{} `bson:"controller_values,omitempty"`
-	Controller       string                 `bson:"controller"`
-	Template         string                 `bson:"template"`
-	DynamicId        string                 `bson:"dynamic_id,omitempty"`
+	MongoId          bson.ObjectId          `bson:"_id,omitempty" json:"id"`
+	ControllerValues map[string]interface{} `bson:"controller_values,omitempty" json:"controller_values"`
+	Controller       string                 `bson:"controller" json:"controller"`
+	Template         string                 `bson:"template" json:"template"`
+	DynamicId        string                 `bson:"dynamic_id,omitempty" json:"dynamic_id"`
+	Title            string                 `bson:"title"`
 }
 
 // Constructor for elements
@@ -72,6 +73,7 @@ type Path struct {
 	Elements []string      `bson:"elements" json:"elements"`
 	Template string        `bson:"template" json:"template"`
 	Status   string        `bson:"status" json:"status"`
+	Title    string        `bson:"title"`
 }
 
 // Constructor for elements
@@ -85,7 +87,7 @@ func NewPath() Path {
 func (p *Path) GetById(i string, s *mgo.Session) error {
 	se := s.Copy()
 	defer se.Close()
-	c := se.DB("").C("elements")
+	c := se.DB("").C("paths")
 	err := c.FindId(bson.ObjectIdHex(i)).One(&p)
 	return err
 }

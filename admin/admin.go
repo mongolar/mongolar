@@ -1,7 +1,7 @@
 package admin
 
 import (
-	//"github.com/davecgh/go-spew/spew"
+	//	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/controller"
 	"github.com/mongolar/mongolar/form"
 	"github.com/mongolar/mongolar/services"
@@ -14,12 +14,22 @@ import (
 
 type AdminMap controller.ControllerMap
 
-func NewAdmin() *AdminMap {
-	am := &AdminMap{
-		"menu":  AdminMenu,
-		"paths": AdminPaths,
+type AdminMenu struct {
+	MenuItems map[string]map[string]string `json:"menu_items"`
+}
+
+func NewAdmin() (*AdminMap, *AdminMenu) {
+	mi := make(map[string]map[string]string)
+	amenu := AdminMenu{MenuItems: mi}
+	amenu.MenuItems["0"] = map[string]string{"title": "Home", "template": "admin/main_content_default.html"}
+	amenu.MenuItems["1"] = map[string]string{"title": "Content", "template": "admin/content_editor.html"}
+	amap := &AdminMap{
+		"menu":          amenu.AdminMenu,
+		"paths":         AdminPaths,
+		"path_elements": PathElements,
+		"element":       Element,
 	}
-	return am
+	return amap, &amenu
 }
 
 func (a AdminMap) Admin(w *wrapper.Wrapper) {
@@ -40,8 +50,8 @@ func validateAdmin(s *session.Session) bool {
 	return true
 }
 
-func AdminMenu(w *wrapper.Wrapper) {
-	w.SetContent(w.SiteConfig.Misc["AdminMenu"])
+func (a *AdminMenu) AdminMenu(w *wrapper.Wrapper) {
+	w.SetContent(a)
 	w.Serve()
 	return
 }
@@ -101,6 +111,41 @@ func EditPath(w *wrapper.Wrapper) {
 			//update/save path here
 		}
 
+	}
+}
+
+func PathElements(w *wrapper.Wrapper) {
+	u := url.UrlToMap(w.Request.URL.Path)
+	p := controller.NewPath()
+	err := p.GetById(u[3], w.SiteConfig.DbSession)
+	if err != nil {
+		w.SiteConfig.Logger.Error("Path not found to edit for " + u[3] + " by " + w.Request.Host)
+		services.AddMessage("This path was not found", "Error", w)
+		w.Serve()
+	} else {
+		w.SetPayload("path", p.Path)
+		w.SetPayload("title", p.Title)
+		w.SetPayload("elements", p.Elements)
+		w.Serve()
+	}
+
+}
+
+func Element(w *wrapper.Wrapper) {
+	u := url.UrlToMap(w.Request.URL.Path)
+	e := controller.NewElement()
+	err := e.GetById(u[3], w.SiteConfig.DbSession)
+	if err != nil {
+		w.SiteConfig.Logger.Error("Element not found to edit for " + u[3] + " by " + w.Request.Host)
+		services.AddMessage("This element was not found", "Error", w)
+		w.Serve()
+	} else {
+		w.SetPayload("id", e.MongoId)
+		w.SetPayload("title", e.Title)
+		if c, ok := e.ControllerValues["elements"]; ok {
+			w.SetPayload("elements", c)
+		}
+		w.Serve()
 	}
 }
 

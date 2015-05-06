@@ -9,14 +9,14 @@ import (
 )
 
 func main() {
-	am := admin.NewAdmin()
+	amap, _ := admin.NewAdmin()
 	cm := controller.NewMap()
 	cm["domian_public_value"] = controller.DomainPublicValue
 	cm["path"] = controller.PathValues
 	cm["content"] = controller.ContentValues
 	cm["wrapper"] = controller.WrapperValues
 	cm["slug"] = controller.SlugValues
-	cm["admin"] = am.Admin
+	cm["admin"] = amap.Admin
 	Serve(cm)
 }
 

@@ -5,9 +5,10 @@ import (
 )
 
 // Add a message to be served
+// TODO: This needs to be fixed.
 func AddMessage(t string, s string, w *wrapper.Wrapper) {
 	m := map[string]string{"text": t, "severity": s}
-	w.SetPayload("mongolar_messages", m)
+	w.SetPayload("mongolar_messages", []map[string]string{m})
 }
 
 func ClearMessage(w *wrapper.Wrapper) {
