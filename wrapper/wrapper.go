@@ -14,7 +14,7 @@ import (
 type Wrapper struct {
 	Writer     http.ResponseWriter    // The response writer
 	Request    *http.Request          // The request
-	Post       map[string]string      // Post data from AngularJS
+	Post       map[string]interface{} // Post data from AngularJS
 	SiteConfig *configs.SiteConfig    // The configuration for the site being accessed
 	Session    *session.Session       // Session for user
 	Payload    map[string]interface{} // This is the sum of the payload that will be returned to the user
@@ -38,10 +38,10 @@ func New(w http.ResponseWriter, r *http.Request, s *configs.SiteConfig) *Wrapper
 }
 
 // Load post data from AngulaJS
-func formPostData(r *http.Request) (map[string]string, error) {
+func formPostData(r *http.Request) (map[string]interface{}, error) {
 	b := make([]byte, r.ContentLength)
 	_, err := r.Body.Read(b)
-	p := make(map[string]string)
+	p := make(map[string]interface{})
 	if err == nil {
 		errj := json.Unmarshal(b, &p)
 		return p, errj

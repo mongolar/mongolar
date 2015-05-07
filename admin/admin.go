@@ -8,8 +8,8 @@ import (
 	"github.com/mongolar/mongolar/session"
 	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
+	"gopkg.in/mgo.v2/bson"
 	"net/http"
-	"strconv"
 )
 
 type AdminMap controller.ControllerMap
@@ -27,6 +27,7 @@ func NewAdmin() (*AdminMap, *AdminMenu) {
 		"menu":          amenu.AdminMenu,
 		"paths":         AdminPaths,
 		"path_elements": PathElements,
+		"path_editor":   PathEditor,
 		"element":       Element,
 	}
 	return amap, &amenu
@@ -67,14 +68,15 @@ func AdminPaths(w *wrapper.Wrapper) {
 	w.Serve()
 }
 
-func EditPath(w *wrapper.Wrapper) {
+func PathEditor(w *wrapper.Wrapper) {
 	if w.Post == nil {
 		ops := []string{"published", "unpublished"}
 		f := form.NewForm()
+		f.AddText("title", "text").AddLabel("Title")
 		f.AddText("path", "text").AddLabel("Path")
 		f.AddText("template", "text").AddLabel("Template")
 		f.AddCheckBox("wildcard").AddLabel("Wildcard")
-		o := make([]map[string]string, 1)
+		o := make([]map[string]string, 0)
 		for _, op := range ops {
 			r := map[string]string{
 				"name":  op,
@@ -85,30 +87,47 @@ func EditPath(w *wrapper.Wrapper) {
 		f.AddRadio("status", o).AddLabel("Status")
 		f.AddText("path_id", "text").Hidden()
 		u := url.UrlToMap(w.Request.URL.Path)
-		if u[2] != "new" {
+		if u[3] != "new" {
 			p := controller.NewPath()
-			err := p.GetById(u[2], w.SiteConfig.DbSession)
+			err := p.GetById(u[3], w)
 			if err != nil {
-				w.SiteConfig.Logger.Error("Path not found to edit for " + u[2] + " by " + w.Request.Host)
+				w.SiteConfig.Logger.Error("Path not found to edit for " + u[3] + " by " + w.Request.Host)
 				services.AddMessage("This path was not found", "Error", w)
 				w.Serve()
 			} else {
-				f.FormData["wildcard"] = strconv.FormatBool(p.Wildcard)
+				f.FormData["wildcard"] = p.Wildcard
 				f.FormData["template"] = p.Template
 				f.FormData["path"] = p.Path
 				f.FormData["status"] = p.Status
+				f.FormData["title"] = p.Title
 			}
 		}
-		w.SetContent(f)
+		f.Register(w)
+		w.SetTemplate("admin/form.html")
+		w.SetPayload("form", f)
 		w.Serve()
 	} else {
-		_, err := form.GetValidRegForm(w.Post["FormId"], w.Session, w.SiteConfig.DbSession)
+		_, err := form.GetValidRegForm(w.Post["form_id"].(string), w)
 		if err != nil {
-			w.SiteConfig.Logger.Error("Attempt to access invalid form" + w.Post["FormId"] + " by " + w.Request.Host)
+			w.SiteConfig.Logger.Error("Attempt to access invalid form" + w.Post["FormId"].(string) + " by " + w.Request.Host)
 			services.AddMessage("Invalid Form", "Error", w)
 			w.Serve()
 		} else {
-			//update/save path here
+			wc, _ := w.Post["wildcard"].(bool)
+			p := bson.M{
+				"$set": bson.M{
+					"wildcard": wc,
+					"path":     w.Post["path"].(string),
+					"template": w.Post["template"].(string),
+					"title":    w.Post["title"].(string),
+					"status":   w.Post["status"].(string),
+				},
+			}
+			se := w.SiteConfig.DbSession.Copy()
+			defer se.Close()
+			c := se.DB("").C("paths")
+			s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
+			c.Update(s, p)
 		}
 
 	}
@@ -117,7 +136,7 @@ func EditPath(w *wrapper.Wrapper) {
 func PathElements(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	p := controller.NewPath()
-	err := p.GetById(u[3], w.SiteConfig.DbSession)
+	err := p.GetById(u[3], w)
 	if err != nil {
 		w.SiteConfig.Logger.Error("Path not found to edit for " + u[3] + " by " + w.Request.Host)
 		services.AddMessage("This path was not found", "Error", w)
@@ -174,9 +193,9 @@ func ElementEditor(w *wrapper.Wrapper) {
 		w.SetContent(f)
 		w.Serve()
 	} else {
-		_, err := form.GetValidRegForm(w.Post["FormId"], w.Session, w.SiteConfig.DbSession)
+		_, err := form.GetValidRegForm(w.Post["FormId"].(string), w)
 		if err != nil {
-			w.SiteConfig.Logger.Error("Attempt to access invalid form" + w.Post["FormId"] + " by " + w.Request.Host)
+			w.SiteConfig.Logger.Error("Attempt to access invalid form" + w.Post["FormId"].(string) + " by " + w.Request.Host)
 			services.AddMessage("Invalid Form", "Error", w)
 			w.Serve()
 		} else {

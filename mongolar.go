@@ -23,7 +23,6 @@ func main() {
 func Serve(cm controller.ControllerMap) {
 
 	c := configs.New()
-	//	spew.Dump(c)
 	HostSwitch := router.New(c.Aliases, c.SitesMap, cm)
 	http.ListenAndServe(":"+c.Server.Port, HostSwitch)
 }

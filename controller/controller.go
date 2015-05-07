@@ -70,10 +70,10 @@ type Path struct {
 	MongoId  bson.ObjectId `bson:"_id,omitempty" json:"id"`
 	Path     string        `bson:"path" json:"path"`
 	Wildcard bool          `bson:"wildcard" json:"wildcard"`
-	Elements []string      `bson:"elements" json:"elements"`
+	Elements []string      `bson:"elements,omitempty" json:"elements"`
 	Template string        `bson:"template" json:"template"`
 	Status   string        `bson:"status" json:"status"`
-	Title    string        `bson:"title"`
+	Title    string        `bson:"title" json:"title"`
 }
 
 // Constructor for elements
@@ -84,8 +84,8 @@ func NewPath() Path {
 }
 
 // Get Path by Id
-func (p *Path) GetById(i string, s *mgo.Session) error {
-	se := s.Copy()
+func (p *Path) GetById(i string, w *wrapper.Wrapper) error {
+	se := w.SiteConfig.DbSession.Copy()
 	defer se.Close()
 	c := se.DB("").C("paths")
 	err := c.FindId(bson.ObjectIdHex(i)).One(&p)
