@@ -43,8 +43,8 @@ func NewElement() Element {
 }
 
 // Query one element
-func (e *Element) GetElement(b bson.M, s *mgo.Session) error {
-	se := s.Copy()
+func (e *Element) GetElement(b bson.M, w *wrapper.Wrapper) error {
+	se := w.SiteConfig.DbSession.Copy()
 	defer se.Close()
 	c := se.DB("").C("elements")
 	err := c.Find(b).One(&e)
@@ -52,16 +52,16 @@ func (e *Element) GetElement(b bson.M, s *mgo.Session) error {
 }
 
 // Get one element given an id
-func (e *Element) GetById(i string, s *mgo.Session) error {
+func (e *Element) GetById(i string, w *wrapper.Wrapper) error {
 	b := bson.M{"_id": bson.ObjectIdHex(i)}
-	err := e.GetElement(b, s)
+	err := e.GetElement(b, w)
 	return err
 }
 
 // Get one element by id and controller path, most common query because you should validate your controller against the id
-func (e *Element) GetValidElement(i string, c string, s *mgo.Session) error {
+func (e *Element) GetValidElement(i string, w *wrapper.Wrapper) error {
 	b := bson.M{"_id": bson.ObjectIdHex(i), "controller": c}
-	err := e.GetElement(b, s)
+	err := e.GetElement(b, w)
 	return err
 }
 
@@ -133,7 +133,7 @@ func PathValues(w *wrapper.Wrapper) {
 	for _, eid := range p.Elements {
 		ev := make(map[string]string)
 		e := NewElement()
-		err = e.GetById(eid, w.SiteConfig.DbSession)
+		err = e.GetById(eid, w)
 		if err != nil {
 			w.SiteConfig.Logger.Error("Content not found " + eid + " by " + w.Request.Host)
 		}
@@ -187,7 +187,7 @@ func DomainPublicValue(w *wrapper.Wrapper) {
 func ContentValues(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	e := NewElement()
-	err := e.GetValidElement(u[2], u[1], w.SiteConfig.DbSession)
+	err := e.GetValidElement(u[2], u[1], w)
 	if err != nil {
 		w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
 		services.AddMessage("There was a problem loading some content on your page.", "Error", w)
@@ -211,7 +211,7 @@ func ContentValues(w *wrapper.Wrapper) {
 func WrapperValues(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	e := NewElement()
-	err := e.GetValidElement(u[2], u[1], w.SiteConfig.DbSession)
+	err := e.GetValidElement(u[2], u[1], w)
 	if err != nil {
 		w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
 		services.AddMessage("There was a problem loading some content on your page.", "Error", w)
@@ -227,7 +227,7 @@ func WrapperValues(w *wrapper.Wrapper) {
 		eid := el.Interface().(string)
 		ev := make(map[string]string)
 		e := NewElement()
-		err = e.GetById(eid, w.SiteConfig.DbSession)
+		err = e.GetById(eid, w)
 		if err != nil {
 			w.SiteConfig.Logger.Error("Content not found " + eid + " by " + w.Request.Host)
 		} else {
@@ -245,7 +245,7 @@ func WrapperValues(w *wrapper.Wrapper) {
 func SlugValues(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	es := NewElement()
-	err := es.GetValidElement(u[2], u[1], w.SiteConfig.DbSession)
+	err := es.GetValidElement(u[2], u[1], w)
 	if err != nil {
 		w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
 		services.AddMessage("There was a problem loading some content on your page.", "Error", w)
@@ -254,7 +254,7 @@ func SlugValues(w *wrapper.Wrapper) {
 	}
 	i := es.ControllerValues[w.Request.Header.Get("QueryParameter")]
 	e := NewElement()
-	err = e.GetById(i.(string), w.SiteConfig.DbSession)
+	err = e.GetById(i.(string), w)
 	if err != nil {
 		w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
 		services.AddMessage("There was a problem loading some content on your page.", "Error", w)

@@ -113,21 +113,31 @@ func PathEditor(w *wrapper.Wrapper) {
 			services.AddMessage("Invalid Form", "Error", w)
 			w.Serve()
 		} else {
-			wc, _ := w.Post["wildcard"].(bool)
-			p := bson.M{
-				"$set": bson.M{
-					"wildcard": wc,
-					"path":     w.Post["path"].(string),
-					"template": w.Post["template"].(string),
-					"title":    w.Post["title"].(string),
-					"status":   w.Post["status"].(string),
-				},
-			}
 			se := w.SiteConfig.DbSession.Copy()
 			defer se.Close()
 			c := se.DB("").C("paths")
-			s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
-			c.Update(s, p)
+			if w.Post["mongolarid"].(string) == "new" {
+				p := Path{
+					Wildcard: w.Post["wildcard"].(bool),
+					Path:     w.Post["path"].(string),
+					Template: w.Post["template"].(string),
+					Title:    w.Post["title"].(string),
+					Status:   w.Post["status"].(string),
+				}
+				c.Insert(p)
+			} else {
+				p := bson.M{
+					"$set": bson.M{
+						"wildcard": w.Post["wildcard"].(bool),
+						"path":     w.Post["path"].(string),
+						"template": w.Post["template"].(string),
+						"title":    w.Post["title"].(string),
+						"status":   w.Post["status"].(string),
+					},
+				}
+				s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
+				c.Update(s, p)
+			}
 		}
 
 	}
@@ -153,7 +163,7 @@ func PathElements(w *wrapper.Wrapper) {
 func Element(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	e := controller.NewElement()
-	err := e.GetById(u[3], w.SiteConfig.DbSession)
+	err := e.GetById(u[3], w)
 	if err != nil {
 		w.SiteConfig.Logger.Error("Element not found to edit for " + u[3] + " by " + w.Request.Host)
 		services.AddMessage("This element was not found", "Error", w)
@@ -172,6 +182,7 @@ func ElementEditor(w *wrapper.Wrapper) {
 	if w.Post == nil {
 
 		f := form.NewForm()
+		f.AddCheckBox("title").AddLabel("Title")
 		f.AddText("controller", "text").AddLabel("Controller")
 		f.AddText("template", "text").AddLabel("Template")
 		f.AddCheckBox("dynamic_id").AddLabel("Dynamic Id")
@@ -179,13 +190,14 @@ func ElementEditor(w *wrapper.Wrapper) {
 		u := url.UrlToMap(w.Request.URL.Path)
 		if u[2] != "new" {
 			e := controller.NewElement()
-			err := e.GetById(u[2], w.SiteConfig.DbSession)
+			err := e.GetById(u[2], w)
 			if err != nil {
 				w.SiteConfig.Logger.Error("Element not found to edit for " + u[2] + " by " + w.Request.Host)
 				services.AddMessage("This element was not found", "Error", w)
 				w.Serve()
 			} else {
 				f.FormData["controller"] = e.Controller
+				f.FormData["title"] = e.Title
 				f.FormData["template"] = e.Template
 				f.FormData["dynamic_id"] = e.DynamicId
 			}
@@ -193,13 +205,38 @@ func ElementEditor(w *wrapper.Wrapper) {
 		w.SetContent(f)
 		w.Serve()
 	} else {
+
 		_, err := form.GetValidRegForm(w.Post["FormId"].(string), w)
 		if err != nil {
 			w.SiteConfig.Logger.Error("Attempt to access invalid form" + w.Post["FormId"].(string) + " by " + w.Request.Host)
 			services.AddMessage("Invalid Form", "Error", w)
 			w.Serve()
 		} else {
-			//update save element here
+			se := w.SiteConfig.DbSession.Copy()
+			defer se.Close()
+			c := se.DB("").C("elements")
+			if w.Post["mongolarid"].(string) == "new" {
+				p := Path{
+					Wildcard: w.Post["controller"].(bool),
+					Path:     w.Post["path"].(string),
+					Template: w.Post["template"].(string),
+					Title:    w.Post["title"].(string),
+					Status:   w.Post["status"].(string),
+				}
+				c.Insert(p)
+			} else {
+				p := bson.M{
+					"$set": bson.M{
+						"wildcard": w.Post["wildcard"].(bool),
+						"path":     w.Post["path"].(string),
+						"template": w.Post["template"].(string),
+						"title":    w.Post["title"].(string),
+						"status":   w.Post["status"].(string),
+					},
+				}
+				s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
+				c.Update(s, p)
+			}
 		}
 	}
 

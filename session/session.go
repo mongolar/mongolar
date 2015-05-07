@@ -105,8 +105,10 @@ func (s Session) Get(n string) (v interface{}, err error) {
 
 // Get a session value by key.
 func (s Session) Set(n string, v interface{}) {
-	d := map[string]map[string]interface{}{
-		"data:": {n: v},
+	d := bson.M{
+                "$set": bson.M{
+                        "data." + n: v,
+			}
 	}
 	s.collection.Update(bson.M{"session_id": s.Id}, d)
 }
