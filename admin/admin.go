@@ -25,11 +25,12 @@ func NewAdmin() (*AdminMap, *AdminMenu) {
 	amenu.MenuItems["1"] = map[string]string{"title": "Content", "template": "admin/content_editor.html"}
 	amenu.MenuItems["2"] = map[string]string{"title": "Content Types", "template": "admin/content_types_editor.html"}
 	amap := &AdminMap{
-		"menu":          amenu.AdminMenu,
-		"paths":         AdminPaths,
-		"path_elements": PathElements,
-		"path_editor":   PathEditor,
-		"element":       Element,
+		"menu":           amenu.AdminMenu,
+		"paths":          AdminPaths,
+		"path_elements":  PathElements,
+		"path_editor":    PathEditor,
+		"element":        Element,
+		"element_editor": ElementEditor,
 	}
 	return amap, &amenu
 }
@@ -118,8 +119,14 @@ func PathEditor(w *wrapper.Wrapper) {
 			defer se.Close()
 			c := se.DB("").C("paths")
 			if w.Post["mongolarid"].(string) == "new" {
-				p := Path{
-					Wildcard: w.Post["wildcard"].(bool),
+				var wc bool
+				if c, ok := w.Post["wildcard"]; ok {
+					wc = c.(bool)
+				} else {
+					wc = false
+				}
+				p := controller.Path{
+					Wildcard: wc,
 					Path:     w.Post["path"].(string),
 					Template: w.Post["template"].(string),
 					Title:    w.Post["title"].(string),
@@ -183,17 +190,17 @@ func ElementEditor(w *wrapper.Wrapper) {
 	if w.Post == nil {
 
 		f := form.NewForm()
-		f.AddCheckBox("title").AddLabel("Title")
+		f.AddText("title", "text").AddLabel("Title")
 		f.AddText("controller", "text").AddLabel("Controller")
 		f.AddText("template", "text").AddLabel("Template")
-		f.AddCheckBox("dynamic_id").AddLabel("Dynamic Id")
+		f.AddText("dynamic_id", "text").AddLabel("Dynamic Id")
 		f.AddText("element_id", "text").Hidden()
 		u := url.UrlToMap(w.Request.URL.Path)
-		if u[2] != "new" {
+		if u[3] != "new" {
 			e := controller.NewElement()
-			err := e.GetById(u[2], w)
+			err := e.GetById(u[3], w)
 			if err != nil {
-				w.SiteConfig.Logger.Error("Element not found to edit for " + u[2] + " by " + w.Request.Host)
+				w.SiteConfig.Logger.Error("Element not found to edit for " + u[3] + " by " + w.Request.Host)
 				services.AddMessage("This element was not found", "Error", w)
 				w.Serve()
 			} else {
@@ -203,11 +210,12 @@ func ElementEditor(w *wrapper.Wrapper) {
 				f.FormData["dynamic_id"] = e.DynamicId
 			}
 		}
-		w.SetContent(f)
+		f.Register(w)
+		w.SetTemplate("admin/form.html")
+		w.SetPayload("form", f)
 		w.Serve()
 	} else {
-
-		_, err := form.GetValidRegForm(w.Post["FormId"].(string), w)
+		_, err := form.GetValidRegForm(w.Post["form_id"].(string), w)
 		if err != nil {
 			w.SiteConfig.Logger.Error("Attempt to access invalid form" + w.Post["FormId"].(string) + " by " + w.Request.Host)
 			services.AddMessage("Invalid Form", "Error", w)
@@ -217,22 +225,20 @@ func ElementEditor(w *wrapper.Wrapper) {
 			defer se.Close()
 			c := se.DB("").C("elements")
 			if w.Post["mongolarid"].(string) == "new" {
-				p := Path{
-					Wildcard: w.Post["controller"].(bool),
-					Path:     w.Post["path"].(string),
-					Template: w.Post["template"].(string),
-					Title:    w.Post["title"].(string),
-					Status:   w.Post["status"].(string),
+				p := controller.Element{
+					Controller: w.Post["controller"].(string),
+					DynamicId:  w.Post["dynamic_id"].(string),
+					Template:   w.Post["template"].(string),
+					Title:      w.Post["title"].(string),
 				}
 				c.Insert(p)
 			} else {
 				p := bson.M{
 					"$set": bson.M{
-						"wildcard": w.Post["wildcard"].(bool),
-						"path":     w.Post["path"].(string),
-						"template": w.Post["template"].(string),
-						"title":    w.Post["title"].(string),
-						"status":   w.Post["status"].(string),
+						"template":   w.Post["template"].(string),
+						"title":      w.Post["title"].(string),
+						"dynamic_id": w.Post["dynamic_id"].(string),
+						"controller": w.Post["controller"].(string),
 					},
 				}
 				s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}

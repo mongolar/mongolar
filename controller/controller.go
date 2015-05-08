@@ -59,7 +59,7 @@ func (e *Element) GetById(i string, w *wrapper.Wrapper) error {
 }
 
 // Get one element by id and controller path, most common query because you should validate your controller against the id
-func (e *Element) GetValidElement(i string, w *wrapper.Wrapper) error {
+func (e *Element) GetValidElement(i string, c string, w *wrapper.Wrapper) error {
 	b := bson.M{"_id": bson.ObjectIdHex(i), "controller": c}
 	err := e.GetElement(b, w)
 	return err
