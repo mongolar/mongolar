@@ -23,6 +23,7 @@ func NewAdmin() (*AdminMap, *AdminMenu) {
 	amenu := AdminMenu{MenuItems: mi}
 	amenu.MenuItems["0"] = map[string]string{"title": "Home", "template": "admin/main_content_default.html"}
 	amenu.MenuItems["1"] = map[string]string{"title": "Content", "template": "admin/content_editor.html"}
+	amenu.MenuItems["2"] = map[string]string{"title": "Content Types", "template": "admin/content_types_editor.html"}
 	amap := &AdminMap{
 		"menu":          amenu.AdminMenu,
 		"paths":         AdminPaths,
