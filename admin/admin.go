@@ -30,6 +30,7 @@ func NewAdmin() (*AdminMap, *AdminMenu) {
 		"path_elements": PathElements,
 		"path_editor":   PathEditor,
 		"element":       Element,
+		"add_child":     AddChild,
 	}
 	return amap, &amenu
 }
@@ -110,7 +111,7 @@ func PathEditor(w *wrapper.Wrapper) {
 	} else {
 		_, err := form.GetValidRegForm(w.Post["form_id"].(string), w)
 		if err != nil {
-			w.SiteConfig.Logger.Error("Attempt to access invalid form" + w.Post["FormId"].(string) + " by " + w.Request.Host)
+			w.SiteConfig.Logger.Error("Attempt to access invalid form" + w.Post["form_id"].(string) + " by " + w.Request.Host)
 			services.AddMessage("Invalid Form", "Error", w)
 			w.Serve()
 		} else {
@@ -125,7 +126,13 @@ func PathEditor(w *wrapper.Wrapper) {
 					Title:    w.Post["title"].(string),
 					Status:   w.Post["status"].(string),
 				}
-				c.Insert(p)
+				err := c.Insert(p)
+				if err != nil {
+					w.SiteConfig.Logger.Error("Unable to save new path by " + w.Request.Host + " : " + err)
+					services.AddMessage("There was a problem saving your path.", "Error", w)
+				} else {
+					services.AddMessage("Your element was saved.", "Success", w)
+				}
 			} else {
 				p := bson.M{
 					"$set": bson.M{
@@ -137,7 +144,13 @@ func PathEditor(w *wrapper.Wrapper) {
 					},
 				}
 				s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
-				c.Update(s, p)
+				err := c.Update(s, p)
+				if err != nil {
+					w.SiteConfig.Logger.Error("Unable to asave path " + w.Post["mongolarid"].(string) + " by " + w.Request.Host + " : " + err)
+					services.AddMessage("There was a problem saving your path.", "Error", w)
+				} else {
+					services.AddMessage("Your path was saved.", "Success", w)
+				}
 			}
 		}
 
@@ -172,6 +185,7 @@ func Element(w *wrapper.Wrapper) {
 	} else {
 		w.SetPayload("id", e.MongoId)
 		w.SetPayload("title", e.Title)
+		w.SetPayload("controller", e.Controller)
 		if c, ok := e.ControllerValues["elements"]; ok {
 			w.SetPayload("elements", c)
 		}
@@ -224,7 +238,13 @@ func ElementEditor(w *wrapper.Wrapper) {
 					Title:    w.Post["title"].(string),
 					Status:   w.Post["status"].(string),
 				}
-				c.Insert(p)
+				err := c.Insert(p)
+				if err != nil {
+					w.SiteConfig.Logger.Error("Unable to save new element by " + w.Request.Host + " : " + err)
+					services.AddMessage("There was a problem saving your element.", "Error", w)
+				} else {
+					services.AddMessage("Your element was saved.", "Success", w)
+				}
 			} else {
 				p := bson.M{
 					"$set": bson.M{
@@ -236,13 +256,61 @@ func ElementEditor(w *wrapper.Wrapper) {
 					},
 				}
 				s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
-				c.Update(s, p)
+				err := c.Update(s, p)
+				if err != nil {
+					w.SiteConfig.Logger.Error("Unable to save element " + w.Post["mongolarid"].(string) + " by " + w.Request.Host + " : " + err)
+					services.AddMessage("There was a problem saving your element.", "Error", w)
+				} else {
+					services.AddMessage("Your element was saved.", "Success", w)
+				}
 			}
 		}
+	}
+	w.Serve()
+
+}
+
+func AddChild(w *wrapper.Wrapper) {
+	u := url.UrlToMap(w.Request.URL.Path)
+	e = controller.NewElement()
+	e.MongoId = bson.NewObjectId()
+	e.Title = "New Element"
+	se := w.SiteConfig.DbSession.Copy()
+	defer se.Close()
+	c := se.DB("").C("elements")
+	err := c.Insert(e)
+	if err != nil {
+		w.SiteConfig.Logger.Error("Unable to create new element  by " + w.Request.Host + " : " + err)
+		services.AddMessage("Could not create a new element.", "Error", w)
+		w.Server()
+		return
+	}
+	c = se.DB("").C(u[3])
+	f := ""
+	if u[3] == "elements" {
+		f = "controller_values.elements"
+	} else if u[3] == "paths" {
+		f = "elements"
+	} else {
+
+	}
+	i := bson.M{"_id", bson.ObjectIdHex(u[4])}
+	err := c.Update(i, bson.M{
+		"$set": bson.M{
+			f: bson.M{
+				"push": e.MongoId.String(),
+			},
+		},
+	})
+	if err != nil {
+		w.SiteConfig.Logger.Error("Unable to add child element " + e.MongoId + " to " + u[4] + " : " + err)
+		services.AddMessage("There was a problem, your elemeent was created but was not assigned to your "+u[3]+".", "Error", w)
+		w.Server()
+		return
 	}
 
 }
 
-func WrapperEditor(w *wrapper.Wrapper) {
+func WrapperEditor(w *wrapper.Wrapper) 
 
 }

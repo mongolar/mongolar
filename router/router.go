@@ -59,13 +59,18 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		// If path is ApiEndPoint this is an API request.
 		case s.APIEndPoint:
-			w.Header().Set("Content-Type", "application/json")
-			// Build a wrapper for the controller
-			wr := wrapper.New(w, r, s)
-			//If the controller exists call it
-			if c, ok := ro.Controllers[pathvalues[1]]; ok {
-				c(wr)
-				return
+			if c, ok := s.Controllers[pathvalues[1]]; ok {
+				w.Header().Set("Content-Type", "application/json")
+				// Build a wrapper for the controller
+				wr := wrapper.New(w, r, s)
+				//If the controller exists call it
+				if c, ok := ro.Controllers[pathvalues[1]]; ok {
+					c(wr)
+					return
+				} else {
+					http.Error(w, "Forbidden", 403)
+					return
+				}
 			} else {
 				http.Error(w, "Forbidden", 403)
 				return
