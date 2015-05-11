@@ -335,6 +335,27 @@ func Delete(w *wrapper.Wrapper) {
 		w.Serve()
 		return
 	}
+	if u[3] == "elements" {
+		s := bson.M{ "controller_values.elements" : u[4] }
+		d := bson.M{ "$pull": bson.M{ "controller_values.elements": u[4] }, }
+		_, err :=  c.UpdateAll(s, d)
+		if err != nil {
+			w.SiteConfig.Logger.Error("Unable to delete reference to " u[3] + " " u[4] + " : " + err.Error())
+			services.AddMessage("Unable to delete reference to " + u[3] , "Error", w)
+			w.Serve()
+			return
+		}
+		s = bson.M{ "elements" : u[4] }
+		d = bson.M{ "$pull": bson.M{ "elements": u[4] }, }
+		c = se.DB("").C("paths")
+		_, err =  c.UpdateAll(s, d)
+		if err != nil {
+			w.SiteConfig.Logger.Error("Unable to delete reference to " u[3] + " " u[4] + " : " + err.Error())
+			services.AddMessage("Unable to delete reference to " + u[3] , "Error", w)
+			w.Serve()
+			return
+		}
+	}
 	services.AddMessage("Successfully deleted " + u[3], "Success", w)
 	w.Serve()
 	return
