@@ -98,7 +98,7 @@ func (l *Login) Callback(w *wrapper.Wrapper) {
 	}
 	client := conf.Client(oauth2.NoContext, t)
 	//TODO find common oauth values
-	test, _ := client.Get("UsersService")
+	test, _ := client.Get("user")
 	spew.Dump(test)
 	http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginSuccess, 301)
 }

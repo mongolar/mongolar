@@ -159,6 +159,8 @@ func PathEditor(w *wrapper.Wrapper) {
 				} else {
 					services.AddMessage("Your path was saved.", "Success", w)
 				}
+				w.Serve()
+				return
 			}
 		}
 
@@ -300,7 +302,7 @@ func AddChild(w *wrapper.Wrapper) {
 	} else if u[3] == "paths" {
 		f = "elements"
 	} else {
-		w.SiteConfig.Logger.Error("Unable to add child element " + e.MongoId.String() + " to " + u[4] + " : " + err.Error())
+		w.SiteConfig.Logger.Error("Unable to add child element " + e.MongoId.Hex() + " to " + u[4] + " : " + err.Error())
 		services.AddMessage("There was a problem, your elemeent was created but was not assigned to your "+u[3]+".", "Error", w)
 		w.Serve()
 		return
@@ -309,7 +311,7 @@ func AddChild(w *wrapper.Wrapper) {
 	i := bson.M{"_id": bson.ObjectIdHex(u[4])}
 	err = c.Update(i, bson.M{"$push": bson.M{f: e.MongoId.Hex()}})
 	if err != nil {
-		w.SiteConfig.Logger.Error("Unable to add child element " + e.MongoId.String() + " to " + u[4] + " : " + err.Error())
+		w.SiteConfig.Logger.Error("Unable to add child element " + e.MongoId.Hex() + " to " + u[4] + " : " + err.Error())
 		services.AddMessage("There was a problem, your elemeent was created but was not assigned to your "+u[3]+".", "Error", w)
 		w.Serve()
 		return
@@ -318,6 +320,24 @@ func AddChild(w *wrapper.Wrapper) {
 	w.Serve()
 	return
 
+}
+
+func Delete(w *wrapper.Wrapper) {
+	se := w.SiteConfig.DbSession.Copy()
+	defer se.Close()
+	c := se.DB("").C(u[3])
+	u := url.UrlToMap(w.Request.URL.Path)
+	i := bson.M{"_id": bson.ObjectIdHex(u[4])}
+	err := c.Remove(i)
+	if err != nil {
+		w.SiteConfig.Logger.Error("Unable to delete " u[3] + " " u[4] + " : " + err.Error())
+		services.AddMessage("Unable to delete " + u[3] , "Error", w)
+		w.Serve()
+		return
+	}
+	services.AddMessage("Successfully deleted " + u[3], "Success", w)
+	w.Serve()
+	return
 }
 
 func WrapperEditor(w *wrapper.Wrapper) {
