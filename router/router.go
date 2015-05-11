@@ -7,6 +7,7 @@ import (
 	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
 	"net/http"
+	"sort"
 )
 
 // The Router should have everything needed to server multiple sites from one go instance
@@ -59,7 +60,8 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		// If path is ApiEndPoint this is an API request.
 		case s.APIEndPoint:
-			if c, ok := s.Controllers[pathvalues[1]]; ok {
+			i := sort.SearchStrings(s.Controllers, pathvalues[1])
+			if s.Controllers[i] == pathvalues[1] {
 				w.Header().Set("Content-Type", "application/json")
 				// Build a wrapper for the controller
 				wr := wrapper.New(w, r, s)

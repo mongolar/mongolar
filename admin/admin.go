@@ -25,13 +25,13 @@ func NewAdmin() (*AdminMap, *AdminMenu) {
 	amenu.MenuItems["1"] = map[string]string{"title": "Content", "template": "admin/content_editor.html"}
 	amenu.MenuItems["2"] = map[string]string{"title": "Content Types", "template": "admin/content_types_editor.html"}
 	amap := &AdminMap{
-		"menu":          amenu.AdminMenu,
-		"paths":         AdminPaths,
-		"path_elements": PathElements,
-		"path_editor":   PathEditor,
-		"element":       Element,
+		"menu":           amenu.AdminMenu,
+		"paths":          AdminPaths,
+		"path_elements":  PathElements,
+		"path_editor":    PathEditor,
+		"element":        Element,
 		"element_editor": ElementEditor,
-		"add_child":     AddChild,
+		"add_child":      AddChild,
 	}
 	return amap, &amenu
 }
@@ -135,7 +135,7 @@ func PathEditor(w *wrapper.Wrapper) {
 				}
 				err := c.Insert(p)
 				if err != nil {
-					w.SiteConfig.Logger.Error("Unable to save new path by " + w.Request.Host + " : " + err)
+					w.SiteConfig.Logger.Error("Unable to save new path by " + w.Request.Host + " : " + err.Error())
 					services.AddMessage("There was a problem saving your path.", "Error", w)
 				} else {
 					services.AddMessage("Your element was saved.", "Success", w)
@@ -153,7 +153,8 @@ func PathEditor(w *wrapper.Wrapper) {
 				s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
 				err := c.Update(s, p)
 				if err != nil {
-					w.SiteConfig.Logger.Error("Unable to asave path " + w.Post["mongolarid"].(string) + " by " + w.Request.Host + " : " + err)
+					w.SiteConfig.Logger.Error("Unable to asave path " + w.Post["mongolarid"].(string) +
+						" by " + w.Request.Host + " : " + err.Error())
 					services.AddMessage("There was a problem saving your path.", "Error", w)
 				} else {
 					services.AddMessage("Your path was saved.", "Success", w)
@@ -247,7 +248,7 @@ func ElementEditor(w *wrapper.Wrapper) {
 				}
 				err := c.Insert(p)
 				if err != nil {
-					w.SiteConfig.Logger.Error("Unable to save new element by " + w.Request.Host + " : " + err)
+					w.SiteConfig.Logger.Error("Unable to save new element by " + w.Request.Host + " : " + err.Error())
 					services.AddMessage("There was a problem saving your element.", "Error", w)
 				} else {
 					services.AddMessage("Your element was saved.", "Success", w)
@@ -264,7 +265,8 @@ func ElementEditor(w *wrapper.Wrapper) {
 				s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
 				err := c.Update(s, p)
 				if err != nil {
-					w.SiteConfig.Logger.Error("Unable to save element " + w.Post["mongolarid"].(string) + " by " + w.Request.Host + " : " + err)
+					w.SiteConfig.Logger.Error("Unable to save element " + w.Post["mongolarid"].(string) +
+						" by " + w.Request.Host + " : " + err.Error())
 					services.AddMessage("There was a problem saving your element.", "Error", w)
 				} else {
 					services.AddMessage("Your element was saved.", "Success", w)
@@ -278,7 +280,7 @@ func ElementEditor(w *wrapper.Wrapper) {
 
 func AddChild(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
-	e = controller.NewElement()
+	e := controller.NewElement()
 	e.MongoId = bson.NewObjectId()
 	e.Title = "New Element"
 	se := w.SiteConfig.DbSession.Copy()
@@ -286,9 +288,9 @@ func AddChild(w *wrapper.Wrapper) {
 	c := se.DB("").C("elements")
 	err := c.Insert(e)
 	if err != nil {
-		w.SiteConfig.Logger.Error("Unable to create new element  by " + w.Request.Host + " : " + err)
+		w.SiteConfig.Logger.Error("Unable to create new element  by " + w.Request.Host + " : " + err.Error())
 		services.AddMessage("Could not create a new element.", "Error", w)
-		w.Server()
+		w.Serve()
 		return
 	}
 	c = se.DB("").C(u[3])
@@ -298,25 +300,26 @@ func AddChild(w *wrapper.Wrapper) {
 	} else if u[3] == "paths" {
 		f = "elements"
 	} else {
+		w.SiteConfig.Logger.Error("Unable to add child element " + e.MongoId.String() + " to " + u[4] + " : " + err.Error())
+		services.AddMessage("There was a problem, your elemeent was created but was not assigned to your "+u[3]+".", "Error", w)
+		w.Serve()
+		return
 
 	}
-	i := bson.M{"_id", bson.ObjectIdHex(u[4])}
-	err := c.Update(i, bson.M{
-		"$set": bson.M{
-			f: bson.M{
-				"push": e.MongoId.String(),
-			},
-		},
-	})
+	i := bson.M{"_id": bson.ObjectIdHex(u[4])}
+	err = c.Update(i, bson.M{"$push": bson.M{f: e.MongoId.Hex()}})
 	if err != nil {
-		w.SiteConfig.Logger.Error("Unable to add child element " + e.MongoId + " to " + u[4] + " : " + err)
+		w.SiteConfig.Logger.Error("Unable to add child element " + e.MongoId.String() + " to " + u[4] + " : " + err.Error())
 		services.AddMessage("There was a problem, your elemeent was created but was not assigned to your "+u[3]+".", "Error", w)
-		w.Server()
+		w.Serve()
 		return
 	}
+	services.AddMessage("You have added a new element.", "Success", w)
+	w.Serve()
+	return
 
 }
 
-func WrapperEditor(w *wrapper.Wrapper) 
+func WrapperEditor(w *wrapper.Wrapper) {
 
 }

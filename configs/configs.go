@@ -9,6 +9,7 @@ import (
 	"gopkg.in/mgo.v2"
 	"log"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 )
@@ -98,6 +99,10 @@ type SiteConfig struct {
 	DbSession         *mgo.Session           // The master MongoDb session that gets copied
 	FourOFour         string
 	APIEndPoint       string
+	Controllers       []string
+	Logins            map[string]map[string]string
+	LoginSuccess      string
+	LoginFailure      string
 }
 
 // Constructor for SiteConfig
@@ -108,6 +113,7 @@ func NewSiteConfig(f string) *SiteConfig {
 	s.getSiteConfig(f)
 	s.getDbConnection(f)
 	s.getLogger(f)
+	sort.Strings(s.Controllers)
 	return &s
 }
 
