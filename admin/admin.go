@@ -203,6 +203,46 @@ func Element(w *wrapper.Wrapper) {
 	}
 }
 
+func ElementSort(w *wrapper.Wrapper) {
+	if w.Post == nil {
+		u := url.UrlToMap(w.Request.URL.Path)
+		if u[3] == "paths" {
+			p := controller.NewPath()
+			err := p.GetById(u[4], w)
+			if err != nil {
+				w.SiteConfig.Logger.Error("Path not found to sort for " + u[4] + " by " + w.Request.Host)
+				services.AddMessage("This path was not found", "Error", w)
+				w.Serve()
+			} else {
+				w.SetPayload("elements", p.Elements)
+				w.Serve()
+				return
+			}
+		}
+		if u[3] == "elements" {
+			e := controller.NewElement()
+			err := e.GetById(u[4], w)
+			if err != nil {
+				w.SiteConfig.Logger.Error("Element not found to sort for " + u[4] + " by " + w.Request.Host)
+				services.AddMessage("This element was not found", "Error", w)
+				w.Serve()
+					return
+			} else {
+				if es, ok := e.ControllerValues["elements"]; ok {
+					if len(es) > 0 {
+						w.SetPayload("elements", e.ControllerValues["elements"])
+					}
+					else {
+						services.AddMessage("This has no elements assigned yet.", "Error", w)
+					}
+				}
+				w.Serve()
+				return
+			}
+		}
+	} else {
+	}
+}
 func ElementEditor(w *wrapper.Wrapper) {
 	if w.Post == nil {
 
