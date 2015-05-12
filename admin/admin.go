@@ -10,6 +10,7 @@ import (
 	"github.com/mongolar/mongolar/wrapper"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
+	"reflect"
 )
 
 type AdminMap controller.ControllerMap
@@ -226,13 +227,13 @@ func ElementSort(w *wrapper.Wrapper) {
 				w.SiteConfig.Logger.Error("Element not found to sort for " + u[4] + " by " + w.Request.Host)
 				services.AddMessage("This element was not found", "Error", w)
 				w.Serve()
-					return
+				return
 			} else {
 				if es, ok := e.ControllerValues["elements"]; ok {
-					if len(es) > 0 {
+					els := reflect.ValueOf(es)
+					if els.Len() > 0 {
 						w.SetPayload("elements", e.ControllerValues["elements"])
-					}
-					else {
+					} else {
 						services.AddMessage("This has no elements assigned yet.", "Error", w)
 					}
 				}
@@ -363,40 +364,40 @@ func AddChild(w *wrapper.Wrapper) {
 }
 
 func Delete(w *wrapper.Wrapper) {
+	u := url.UrlToMap(w.Request.URL.Path)
 	se := w.SiteConfig.DbSession.Copy()
 	defer se.Close()
 	c := se.DB("").C(u[3])
-	u := url.UrlToMap(w.Request.URL.Path)
 	i := bson.M{"_id": bson.ObjectIdHex(u[4])}
 	err := c.Remove(i)
 	if err != nil {
-		w.SiteConfig.Logger.Error("Unable to delete " u[3] + " " u[4] + " : " + err.Error())
-		services.AddMessage("Unable to delete " + u[3] , "Error", w)
+		w.SiteConfig.Logger.Error("Unable to delete " + u[3] + " " + u[4] + " : " + err.Error())
+		services.AddMessage("Unable to delete "+u[3], "Error", w)
 		w.Serve()
 		return
 	}
 	if u[3] == "elements" {
-		s := bson.M{ "controller_values.elements" : u[4] }
-		d := bson.M{ "$pull": bson.M{ "controller_values.elements": u[4] }, }
-		_, err :=  c.UpdateAll(s, d)
+		s := bson.M{"controller_values.elements": u[4]}
+		d := bson.M{"$pull": bson.M{"controller_values.elements": u[4]}}
+		_, err := c.UpdateAll(s, d)
 		if err != nil {
-			w.SiteConfig.Logger.Error("Unable to delete reference to " u[3] + " " u[4] + " : " + err.Error())
-			services.AddMessage("Unable to delete reference to " + u[3] , "Error", w)
+			w.SiteConfig.Logger.Error("Unable to delete reference to " + u[3] + " " + u[4] + " : " + err.Error())
+			services.AddMessage("Unable to delete reference to "+u[3], "Error", w)
 			w.Serve()
 			return
 		}
-		s = bson.M{ "elements" : u[4] }
-		d = bson.M{ "$pull": bson.M{ "elements": u[4] }, }
+		s = bson.M{"elements": u[4]}
+		d = bson.M{"$pull": bson.M{"elements": u[4]}}
 		c = se.DB("").C("paths")
-		_, err =  c.UpdateAll(s, d)
+		_, err = c.UpdateAll(s, d)
 		if err != nil {
-			w.SiteConfig.Logger.Error("Unable to delete reference to " u[3] + " " u[4] + " : " + err.Error())
-			services.AddMessage("Unable to delete reference to " + u[3] , "Error", w)
+			w.SiteConfig.Logger.Error("Unable to delete reference to " + u[3] + " " + u[4] + " : " + err.Error())
+			services.AddMessage("Unable to delete reference to "+u[3], "Error", w)
 			w.Serve()
 			return
 		}
 	}
-	services.AddMessage("Successfully deleted " + u[3], "Success", w)
+	services.AddMessage("Successfully deleted "+u[3], "Success", w)
 	w.Serve()
 	return
 }

@@ -8,6 +8,8 @@ import (
 	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
 	"golang.org/x/oauth2"
+	//	"io/ioutil"
+	"bytes"
 	"net/http"
 	"strings"
 )
@@ -98,8 +100,12 @@ func (l *Login) Callback(w *wrapper.Wrapper) {
 	}
 	client := conf.Client(oauth2.NoContext, t)
 	//TODO find common oauth values
-	test, _ := client.Get("user")
-	spew.Dump(test)
+	test, err1 := client.Get("https://api.github.com/user")
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(test.Body)
+	resp := buf.String()
+	spew.Dump(err1)
+	spew.Dump(resp)
 	http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginSuccess, 301)
 }
 
