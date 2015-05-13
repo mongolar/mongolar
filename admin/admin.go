@@ -205,8 +205,8 @@ func Element(w *wrapper.Wrapper) {
 }
 
 func ElementSort(w *wrapper.Wrapper) {
+	u := url.UrlToMap(w.Request.URL.Path)
 	if w.Post == nil {
-		u := url.UrlToMap(w.Request.URL.Path)
 		if u[3] == "paths" {
 			p := controller.NewPath()
 			err := p.GetById(u[4], w)
@@ -219,8 +219,7 @@ func ElementSort(w *wrapper.Wrapper) {
 				w.Serve()
 				return
 			}
-		}
-		if u[3] == "elements" {
+		} else if u[3] == "elements" {
 			e := controller.NewElement()
 			err := e.GetById(u[4], w)
 			if err != nil {
@@ -240,8 +239,35 @@ func ElementSort(w *wrapper.Wrapper) {
 				w.Serve()
 				return
 			}
+		} else {
+			//TODO Illegal request
 		}
 	} else {
+		//TODO range over Post?
+		se := w.SiteConfig.DbSession.Copy()
+		defer se.Close()
+		if u[3] == "paths" {
+			p := bson.M{
+				"$set": bson.M{
+					"elements": w.Post["elements"].(string),
+				},
+			}
+			s := bson.M{"_id": bson.ObjectIdHex(u[4].(string))}
+			c := se.DB("").C("paths")
+			c.Update(s, p)
+
+		} else if u[3] == "elements" {
+			p := bson.M{
+				"$set": bson.M{
+					"controller_values.elements": w.Post["elements"].(string),
+				},
+			}
+			s := bson.M{"_id": bson.ObjectIdHex(u[4].(string))}
+			c := se.DB("").C("elements")
+			c.Update(s, p)
+		} else {
+			//TODO Illegal request
+		}
 	}
 }
 func ElementEditor(w *wrapper.Wrapper) {
@@ -363,6 +389,39 @@ func AddChild(w *wrapper.Wrapper) {
 
 }
 
+func AllElements(w *wrapper.Wrapper) {
+	se := w.SiteConfig.DbSession.Copy()
+	defer se.Close()
+	var es []controller.Element
+	c := se.DB("").C("elements")
+	c.Find(nil).Limit(50).Iter().All(&es)
+	w.SetPayload("elements", es)
+	w.Serve()
+	return
+}
+
+func AddExistingChild(w *wrapper.Wrapper) {
+	u := url.UrlToMap(w.Request.URL.Path)
+	se := w.SiteConfig.DbSession.Copy()
+	defer se.Close()
+	c := se.DB("").C(u[3])
+	i := bson.M{"_id": bson.ObjectIdHex(u[4])}
+	if u[3] == "elements" {
+		f := "controller_values.elements"
+	}
+	if u[3] == "paths" {
+		f := "elements"
+	}
+	err = c.Update(i, bson.M{"$push": bson.M{f: u[5]}})
+	if err != nil {
+		w.SiteConfig.Logger.Error("Unable to assign child " + u[5] + " to " + u[4] + " : " + err.Error())
+		services.AddMessage("Unable to add child element", "Error", w)
+		w.Serve()
+		return
+	}
+	services.AddMessage("Child element added", "Error", w)
+}
+
 func Delete(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	se := w.SiteConfig.DbSession.Copy()
@@ -402,6 +461,20 @@ func Delete(w *wrapper.Wrapper) {
 	return
 }
 
-func WrapperEditor(w *wrapper.Wrapper) {
-
+func FieldForm() *form.Form {
+	ft := []map[string]string{
+		map[string]string{"name": "Text Field", "value": "text"},
+		map[string]string{"name": "TextArea Field", "value": "textarea"},
+		map[string]string{"name": "Radio Buttons", "value": "radio"},
+		map[string]string{"name": "Checkbox", "value": "checkbox"},
+	}
+	f := form.NewForm()
+	f.AddRadio("field_type", ft).AddLabel("Field Type").Required()
+	f.AddText("key").AddLabel("Key").Required()
+	f.AddText("label").AddLabel("Label")
+	f.AddText("placeholder").AddLabel("Placeholder")
+	f.AddTextArea("options").AddLabel("Options").HideExpression("form.FormData.field_type != 'radio'")
+	f.AddText("cols").AddLabel("Columns").HideExpression("form.FormData.field_type != 'textarea'")
+	f.AddText("rows").AddLabel("Rows").HideExpression("form.FormData.field_type != 'textarea'")
+	return &form.Form
 }

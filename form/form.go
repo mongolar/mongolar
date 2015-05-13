@@ -120,6 +120,7 @@ type Field struct {
 	Hide            bool                   `json:"hide,omitempty"`
 	Key             string                 `json:"key"`
 	TemplateOptions map[string]interface{} `json:"templateOptions"`
+	HideExpression  string                 `json:"hideExpression"`
 }
 
 // Add label to field
@@ -137,6 +138,11 @@ func (f *Field) AddPlaceHolder(p string) *Field {
 func (f *Field) AddRowsCols(r int, c int) *Field {
 	f.TemplateOptions["rows"] = r
 	f.TemplateOptions["cols"] = c
+	return f
+}
+
+func (f *Field) AddHideExpression(he string) *Field {
+	f.HideExpression = he
 	return f
 }
 
