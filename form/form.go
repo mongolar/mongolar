@@ -72,6 +72,18 @@ func (f *Form) AddRadio(k string, o []map[string]string) *Field {
 	return fi
 }
 
+// Add a radio button to form
+func (f *Form) AddRepeatSection(k string, b string, fs []*Field) *Field {
+	to := map[string]interface{}{"fields": fs, "label": "", "btnText": b}
+	fi := &Field{
+		Type:            "repeatSection",
+		Key:             k,
+		TemplateOptions: to,
+	}
+	f.Fields = append(f.Fields, fi)
+	return fi
+}
+
 // Register the form in the database
 func (f *Form) Register(w *wrapper.Wrapper) error {
 	fr := FormRegister{
@@ -120,7 +132,7 @@ type Field struct {
 	Hide            bool                   `json:"hide,omitempty" bson:"hide,omitempty"`
 	Key             string                 `json:"key" bson:"key"`
 	TemplateOptions map[string]interface{} `json:"templateOptions" bson:"template_options"`
-	HideExpression  string                 `json:"hideExpression" bson:"hide_expression"`
+	HideExpression  string                 `json:"hideExpression,omitempty" bson:"hide_expression"`
 }
 
 // Add label to field
@@ -142,7 +154,7 @@ func (f *Field) AddRowsCols(r int, c int) *Field {
 }
 
 func (f *Field) AddHideExpression(he string) *Field {
-	f.HideExpression = he
+	//f.HideExpression = he
 	return f
 }
 

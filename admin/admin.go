@@ -26,13 +26,15 @@ func NewAdmin() (*AdminMap, *AdminMenu) {
 	amenu.MenuItems["1"] = map[string]string{"title": "Content", "template": "admin/content_editor.html"}
 	amenu.MenuItems["2"] = map[string]string{"title": "Content Types", "template": "admin/content_types_editor.html"}
 	amap := &AdminMap{
-		"menu":           amenu.AdminMenu,
-		"paths":          AdminPaths,
-		"path_elements":  PathElements,
-		"path_editor":    PathEditor,
-		"element":        Element,
-		"element_editor": ElementEditor,
-		"add_child":      AddChild,
+		"menu":              amenu.AdminMenu,
+		"paths":             AdminPaths,
+		"path_elements":     PathElements,
+		"path_editor":       PathEditor,
+		"element":           Element,
+		"element_editor":    ElementEditor,
+		"add_child":         AddChild,
+		"all_content_types": GetAllContentTypes,
+		"edit_content_type": EditContentType,
 	}
 	return amap, &amenu
 }
@@ -252,7 +254,7 @@ func ElementSort(w *wrapper.Wrapper) {
 					"elements": w.Post["elements"].(string),
 				},
 			}
-			s := bson.M{"_id": bson.ObjectIdHex(u[4].(string))}
+			s := bson.M{"_id": bson.ObjectIdHex(u[4])}
 			c := se.DB("").C("paths")
 			c.Update(s, p)
 
@@ -262,7 +264,7 @@ func ElementSort(w *wrapper.Wrapper) {
 					"controller_values.elements": w.Post["elements"].(string),
 				},
 			}
-			s := bson.M{"_id": bson.ObjectIdHex(u[4].(string))}
+			s := bson.M{"_id": bson.ObjectIdHex(u[4])}
 			c := se.DB("").C("elements")
 			c.Update(s, p)
 		} else {
@@ -406,13 +408,14 @@ func AddExistingChild(w *wrapper.Wrapper) {
 	defer se.Close()
 	c := se.DB("").C(u[3])
 	i := bson.M{"_id": bson.ObjectIdHex(u[4])}
+	var f string
 	if u[3] == "elements" {
-		f := "controller_values.elements"
+		f = "controller_values.elements"
 	}
 	if u[3] == "paths" {
-		f := "elements"
+		f = "elements"
 	}
-	err = c.Update(i, bson.M{"$push": bson.M{f: u[5]}})
+	err := c.Update(i, bson.M{"$push": bson.M{f: u[5]}})
 	if err != nil {
 		w.SiteConfig.Logger.Error("Unable to assign child " + u[5] + " to " + u[4] + " : " + err.Error())
 		services.AddMessage("Unable to add child element", "Error", w)
@@ -462,12 +465,13 @@ func Delete(w *wrapper.Wrapper) {
 }
 
 type ContentType struct {
-	Form form.Form `bson:"form"`
-	Type string    `bson:"type"`
-	MongoId bson.ObjectId `bson:"_id"`
+	Form    form.Form     `bson:"form" json:"content_form"`
+	Type    string        `bson:"type" json:"type"`
+	MongoId bson.ObjectId `bson:"_id" json:"id"`
 }
 
 func GetContentType(w *wrapper.Wrapper) {
+	u := url.UrlToMap(w.Request.URL.Path)
 	se := w.SiteConfig.DbSession.Copy()
 	defer se.Close()
 	c := se.DB("").C("content_types")
@@ -485,6 +489,30 @@ func GetContentType(w *wrapper.Wrapper) {
 	return
 }
 
+func EditContentType(w *wrapper.Wrapper) {
+	u := url.UrlToMap(w.Request.URL.Path)
+	se := w.SiteConfig.DbSession.Copy()
+	defer se.Close()
+	c := se.DB("").C("content_types")
+	i := bson.M{"_id": bson.ObjectIdHex(u[3])}
+	var ct ContentType
+	err := c.Find(i).One(&ct)
+	if err != nil {
+		w.SiteConfig.Logger.Error("Content Type not found " + u[3] + " : " + err.Error())
+		services.AddMessage("Your content types was not found "+u[3], "Error", w)
+		w.Serve()
+		return
+	}
+	f := form.NewForm()
+	f.AddRepeatSection("elements", "Add another field", FieldFormGroup())
+	test := []map[string]string{map[string]string{"key": "test"}}
+	f.FormData["elements"] = test
+	w.SetPayload("form", f)
+	w.SetTemplate("admin/form.html")
+	w.Serve()
+	return
+}
+
 func GetAllContentTypes(w *wrapper.Wrapper) {
 	se := w.SiteConfig.DbSession.Copy()
 	defer se.Close()
@@ -496,9 +524,7 @@ func GetAllContentTypes(w *wrapper.Wrapper) {
 	return
 }
 
-
-}
-func FieldForm() *form.Form {
+func FieldFormGroup() []*form.Field {
 	ft := []map[string]string{
 		map[string]string{"name": "Text Field", "value": "text"},
 		map[string]string{"name": "TextArea Field", "value": "textarea"},
@@ -507,11 +533,11 @@ func FieldForm() *form.Form {
 	}
 	f := form.NewForm()
 	f.AddRadio("field_type", ft).AddLabel("Field Type").Required()
-	f.AddText("key").AddLabel("Key").Required()
-	f.AddText("label").AddLabel("Label")
-	f.AddText("placeholder").AddLabel("Placeholder")
-	f.AddTextArea("options").AddLabel("Options").HideExpression("form.FormData.field_type != 'radio'")
-	f.AddText("cols").AddLabel("Columns").HideExpression("form.FormData.field_type != 'textarea'")
-	f.AddText("rows").AddLabel("Rows").HideExpression("form.FormData.field_type != 'textarea'")
-	return &form.Form
+	f.AddText("key", "text").AddLabel("Key").Required()
+	f.AddText("label", "text").AddLabel("Label")
+	f.AddText("placeholder", "text").AddLabel("Placeholder")
+	f.AddTextArea("options").AddLabel("Options").AddHideExpression("form.FormData.field_type != 'radio'")
+	f.AddText("cols", "text").AddLabel("Columns").AddHideExpression("form.FormData.field_type != 'textarea'")
+	f.AddText("rows", "text").AddLabel("Rows").AddHideExpression("form.FormData.field_type != 'textarea'")
+	return f.Fields
 }
