@@ -73,6 +73,18 @@ func (f *Form) AddRadio(k string, o []map[string]string) *Field {
 }
 
 // Add a radio button to form
+func (f *Form) AddSelect(k string, o []map[string]string) *Field {
+	to := map[string]interface{}{"options": o, "label": ""}
+	fi := &Field{
+		Type:            "radio",
+		Key:             k,
+		TemplateOptions: to,
+	}
+	f.Fields = append(f.Fields, fi)
+	return fi
+}
+
+// Add a radio button to form
 func (f *Form) AddRepeatSection(k string, b string, fs []*Field) *Field {
 	to := map[string]interface{}{"fields": fs, "label": "", "btnText": b}
 	fi := &Field{

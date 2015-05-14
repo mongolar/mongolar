@@ -1,6 +1,7 @@
 package login
 
 import (
+	"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"github.com/davecgh/go-spew/spew"
@@ -8,22 +9,45 @@ import (
 	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
 	"golang.org/x/oauth2"
-	//	"io/ioutil"
-	"bytes"
 	"net/http"
 	"strings"
 )
 
-type Login struct {
-	Controllers controller.ControllerMap
-	State       string
+		//Build example
+		//conf := &oauth2.Config{
+		//	ClientID:     l["client_id"],
+		//	ClientSecret: l["client_secret"],
+		//	Scopes:       s,
+		///	Endpoint: oauth2.Endpoint{
+		//		AuthURL:  l["auth_url"],
+		//		TokenURL: l["token_url"],
+		//	},
+		//	RedirectURL: "http://" + w.Request.Host + "/" + u[0] + "/" + u[1] + "/callback/" + k,
+		//}
+	//TODO find common oauth values
+	//test, err1 := client.Get("https://api.github.com/user")
+	//buf := new(bytes.Buffer)
+	//buf.ReadFrom(test.Body)
+	//resp := buf.String()
+	//spew.Dump(err1)
+	//spew.Dump(resp)
+	//http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginSuccess, 301)
+
+
+type Login interface {
+	BuildConfig(map[string]string) *oauth2.Config
+	GetID(oauth2.Client) string
+	ValidateLogin(oauth2.Client) string
 }
 
-func NewLogin() *Login {
-	s, _ := getStateString()
+type LoginMap struct {
+	Controllers controller.ControllerMap
+	Logins      map[string]Login
+}
+
+func NewLoginMap() *LoginMap {
 	lmap := &Login{
 		Controllers: make(controller.ControllerMap),
-		State:       s,
 	}
 	lmap.Controllers["loginurls"] = lmap.LoginUrls
 	lmap.Controllers["callback"] = lmap.Callback
@@ -31,31 +55,26 @@ func NewLogin() *Login {
 	return lmap
 }
 
-func (l *Login) Login(w *wrapper.Wrapper) {
+func (l *LoginMap) Login(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	if c, ok := l.Controllers[u[2]]; ok {
-		c(w)
-	} else {
-		http.Error(w.Writer, "Forbidden", 403)
-		return
+		if c, ok := w.SiteConfig.Logins[u[3]]; ok {
+			if c, ok := l.Logins[u[3]]; ok {
+				c(w)
+				return
+			}
+		}
 	}
+	http.Error(w.Writer, "Forbidden", 403)
+	return
 }
 
-func (lo *Login) LoginUrls(w *wrapper.Wrapper) {
+func (lo *LoginMap) LoginUrls(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	us := make(map[string]map[string]string)
 	for k, l := range w.SiteConfig.Logins {
-		s := strings.Split(l["scopes"], ",")
-		conf := &oauth2.Config{
-			ClientID:     l["client_id"],
-			ClientSecret: l["client_secret"],
-			Scopes:       s,
-			Endpoint: oauth2.Endpoint{
-				AuthURL:  l["auth_url"],
-				TokenURL: l["token_url"],
-			},
-			RedirectURL: "http://" + w.Request.Host + "/" + u[0] + "/" + u[1] + "/callback/" + k,
-		}
+		conf := lo.Logins.BuildConfig(l)
+		conf.RedirectURL = "http://" + w.Request.Host + "/" + u[0] + "/" + u[1] + "/callback/" + k,
 		u := conf.AuthCodeURL(lo.State, oauth2.AccessTypeOffline)
 		m := map[string]string{"url": u, "login_text": l["login_text"]}
 		us[k] = m
@@ -65,32 +84,21 @@ func (lo *Login) LoginUrls(w *wrapper.Wrapper) {
 	return
 }
 
-func (l *Login) Logout(w *wrapper.Wrapper) {
+func (l *LoginMap) Logout(w *wrapper.Wrapper) {
 
 }
 
-func (l *Login) Callback(w *wrapper.Wrapper) {
+func (l *LoginMap) Callback(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	s := w.Request.FormValue("state")
-	if s != l.State {
-		w.SiteConfig.Logger.Error("invalid oauth state, expected " + l.State + ", got " + s)
+	sc := w.SiteConfig.Login[u[3]]
+	if s != sc["state"] {
+		w.SiteConfig.Logger.Error("invalid oauth state, expected " + sc["state"] + ", got " + s)
 		http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginFailure, 301)
 		return
 	}
-
-	li := w.SiteConfig.Logins[u[3]]
-	sc := strings.Split(li["scopes"], ",")
-	conf := &oauth2.Config{
-		ClientID:     li["client_id"],
-		ClientSecret: li["client_secret"],
-		Scopes:       sc,
-		Endpoint: oauth2.Endpoint{
-			AuthURL:  li["auth_url"],
-			TokenURL: li["token_url"],
-		},
-		RedirectURL: "http://" + w.Request.Host + "/" + u[0] + "/" + u[1] + "/callback/" + u[3],
-	}
-
+	conf := l.Logins.BuildConfig(sc)
+	conf.RedirectURL = "http://" + w.Request.Host + "/" + u[0] + "/" + u[1] + "/callback/" + u[3] ,
 	co := w.Request.FormValue("code")
 	t, err := conf.Exchange(oauth2.NoContext, co)
 	if err != nil {
@@ -99,22 +107,6 @@ func (l *Login) Callback(w *wrapper.Wrapper) {
 		return
 	}
 	client := conf.Client(oauth2.NoContext, t)
-	//TODO find common oauth values
-	test, err1 := client.Get("https://api.github.com/user")
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(test.Body)
-	resp := buf.String()
-	spew.Dump(err1)
-	spew.Dump(resp)
-	http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginSuccess, 301)
-}
-
-// Generate a random session key.
-func getStateString() (string, error) {
-	raw := make([]byte, 30)
-	_, err := rand.Read(raw)
-	if err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(raw), nil
+	id := l.Logins[u[3]].GetId(client)
+	//TODO link session to user
 }

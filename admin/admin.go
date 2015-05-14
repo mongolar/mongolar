@@ -349,6 +349,84 @@ func ElementEditor(w *wrapper.Wrapper) {
 
 }
 
+func ContentEditor(w *wrapper.Wrapper) {
+	se := w.SiteConfig.DbSession.Copy()
+	defer se.Close()
+	if w.Post == nil {
+		e := controller.NewElement()
+		err := e.GetById(u[3], w)
+		if err != nil {
+			w.SiteConfig.Logger.Error("Element not found to edit for " + u[3] + " by " + w.Request.Host)
+			services.AddMessage("This element was not found", "Error", w)
+			w.Serve()
+		}
+		c := se.DB("").C("content_types")
+		t := bson.M{"type", e.ControllerValues['type']}
+		var ct ContentType
+		err := c.Find(t).One(&ct)
+		f := form.NewForm()
+		f.Fields = ct.Form
+		f.FormData = e.ControllerValues['content']
+		w.SetPayload("form", f)
+		w.Serve()
+		return
+	} else {
+		e := bson.M{
+			"$set": bson.M{
+				"controller_values.content": w.Post,
+			},
+		}
+		s := bson.M{"_id": bson.ObjectIdHex(u[3])}
+		c := se.DB("").C("elements")
+		err := c.Update(s, e)
+		if err != nil {
+			w.SiteConfig.Logger.Error("Element not saved " + u[3] + " by " + w.Request.Host)
+			services.AddMessage("Unable to save element.", "Error", w)
+			w.Serve()
+		}
+	}
+}
+
+
+func ContentTypeEditor(w *wrapper.Wrapper) {
+	se := w.SiteConfig.DbSession.Copy()
+	defer se.Close()
+	if w.Post == nil {
+		e := controller.NewElement()
+		err := e.GetById(u[3], w)
+		if err != nil {
+			w.SiteConfig.Logger.Error("Element not found to edit for " + u[3] + " by " + w.Request.Host)
+			services.AddMessage("This element was not found", "Error", w)
+			w.Serve()
+		}
+		c := se.DB("").C("content_types")
+		var cts []ContentType
+		c.Find(nil).Limit(50).Iter().All(&cts)
+		for _, ct := range cts {
+			ct.Type
+		}
+		f := form.NewForm()
+		f.FormData = e.ControllerValues['type']
+		w.SetPayload("form", f)
+		w.Serve()
+		return
+	} else {
+		e := bson.M{
+			"$set": bson.M{
+				"controller_values.type": w.Post["type"],
+			},
+		}
+		s := bson.M{"_id": bson.ObjectIdHex(u[3])}
+		c := se.DB("").C("elements")
+		err := c.Update(s, e)
+		if err != nil {
+			w.SiteConfig.Logger.Error("Element not saved " + u[3] + " by " + w.Request.Host)
+			services.AddMessage("Unable to save element.", "Error", w)
+			w.Serve()
+		}
+	}
+
+
 func AddChild(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	e := controller.NewElement()
