@@ -116,11 +116,11 @@ func GetValidRegForm(i string, w *wrapper.Wrapper) (*FormRegister, error) {
 
 // Form fields structure
 type Field struct {
-	Type            string                 `json:"type"`
-	Hide            bool                   `json:"hide,omitempty"`
-	Key             string                 `json:"key"`
-	TemplateOptions map[string]interface{} `json:"templateOptions"`
-	HideExpression  string                 `json:"hideExpression"`
+	Type            string                 `json:"type" bson:"type"`
+	Hide            bool                   `json:"hide,omitempty" bson:"hide,omitempty"`
+	Key             string                 `json:"key" bson:"key"`
+	TemplateOptions map[string]interface{} `json:"templateOptions" bson:"template_options"`
+	HideExpression  string                 `json:"hideExpression" bson:"hide_expression"`
 }
 
 // Add label to field

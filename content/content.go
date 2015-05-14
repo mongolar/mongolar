@@ -1,3 +1,0 @@
-package content
-
-import ()

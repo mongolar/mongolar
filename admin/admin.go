@@ -461,6 +461,43 @@ func Delete(w *wrapper.Wrapper) {
 	return
 }
 
+type ContentType struct {
+	Form form.Form `bson:"form"`
+	Type string    `bson:"type"`
+	MongoId bson.ObjectId `bson:"_id"`
+}
+
+func GetContentType(w *wrapper.Wrapper) {
+	se := w.SiteConfig.DbSession.Copy()
+	defer se.Close()
+	c := se.DB("").C("content_types")
+	i := bson.M{"_id": bson.ObjectIdHex(u[3])}
+	var ct ContentType
+	err := c.Find(i).One(&ct)
+	if err != nil {
+		w.SiteConfig.Logger.Error("Content Type not found " + u[3] + " : " + err.Error())
+		services.AddMessage("Your content types was not found "+u[3], "Error", w)
+		w.Serve()
+		return
+	}
+	w.SetPayload("content_type", ct)
+	w.Serve()
+	return
+}
+
+func GetAllContentTypes(w *wrapper.Wrapper) {
+	se := w.SiteConfig.DbSession.Copy()
+	defer se.Close()
+	var cts []ContentType
+	c := se.DB("").C("content_types")
+	c.Find(nil).Limit(50).Iter().All(&cts)
+	w.SetPayload("content_types", cts)
+	w.Serve()
+	return
+}
+
+
+}
 func FieldForm() *form.Form {
 	ft := []map[string]string{
 		map[string]string{"name": "Text Field", "value": "text"},
