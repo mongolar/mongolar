@@ -617,5 +617,6 @@ func FieldFormGroup() []*form.Field {
 	f.AddTextArea("options").AddLabel("Options").AddHideExpression("form.FormData.field_type != 'radio'")
 	f.AddText("cols", "text").AddLabel("Columns").AddHideExpression("form.FormData.field_type != 'textarea'")
 	f.AddText("rows", "text").AddLabel("Rows").AddHideExpression("form.FormData.field_type != 'textarea'")
+	w.SetTemplate("admin/form.html")
 	return f.Fields
 }
