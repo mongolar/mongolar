@@ -1,5 +1,4 @@
-package login
-
+package oauthlogin
 import (
 	"bytes"
 	"crypto/rand"
@@ -35,11 +34,6 @@ import (
 	//http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginSuccess, 301)
 
 
-type Login interface {
-	BuildConfig(map[string]string) *oauth2.Config
-	GetID(oauth2.Client) string
-	ValidateLogin(oauth2.Client) string
-}
 
 type LoginMap struct {
 	Controllers controller.ControllerMap
@@ -110,4 +104,28 @@ func (l *LoginMap) Callback(w *wrapper.Wrapper) {
 	client := conf.Client(oauth2.NoContext, t)
 	id := l.Logins[u[3]].GetId(client)
 	//TODO link session to user
+}
+
+
+
+type Login interface {
+	GetUrl() string
+	GetID() string
+	GetToken() string
+	ValidateLogin() string
+}
+
+
+type LoginStructure struct{
+	AuthURL: string
+	TokenURL: string
+	Scope: string
+	Id: string
+	Secret:	string
+}
+
+type GitHub LoginStructure
+
+func NewGitHub(map[string]string){
+	
 }

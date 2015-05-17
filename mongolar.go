@@ -4,7 +4,7 @@ import (
 	"github.com/mongolar/mongolar/admin"
 	"github.com/mongolar/mongolar/configs"
 	"github.com/mongolar/mongolar/controller"
-	"github.com/mongolar/mongolar/login"
+	"github.com/mongolar/mongolar/oauthlogin"
 	"github.com/mongolar/mongolar/router"
 	"net/http"
 )

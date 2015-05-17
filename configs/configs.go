@@ -100,7 +100,7 @@ type SiteConfig struct {
 	FourOFour         string
 	APIEndPoint       string
 	Controllers       []string
-	Logins            map[string]map[string]string
+	OAuthLogins       map[string]map[string]string
 	LoginSuccess      string
 	LoginFailure      string
 }
@@ -135,11 +135,11 @@ func (s *SiteConfig) getSiteConfig(file string) {
 // Establish a Database connection and attach it to the site configuration
 func (s *SiteConfig) getDbConnection(f string) {
 	u := "mongodb://" + s.MongoDb["user"] + ":" + s.MongoDb["password"] + "@" + s.MongoDb["host"] + "/" + s.MongoDb["db"]
-	var err error
-	s.DbSession, err = mgo.Dial(u)
+	dbs, err := mgo.Dial(u)
 	if err != nil {
 		log.Fatal(err)
 	}
+	s.DbSession = dbs.Copy()
 }
 
 // Attach a logger channel to log errors predictably.

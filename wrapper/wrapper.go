@@ -6,8 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/mongolar/mongolar/configs"
-	"github.com/mongolar/mongolar/session"
+	"gopkg.in/mgo.v2/bson"
 	"net/http"
+	"time"
 )
 
 // Wrapper structure required to be passed back to the Controller
@@ -16,7 +17,7 @@ type Wrapper struct {
 	Request    *http.Request          // The request
 	Post       map[string]interface{} // Post data from AngularJS
 	SiteConfig *configs.SiteConfig    // The configuration for the site being accessed
-	Session    *session.Session       // Session for user
+	Session    *Session               // Session for user
 	Payload    map[string]interface{} // This is the sum of the payload that will be returned to the user
 }
 
@@ -31,7 +32,11 @@ func New(w http.ResponseWriter, r *http.Request, s *configs.SiteConfig) *Wrapper
 		}
 	}
 	//Get session
-	wr.Session = session.New(w, r, s)
+	err = wr.NewSession()
+	wr.SetSession()
+	if err != nil {
+		//TODO, logs and such Do something here
+	}
 	// Define payload
 	wr.Payload = make(map[string]interface{})
 	return &wr
@@ -96,5 +101,73 @@ func (w *Wrapper) Serve() {
 		return
 	}
 	w.Writer.Write(js)
+	w.SiteConfig.DbSession.Close()
 	return
+}
+
+// Wrapper structure for Sessions
+type Session struct {
+	Id     bson.ObjectId `bson:"_id"`
+	UserId bson.ObjectId `bson:"user_id,omitempty"`
+	Token  string        `bson:"token,omitempty"`
+}
+
+//Session constructor
+func (w *Wrapper) NewSession() error {
+	se := new(Session)
+	// Duration of expiration, needs to be worked out between cookies and db
+	var duration time.Duration = time.Duration(w.SiteConfig.SessionExpiration * time.Hour)
+	expire := time.Now().Add(duration)
+	// Set the cookies
+	c, err := w.Request.Cookie("m_session_id")
+	if err != nil {
+		return err
+	}
+	//  If cookie is not set, set one
+	if c == nil {
+		se.Id = bson.NewObjectId()
+		c = &http.Cookie{
+			Name:   "m_session_id",
+			Value:  se.Id.Hex(),
+			Path:   "/",
+			Domain: w.Request.Host,
+		}
+	} else {
+		se.Id = bson.ObjectIdHex(c.Value)
+	}
+	//  New or reused cookies will have their expiration refreshed
+	c.Expires = expire
+	c.RawExpires = expire.Format(time.RFC3339)
+	http.SetCookie(w.Writer, c)
+	w.Session = se
+	return nil
+}
+
+func (w *Wrapper) SetSession() error {
+	c := w.SiteConfig.DbSession.DB("").C("sessions")
+	err := c.Update(bson.M{"_id": w.Session.Id}, bson.M{"$set": w.Session})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Get current session data
+func (w *Wrapper) SetSessionValue(k string, v interface{}) error {
+	c := w.SiteConfig.DbSession.DB("").C("sessions")
+	err := c.Update(bson.M{"_id": w.Session.Id}, bson.M{"$set": bson.M{k: v}})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// Get a session value by key.
+func (w *Wrapper) GetSessionValue(n string, i *interface{}) error {
+	c := w.SiteConfig.DbSession.DB("").C("sessions")
+	err := c.Find(bson.M{"_id": w.Session.Id}).Select(bson.M{n: 1}).One(i)
+	if err != nil {
+		return err
+	}
+	return nil
 }
