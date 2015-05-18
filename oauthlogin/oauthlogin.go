@@ -181,6 +181,7 @@ func (gh *GitHub) GetToken(code string) error {
 	return err
 }
 
+// move below to new package
 type User struct {
 	MongoId bson.ObjectId `json:"-" bson:"_id"`
 	Email   string        `json:"email" bson:"email"`

@@ -41,7 +41,7 @@ func NewAdmin() (*AdminMap, *AdminMenu) {
 func (a AdminMap) Admin(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	if c, ok := a[u[2]]; ok {
-		if validateAdmin(w.Session) {
+		if validateAdmin(w) {
 			c(w)
 		} else {
 			http.Error(w.Writer, "Forbidden", 403)
@@ -52,8 +52,16 @@ func (a AdminMap) Admin(w *wrapper.Wrapper) {
 	}
 }
 
-func validateAdmin(s *wrapper.Session) bool {
-	return true
+func validateAdmin(w *wrapper) bool {
+	var roles []string
+	uid := w.Session.UserId
+	//TODO load user here
+	for _, role := range roles {
+		if role == "admin" {
+			return true
+		}
+	}
+	return false
 }
 
 func (a *AdminMenu) AdminMenu(w *wrapper.Wrapper) {
