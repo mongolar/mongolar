@@ -118,7 +118,7 @@ func PathEditor(w *wrapper.Wrapper) {
 			services.AddMessage("Invalid Form", "Error", w)
 			w.Serve()
 		} else {
-			c := w.SiteConfig.DbSession.DB("").C("paths")
+			c := w.DbSession.DB("").C("paths")
 			if w.Post["mongolarid"].(string) == "new" {
 				var wc bool
 				if c, ok := w.Post["wildcard"]; ok {
@@ -250,7 +250,7 @@ func ElementSort(w *wrapper.Wrapper) {
 				},
 			}
 			s := bson.M{"_id": bson.ObjectIdHex(u[4])}
-			c := w.SiteConfig.DbSession.DB("").C("paths")
+			c := w.DbSession.DB("").C("paths")
 			c.Update(s, p)
 
 		} else if u[3] == "elements" {
@@ -260,7 +260,7 @@ func ElementSort(w *wrapper.Wrapper) {
 				},
 			}
 			s := bson.M{"_id": bson.ObjectIdHex(u[4])}
-			c := w.SiteConfig.DbSession.DB("").C("elements")
+			c := w.DbSession.DB("").C("elements")
 			c.Update(s, p)
 		} else {
 			//TODO Illegal request
@@ -302,7 +302,7 @@ func ElementEditor(w *wrapper.Wrapper) {
 			services.AddMessage("Invalid Form", "Error", w)
 			w.Serve()
 		} else {
-			c := w.SiteConfig.DbSession.DB("").C("elements")
+			c := w.DbSession.DB("").C("elements")
 			if w.Post["mongolarid"].(string) == "new" {
 				p := controller.Element{
 					Controller: w.Post["controller"].(string),
@@ -352,7 +352,7 @@ func ContentEditor(w *wrapper.Wrapper) {
 			services.AddMessage("This element was not found", "Error", w)
 			w.Serve()
 		}
-		c := w.SiteConfig.DbSession.DB("").C("content_types")
+		c := w.DbSession.DB("").C("content_types")
 		t := bson.M{"type": e.ControllerValues["type"]}
 		var ct ContentType
 		err = c.Find(t).One(&ct)
@@ -369,7 +369,7 @@ func ContentEditor(w *wrapper.Wrapper) {
 			},
 		}
 		s := bson.M{"_id": bson.ObjectIdHex(u[3])}
-		c := w.SiteConfig.DbSession.DB("").C("elements")
+		c := w.DbSession.DB("").C("elements")
 		err := c.Update(s, e)
 		if err != nil {
 			w.SiteConfig.Logger.Error("Element not saved " + u[3] + " by " + w.Request.Host)
@@ -389,7 +389,7 @@ func ContentTypeEditor(w *wrapper.Wrapper) {
 			services.AddMessage("This element was not found", "Error", w)
 			w.Serve()
 		}
-		c := w.SiteConfig.DbSession.DB("").C("content_types")
+		c := w.DbSession.DB("").C("content_types")
 		var cts []ContentType
 		c.Find(nil).Limit(50).Iter().All(&cts)
 		//for _, ct := range cts {
@@ -407,7 +407,7 @@ func ContentTypeEditor(w *wrapper.Wrapper) {
 			},
 		}
 		s := bson.M{"_id": bson.ObjectIdHex(u[3])}
-		c := w.SiteConfig.DbSession.DB("").C("content_types")
+		c := w.DbSession.DB("").C("content_types")
 		err := c.Update(s, e)
 		if err != nil {
 			w.SiteConfig.Logger.Error("Element not saved " + u[3] + " by " + w.Request.Host)
@@ -422,7 +422,7 @@ func AddChild(w *wrapper.Wrapper) {
 	e := controller.NewElement()
 	e.MongoId = bson.NewObjectId()
 	e.Title = "New Element"
-	c := w.SiteConfig.DbSession.DB("").C("elements")
+	c := w.DbSession.DB("").C("elements")
 	err := c.Insert(e)
 	if err != nil {
 		w.SiteConfig.Logger.Error("Unable to create new element  by " + w.Request.Host + " : " + err.Error())
@@ -430,7 +430,7 @@ func AddChild(w *wrapper.Wrapper) {
 		w.Serve()
 		return
 	}
-	c = w.SiteConfig.DbSession.DB("").C(u[3])
+	c = w.DbSession.DB("").C(u[3])
 	f := ""
 	if u[3] == "elements" {
 		f = "controller_values.elements"
@@ -458,7 +458,7 @@ func AddChild(w *wrapper.Wrapper) {
 }
 
 func AllElements(w *wrapper.Wrapper) {
-	c := w.SiteConfig.DbSession.DB("").C("elements")
+	c := w.DbSession.DB("").C("elements")
 	var es []controller.Element
 	c.Find(nil).Limit(50).Iter().All(&es)
 	w.SetPayload("elements", es)
@@ -468,7 +468,7 @@ func AllElements(w *wrapper.Wrapper) {
 
 func AddExistingChild(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
-	c := w.SiteConfig.DbSession.DB("").C(u[3])
+	c := w.DbSession.DB("").C(u[3])
 	i := bson.M{"_id": bson.ObjectIdHex(u[4])}
 	var f string
 	if u[3] == "elements" {
@@ -489,7 +489,7 @@ func AddExistingChild(w *wrapper.Wrapper) {
 
 func Delete(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
-	c := w.SiteConfig.DbSession.DB("").C(u[3])
+	c := w.DbSession.DB("").C(u[3])
 	i := bson.M{"_id": bson.ObjectIdHex(u[4])}
 	err := c.Remove(i)
 	if err != nil {
@@ -510,7 +510,7 @@ func Delete(w *wrapper.Wrapper) {
 		}
 		s = bson.M{"elements": u[4]}
 		d = bson.M{"$pull": bson.M{"elements": u[4]}}
-		c := w.SiteConfig.DbSession.DB("").C("paths")
+		c := w.DbSession.DB("").C("paths")
 		_, err = c.UpdateAll(s, d)
 		if err != nil {
 			w.SiteConfig.Logger.Error("Unable to delete reference to " + u[3] + " " + u[4] + " : " + err.Error())
@@ -532,7 +532,7 @@ type ContentType struct {
 
 func GetContentType(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
-	c := w.SiteConfig.DbSession.DB("").C("content_types")
+	c := w.DbSession.DB("").C("content_types")
 	i := bson.M{"_id": bson.ObjectIdHex(u[3])}
 	var ct ContentType
 	err := c.Find(i).One(&ct)
@@ -549,7 +549,7 @@ func GetContentType(w *wrapper.Wrapper) {
 
 func EditContentType(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
-	c := w.SiteConfig.DbSession.DB("").C("content_types")
+	c := w.DbSession.DB("").C("content_types")
 	i := bson.M{"_id": bson.ObjectIdHex(u[3])}
 	var ct ContentType
 	err := c.Find(i).One(&ct)
@@ -570,7 +570,7 @@ func EditContentType(w *wrapper.Wrapper) {
 }
 
 func GetAllContentTypes(w *wrapper.Wrapper) {
-	c := w.SiteConfig.DbSession.DB("").C("content_types")
+	c := w.DbSession.DB("").C("content_types")
 	var cts []ContentType
 	c.Find(nil).Limit(50).Iter().All(&cts)
 	w.SetPayload("content_types", cts)

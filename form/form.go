@@ -103,7 +103,7 @@ func (f *Form) Register(w *wrapper.Wrapper) error {
 		FormId:     f.FormId,
 		SessionId:  w.Session.Id.Hex(),
 	}
-	c := w.SiteConfig.DbSession.DB("").C("form_register")
+	c := w.DbSession.DB("").C("form_register")
 	err := c.Insert(fr)
 	return err
 }
@@ -118,7 +118,7 @@ type FormRegister struct {
 // Retrieve a previously registered form by id
 func GetRegisteredForm(i string, w *wrapper.Wrapper) (*FormRegister, error) {
 	fr := new(FormRegister)
-	c := w.SiteConfig.DbSession.DB("").C("form_register")
+	c := w.DbSession.DB("").C("form_register")
 	err := c.FindId(bson.ObjectIdHex(i)).One(fr)
 	return fr, err
 }
@@ -126,7 +126,7 @@ func GetRegisteredForm(i string, w *wrapper.Wrapper) (*FormRegister, error) {
 // Retrieve valid form based on id and session id
 func GetValidRegForm(i string, w *wrapper.Wrapper) (*FormRegister, error) {
 	fr := new(FormRegister)
-	c := w.SiteConfig.DbSession.DB("").C("form_register")
+	c := w.DbSession.DB("").C("form_register")
 	b := bson.M{"session_id": w.Session.Id, "_id": bson.ObjectIdHex(i)}
 	err := c.Find(b).One(fr)
 	return fr, err

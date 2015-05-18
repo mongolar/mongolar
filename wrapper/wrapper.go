@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/mongolar/mongolar/configs"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"time"
@@ -19,6 +20,7 @@ type Wrapper struct {
 	SiteConfig *configs.SiteConfig    // The configuration for the site being accessed
 	Session    *Session               // Session for user
 	Payload    map[string]interface{} // This is the sum of the payload that will be returned to the user
+	DbSession  *mgo.Session           // The master MongoDb session that gets copied
 }
 
 //Constructor for the Wrapper
@@ -31,9 +33,10 @@ func New(w http.ResponseWriter, r *http.Request, s *configs.SiteConfig) *Wrapper
 			//s.Logger.Error("Could not load Post Data: " + err.Error())
 		}
 	}
+	wr.DbSession = s.DbSession.Copy()
 	//Get session
 	err = wr.NewSession()
-	wr.SetSession()
+	err = wr.SetSession()
 	if err != nil {
 		//TODO, logs and such Do something here
 	}
@@ -101,7 +104,7 @@ func (w *Wrapper) Serve() {
 		return
 	}
 	w.Writer.Write(js)
-	w.SiteConfig.DbSession.Close()
+	w.DbSession.Close()
 	return
 }
 
@@ -120,7 +123,7 @@ func (w *Wrapper) NewSession() error {
 	expire := time.Now().Add(duration)
 	// Set the cookies
 	c, err := w.Request.Cookie("m_session_id")
-	if err != nil {
+	if err != nil && err.Error() != "http: named cookie not present" {
 		return err
 	}
 	//  If cookie is not set, set one
@@ -144,8 +147,8 @@ func (w *Wrapper) NewSession() error {
 }
 
 func (w *Wrapper) SetSession() error {
-	c := w.SiteConfig.DbSession.DB("").C("sessions")
-	err := c.Update(bson.M{"_id": w.Session.Id}, bson.M{"$set": w.Session})
+	c := w.DbSession.DB("").C("sessions")
+	_, err := c.Upsert(bson.M{"_id": w.Session.Id}, bson.M{"$set": bson.M{"_id": w.Session.Id}})
 	if err != nil {
 		return err
 	}
@@ -154,7 +157,7 @@ func (w *Wrapper) SetSession() error {
 
 // Get current session data
 func (w *Wrapper) SetSessionValue(k string, v interface{}) error {
-	c := w.SiteConfig.DbSession.DB("").C("sessions")
+	c := w.DbSession.DB("").C("sessions")
 	err := c.Update(bson.M{"_id": w.Session.Id}, bson.M{"$set": bson.M{k: v}})
 	if err != nil {
 		return err
@@ -164,7 +167,7 @@ func (w *Wrapper) SetSessionValue(k string, v interface{}) error {
 
 // Get a session value by key.
 func (w *Wrapper) GetSessionValue(n string, i *interface{}) error {
-	c := w.SiteConfig.DbSession.DB("").C("sessions")
+	c := w.DbSession.DB("").C("sessions")
 	err := c.Find(bson.M{"_id": w.Session.Id}).Select(bson.M{n: 1}).One(i)
 	if err != nil {
 		return err

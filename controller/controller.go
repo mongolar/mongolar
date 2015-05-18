@@ -44,7 +44,7 @@ func NewElement() Element {
 
 // Query one element
 func (e *Element) GetElement(b bson.M, w *wrapper.Wrapper) error {
-	c := w.SiteConfig.DbSession.DB("").C("elements")
+	c := w.DbSession.DB("").C("elements")
 	err := c.Find(b).One(&e)
 	return err
 }
@@ -83,7 +83,7 @@ func NewPath() Path {
 
 // Get Path by Id
 func (p *Path) GetById(i string, w *wrapper.Wrapper) error {
-	c := w.SiteConfig.DbSession.DB("").C("paths")
+	c := w.DbSession.DB("").C("paths")
 	err := c.FindId(bson.ObjectIdHex(i)).One(&p)
 	return err
 }
@@ -91,7 +91,7 @@ func (p *Path) GetById(i string, w *wrapper.Wrapper) error {
 // Get all Paths
 func PathList(w *wrapper.Wrapper) ([]Path, error) {
 	pl := make([]Path, 1)
-	c := w.SiteConfig.DbSession.DB("").C("paths")
+	c := w.DbSession.DB("").C("paths")
 	i := c.Find(nil).Limit(50).Iter()
 	err := i.All(&pl)
 	if err != nil {
@@ -103,7 +103,7 @@ func PathList(w *wrapper.Wrapper) ([]Path, error) {
 // The controller function to retrieve elements ids from the path
 func PathValues(w *wrapper.Wrapper) {
 	p := NewPath()
-	c := w.SiteConfig.DbSession.DB("").C("paths")
+	c := w.DbSession.DB("").C("paths")
 	u := w.Request.Header.Get("CurrentPath")
 	qp, err := p.pathMatch(u, c)
 	if err != nil {

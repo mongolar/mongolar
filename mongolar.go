@@ -11,7 +11,7 @@ import (
 
 func main() {
 	amap, _ := admin.NewAdmin()
-	lmap := login.NewLogin()
+	lmap := oauthlogin.NewLoginMap()
 	cm := controller.NewMap()
 	cm["domian_public_value"] = controller.DomainPublicValue
 	cm["path"] = controller.PathValues

@@ -139,7 +139,7 @@ func (s *SiteConfig) getDbConnection(f string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	s.DbSession = dbs.Copy()
+	s.DbSession = dbs
 }
 
 // Attach a logger channel to log errors predictably.
