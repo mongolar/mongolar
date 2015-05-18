@@ -110,9 +110,10 @@ func (w *Wrapper) Serve() {
 
 // Wrapper structure for Sessions
 type Session struct {
-	Id     bson.ObjectId `bson:"_id"`
-	UserId bson.ObjectId `bson:"user_id,omitempty"`
-	Token  string        `bson:"token,omitempty"`
+	Id      bson.ObjectId `bson:"_id"`
+	UserId  bson.ObjectId `bson:"user_id,omitempty"`
+	Token   string        `bson:"token,omitempty"`
+	Updated time.Time     `bson:"updated"`
 }
 
 //Session constructor
@@ -147,6 +148,7 @@ func (w *Wrapper) NewSession() error {
 }
 
 func (w *Wrapper) SetSession() error {
+	w.Session.Updated = time.Now()
 	c := w.DbSession.DB("").C("sessions")
 	_, err := c.Upsert(bson.M{"_id": w.Session.Id}, bson.M{"$set": bson.M{"_id": w.Session.Id}})
 	if err != nil {

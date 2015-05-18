@@ -19,13 +19,51 @@ func main() {
 	cm["wrapper"] = controller.WrapperValues
 	cm["slug"] = controller.SlugValues
 	cm["admin"] = amap.Admin
-	cm["login"] = lmap.Login
+	cm["login"] = lmap.Logi
 	Serve(cm)
 }
 
 func Serve(cm controller.ControllerMap) {
 
 	c := configs.New()
+	EnsureIndexes(c)
 	HostSwitch := router.New(c.Aliases, c.SitesMap, cm)
 	http.ListenAndServe(":"+c.Server.Port, HostSwitch)
+}
+
+
+func EnsureIndexes(configs = configs.Configs){
+	for _, site_config := range configs.SitesMap{
+		db_session = site_config.DbSession.Copy()
+		defer db_session.Close()
+		var duration time.Duration = time.Duration(site_cofig.SessionExpiration * time.Hour)
+		i := mgo.Index{
+			Key:         []string{"updated"},
+			Unique:      true,
+			DropDups:    true,
+			Background:  true,
+			Sparse:      false,
+			ExpireAfter: duration.Seconds(),
+		}
+		c := db_session.DB("").C("sessions")
+		c.EnsureIndex(i)
+		i := mgo.Index{
+			Key:         []string{"path", "wildcard"},
+			Unique:      true,
+			DropDups:    true,
+			Background:  true,
+			Sparse:      false,
+		}
+		c := db_session.DB("").C("paths")
+		c.EnsureIndex(i)
+		i := mgo.Index{
+			Key:         []string{"id", "type"},
+			Unique:      true,
+			DropDups:    true,
+			Background:  true,
+			Sparse:      false,
+		}
+		c := db_session.DB("").C("users")
+		c.EnsureIndex(i)
+	}
 }
