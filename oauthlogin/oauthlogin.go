@@ -1,10 +1,10 @@
 package oauthlogin
 
 import (
-	"bytes"
+	//"bytes"
 	"crypto/rand"
 	"encoding/hex"
-	//"encoding/json"
+	"encoding/json"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/controller"
 	"github.com/mongolar/mongolar/url"
@@ -172,14 +172,8 @@ func (gh *GitHub) GetUser() *User {
 	client := gh.Config.Client(oauth2.NoContext, gh.Token)
 	test, _ := client.Get("https://api.github.com/user")
 	u := new(User)
-	buf := new(bytes.Buffer)
-	buf.ReadFrom(test.Body)
-	resp := buf.String()
-	spew.Dump(resp)
-	//data, _ := ioutil.ReadAll(test.Body)
-	//t := new(map[string]string)
-	//json.Unmarshal(data, t)
-	//spew.Dump(t)
+	json.NewDecoder(test.Body).Decode(u)
+	spew.Dump(u)
 	return u
 
 }
