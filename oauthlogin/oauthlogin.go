@@ -1,7 +1,6 @@
 package oauthlogin
 
 import (
-	//"bytes"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -10,7 +9,6 @@ import (
 	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
 	"golang.org/x/oauth2"
-	//"io/ioutil"
 	"net/http"
 )
 
@@ -93,8 +91,11 @@ func (lo *LoginMap) Callback(w *wrapper.Wrapper) {
 				http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginFailure, 301)
 				return
 			}
-			login.GetUser()
-			//spew.Dump(u)
+			u := login.GetUser()
+			err = u.Set()
+			w.Session.Token = login.Token
+			w.Session.UserId = u.MongoId
+			w.SetSession()
 			return
 		}
 	}
@@ -135,12 +136,6 @@ func (ls *LoginStructure) BuildConfig() {
 	}
 }
 
-type User struct {
-	Email string `json:"email"`
-	Id    int    `json:"id"`
-	Name  string `json:"login"`
-}
-
 type GitHub struct {
 	LoginStructure
 }
@@ -173,7 +168,7 @@ func (gh *GitHub) GetUser() *User {
 	test, _ := client.Get("https://api.github.com/user")
 	u := new(User)
 	json.NewDecoder(test.Body).Decode(u)
-	spew.Dump(u)
+	u.Type = "github"
 	return u
 
 }
@@ -183,5 +178,34 @@ func (gh *GitHub) GetToken(code string) error {
 	if err == nil {
 		gh.Token = token
 	}
+	return err
+}
+
+type User struct {
+	MongoId bson.ObjectId `json:"-" bson:"_id"`
+	Email   string        `json:"email" bson:"email"`
+	Id      int           `json:"id" bson:"id"`
+	Name    string        `json:"login" bson:"name"`
+	Type    string        `bson:"type"`
+}
+
+func (u *User) Set(w *wrapper.Wrapper) error {
+	c := w.DbSession.DB("").C("user")
+	tmpuser := new(User)
+	s := bson.M{"id": u.Id, "type": u.Type}
+	err := c.Find(s).One(tmpuser)
+	if err != nil {
+		if err.Error() == "not found" {
+			u.MongoId = bson.NewObjectId()
+			err := c.Insert(u)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		return err
+	}
+	u.MongoId = tmpuser.MongoId
+	err = c.Update(bson.M{"_id": u.MongoId}, u)
 	return err
 }
