@@ -367,7 +367,7 @@ func ContentEditor(w *wrapper.Wrapper) {
 		var ct ContentType
 		err = c.Find(t).One(&ct)
 		f := form.NewForm()
-		f.Fields = ct.Form.Fields
+		f.Fields = ct.Form
 		f.FormData = e.ControllerValues
 		w.SetPayload("form", f)
 		w.Serve()
@@ -535,7 +535,7 @@ func Delete(w *wrapper.Wrapper) {
 }
 
 type ContentType struct {
-	Form    form.Form     `bson:"form" json:"content_form"`
+	Form    []*form.Field `bson:"form" json:"content_form"`
 	Type    string        `bson:"type" json:"type"`
 	MongoId bson.ObjectId `bson:"_id" json:"id"`
 }
@@ -559,21 +559,24 @@ func GetContentType(w *wrapper.Wrapper) {
 
 func EditContentType(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
-	c := w.DbSession.DB("").C("content_types")
 	f := form.NewForm()
-	var ct map[string]interface{}
+	var ct ContentType
+	//var ct []map[string]string
 	if u[3] != "new" {
+		c := w.DbSession.DB("").C("content_types")
 		i := bson.M{"_id": bson.ObjectIdHex(u[3])}
-		var ct map[string]interface{}
-		err := c.Find(i).One(&ct)
+		err := c.Find(i).Select(bson.M{"form": 1}).One(&ct)
 		if err != nil {
 			w.SiteConfig.Logger.Error("Content Type not found " + u[3] + " : " + err.Error())
 			services.AddMessage("Your content types was not found "+u[3], "Error", w)
 			w.Serve()
 			return
 		}
+		f.FormData["elements"] = ct.Form
+	} else {
+		fd := make([]map[string]string, 1)
+		f.FormData["elements"] = fd
 	}
-	f.FormData = ct
 	f.AddRepeatSection("elements", "Add another field", FieldFormGroup())
 	w.SetPayload("form", f)
 	w.SetTemplate("admin/form.html")
@@ -600,9 +603,9 @@ func FieldFormGroup() []*form.Field {
 	f := form.NewForm()
 	f.AddRadio("field_type", ft).AddLabel("Field Type").Required()
 	f.AddText("key", "text").AddLabel("Key").Required()
-	f.AddText("label", "text").AddLabel("Label")
-	f.AddText("placeholder", "text").AddLabel("Placeholder")
-	f.AddTextArea("options").AddLabel("Options").AddHideExpression("form.FormData.field_type != 'radio'")
+	f.AddText("templateOptions.label", "text").AddLabel("Label")
+	f.AddText("templateOptions.placeholder", "text").AddLabel("Placeholder")
+	f.AddTextArea("templateOptions.options").AddLabel("Options").AddHideExpression("form.FormData.field_type != 'radio'")
 	f.AddText("cols", "text").AddLabel("Columns").AddHideExpression("form.FormData.field_type != 'textarea'")
 	f.AddText("rows", "text").AddLabel("Rows").AddHideExpression("form.FormData.field_type != 'textarea'")
 	return f.Fields

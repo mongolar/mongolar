@@ -27,11 +27,10 @@ func NewForm() *Form {
 
 // Add a text field to form
 func (f *Form) AddText(k string, t string) *Field {
-	to := map[string]interface{}{"type": t, "label": ""}
 	fi := &Field{
 		Type:            "input",
 		Key:             k,
-		TemplateOptions: to,
+		TemplateOptions: new(TemplateOptions),
 	}
 	f.Fields = append(f.Fields, fi)
 	return fi
@@ -39,11 +38,10 @@ func (f *Form) AddText(k string, t string) *Field {
 
 // Add a text are to form
 func (f *Form) AddTextArea(k string) *Field {
-	to := map[string]interface{}{"label": ""}
 	fi := &Field{
 		Type:            "textarea",
 		Key:             k,
-		TemplateOptions: to,
+		TemplateOptions: new(TemplateOptions),
 	}
 	f.Fields = append(f.Fields, fi)
 	return fi
@@ -51,11 +49,10 @@ func (f *Form) AddTextArea(k string) *Field {
 
 // Add a checkbox to form
 func (f *Form) AddCheckBox(k string) *Field {
-	to := map[string]interface{}{"label": ""}
 	fi := &Field{
 		Type:            "checkbox",
 		Key:             k,
-		TemplateOptions: to,
+		TemplateOptions: new(TemplateOptions),
 	}
 	f.Fields = append(f.Fields, fi)
 	return fi
@@ -63,11 +60,13 @@ func (f *Form) AddCheckBox(k string) *Field {
 
 // Add a radio button to form
 func (f *Form) AddRadio(k string, o []map[string]string) *Field {
-	to := map[string]interface{}{"options": o, "label": ""}
+	fo := &TemplateOptions{
+		Options: o,
+	}
 	fi := &Field{
 		Type:            "radio",
 		Key:             k,
-		TemplateOptions: to,
+		TemplateOptions: fo,
 	}
 	f.Fields = append(f.Fields, fi)
 	return fi
@@ -75,11 +74,13 @@ func (f *Form) AddRadio(k string, o []map[string]string) *Field {
 
 // Add a radio button to form
 func (f *Form) AddSelect(k string, o []map[string]string) *Field {
-	to := map[string]interface{}{"options": o, "label": ""}
+	fo := &TemplateOptions{
+		Options: o,
+	}
 	fi := &Field{
 		Type:            "radio",
 		Key:             k,
-		TemplateOptions: to,
+		TemplateOptions: fo,
 	}
 	f.Fields = append(f.Fields, fi)
 	return fi
@@ -87,11 +88,14 @@ func (f *Form) AddSelect(k string, o []map[string]string) *Field {
 
 // Add a radio button to form
 func (f *Form) AddRepeatSection(k string, b string, fs []*Field) *Field {
-	to := map[string]interface{}{"fields": fs, "label": "", "btnText": b}
+	fo := &TemplateOptions{
+		Fields:     fs,
+		ButtonText: b,
+	}
 	fi := &Field{
 		Type:            "repeatSection",
 		Key:             k,
-		TemplateOptions: to,
+		TemplateOptions: fo,
 	}
 	f.Fields = append(f.Fields, fi)
 	return fi
@@ -135,38 +139,50 @@ func GetValidRegForm(i string, w *wrapper.Wrapper) (*FormRegister, error) {
 
 // Form fields structure
 type Field struct {
-	Type            string                 `json:"type" bson:"type"`
-	Hide            bool                   `json:"hide,omitempty" bson:"hide,omitempty"`
-	Key             string                 `json:"key" bson:"key"`
-	TemplateOptions map[string]interface{} `json:"templateOptions" bson:"template_options"`
-	HideExpression  string                 `json:"hideExpression,omitempty" bson:"hide_expression"`
+	Type            string           `json:"type" bson:"type"`
+	Hide            bool             `json:"hide,omitempty" bson:"hide,omitempty"`
+	Key             string           `json:"key" bson:"key"`
+	TemplateOptions *TemplateOptions `json:"templateOptions" bson:"template_options"`
+	HideExpression  string           `json:"hideExpression,omitempty" bson:"hide_expression"`
+}
+
+type TemplateOptions struct {
+	Options     []map[string]string `json:"options" bson:"options"`
+	Label       string              `json:"label" bson:"label"`
+	Required    bool                `json:"required" bson:"required"`
+	Placeholder string              `json:"placeholder" bson:"placeholder"`
+	Rows        int                 `json:"rows" bson:"rows"`
+	Cols        int                 `json:"cols" bson:"cols"`
+	Fields      []*Field            `json:"fields" bson:"fields"`
+	ButtonText  string              `json:"btnText" bson:"btnText"`
 }
 
 // Add label to field
 func (f *Field) AddLabel(l string) *Field {
-	f.TemplateOptions["label"] = l
+	f.TemplateOptions.Label = l
 	return f
 }
 
 // Add
 func (f *Field) AddPlaceHolder(p string) *Field {
-	f.TemplateOptions["placeholder"] = p
+	f.TemplateOptions.Placeholder = p
 	return f
 }
 
 func (f *Field) AddRowsCols(r int, c int) *Field {
-	f.TemplateOptions["rows"] = r
-	f.TemplateOptions["cols"] = c
+	f.TemplateOptions.Rows = r
+	f.TemplateOptions.Cols = c
 	return f
 }
 
 func (f *Field) AddHideExpression(he string) *Field {
-	//f.HideExpression = he
+	//TODO: Fix this
+	f.HideExpression = he
 	return f
 }
 
 func (f *Field) Required() *Field {
-	f.TemplateOptions["required"] = true
+	f.TemplateOptions.Required = true
 	return f
 }
 

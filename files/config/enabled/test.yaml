@@ -1,8 +1,0 @@
-MongoDb:
-        user: test
-        db: test
-Domain: mongolar.org
-Directory: /home/jason/Desktop/mongolar.org
-Aliases:
-        - test-1.com
-        - test-1.1.com
