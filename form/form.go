@@ -1,6 +1,7 @@
 package form
 
 import (
+	//	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/wrapper"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -101,7 +102,7 @@ func (f *Form) Register(w *wrapper.Wrapper) error {
 	fr := FormRegister{
 		FormFields: f.Fields,
 		FormId:     f.FormId,
-		SessionId:  w.Session.Id.Hex(),
+		SessionId:  w.Session.Id,
 	}
 	c := w.DbSession.DB("").C("form_register")
 	err := c.Insert(fr)
@@ -112,7 +113,7 @@ func (f *Form) Register(w *wrapper.Wrapper) error {
 type FormRegister struct {
 	FormFields []*Field      `bson:"fields"`
 	FormId     bson.ObjectId `bson:"_id"`
-	SessionId  string        `bson:"session_id"`
+	SessionId  bson.ObjectId `bson:"session_id"`
 }
 
 // Retrieve a previously registered form by id

@@ -25,15 +25,16 @@ func NewAdmin() (*AdminMap, *AdminMenu) {
 	amenu.MenuItems["1"] = map[string]string{"title": "Content", "template": "admin/content_editor.html"}
 	amenu.MenuItems["2"] = map[string]string{"title": "Content Types", "template": "admin/content_types_editor.html"}
 	amap := &AdminMap{
-		"menu":              amenu.AdminMenu,
-		"paths":             AdminPaths,
-		"path_elements":     PathElements,
-		"path_editor":       PathEditor,
-		"element":           Element,
-		"element_editor":    ElementEditor,
-		"add_child":         AddChild,
-		"all_content_types": GetAllContentTypes,
-		"edit_content_type": EditContentType,
+		"menu":               amenu.AdminMenu,
+		"paths":              AdminPaths,
+		"path_elements":      PathElements,
+		"path_editor":        PathEditor,
+		"element":            Element,
+		"element_editor":     ElementEditor,
+		"add_child":          AddChild,
+		"add_existing_child": AddExistingChild,
+		"all_content_types":  GetAllContentTypes,
+		"edit_content_type":  EditContentType,
 	}
 	return amap, &amenu
 }
@@ -52,15 +53,15 @@ func (a AdminMap) Admin(w *wrapper.Wrapper) {
 	}
 }
 
-func validateAdmin(w *wrapper) bool {
-	var roles []string
-	uid := w.Session.UserId
+func validateAdmin(w *wrapper.Wrapper) bool {
+	//var roles []string
+	//uid := w.Session.UserId
 	//TODO load user here
-	for _, role := range roles {
-		if role == "admin" {
-			return true
-		}
-	}
+	//for _, role := range roles {
+	//	if role == "admin" {
+	return true
+	//	}
+	//}
 	return false
 }
 
@@ -303,6 +304,7 @@ func ElementEditor(w *wrapper.Wrapper) {
 		w.SetTemplate("admin/form.html")
 		w.SetPayload("form", f)
 		w.Serve()
+		return
 	} else {
 		_, err := form.GetValidRegForm(w.Post["form_id"].(string), w)
 		if err != nil {
@@ -558,19 +560,21 @@ func GetContentType(w *wrapper.Wrapper) {
 func EditContentType(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	c := w.DbSession.DB("").C("content_types")
-	i := bson.M{"_id": bson.ObjectIdHex(u[3])}
-	var ct ContentType
-	err := c.Find(i).One(&ct)
-	if err != nil {
-		w.SiteConfig.Logger.Error("Content Type not found " + u[3] + " : " + err.Error())
-		services.AddMessage("Your content types was not found "+u[3], "Error", w)
-		w.Serve()
-		return
-	}
 	f := form.NewForm()
+	var ct map[string]interface{}
+	if u[3] != "new" {
+		i := bson.M{"_id": bson.ObjectIdHex(u[3])}
+		var ct map[string]interface{}
+		err := c.Find(i).One(&ct)
+		if err != nil {
+			w.SiteConfig.Logger.Error("Content Type not found " + u[3] + " : " + err.Error())
+			services.AddMessage("Your content types was not found "+u[3], "Error", w)
+			w.Serve()
+			return
+		}
+	}
+	f.FormData = ct
 	f.AddRepeatSection("elements", "Add another field", FieldFormGroup())
-	test := []map[string]string{map[string]string{"key": "test"}}
-	f.FormData["elements"] = test
 	w.SetPayload("form", f)
 	w.SetTemplate("admin/form.html")
 	w.Serve()

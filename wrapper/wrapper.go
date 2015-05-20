@@ -47,13 +47,8 @@ func New(w http.ResponseWriter, r *http.Request, s *configs.SiteConfig) *Wrapper
 
 // Load post data from AngulaJS
 func formPostData(r *http.Request) (map[string]interface{}, error) {
-	b := make([]byte, r.ContentLength)
-	_, err := r.Body.Read(b)
 	p := make(map[string]interface{})
-	if err == nil {
-		errj := json.Unmarshal(b, &p)
-		return p, errj
-	}
+	err := json.NewDecoder(r.Body).Decode(&p)
 	return p, err
 }
 
