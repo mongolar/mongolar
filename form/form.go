@@ -142,19 +142,19 @@ type Field struct {
 	Type            string           `json:"type" bson:"type"`
 	Hide            bool             `json:"hide,omitempty" bson:"hide,omitempty"`
 	Key             string           `json:"key" bson:"key"`
-	TemplateOptions *TemplateOptions `json:"templateOptions" bson:"template_options"`
-	HideExpression  string           `json:"hideExpression,omitempty" bson:"hide_expression"`
+	TemplateOptions *TemplateOptions `json:"templateOptions" bson:"templateOptions"`
+	HideExpression  string           `json:"hideExpression,omitempty" bson:"hideExpression"`
 }
 
 type TemplateOptions struct {
-	Options     []map[string]string `json:"options" bson:"options"`
-	Label       string              `json:"label" bson:"label"`
-	Required    bool                `json:"required" bson:"required"`
-	Placeholder string              `json:"placeholder" bson:"placeholder"`
-	Rows        int                 `json:"rows" bson:"rows"`
-	Cols        int                 `json:"cols" bson:"cols"`
-	Fields      []*Field            `json:"fields" bson:"fields"`
-	ButtonText  string              `json:"btnText" bson:"btnText"`
+	Options     []map[string]string `json:"options,omitempty" bson:"options,omitempty"`
+	Label       string              `json:"label,omitempty" bson:"label,omitempty"`
+	Required    bool                `json:"required,omitempty" bson:"required,omitempty"`
+	Placeholder string              `json:"placeholder,omitempty" bson:"placeholder,omitempty"`
+	Rows        int                 `json:"rows,omitempty" bson:"rows,omitempty"`
+	Cols        int                 `json:"cols,omitempty" bson:"cols,omitempty"`
+	Fields      []*Field            `json:"fields,omitempty" bson:"fields,omitempty"`
+	ButtonText  string              `json:"btnText,omitempty" bson:"btnText,omitempty"`
 }
 
 // Add label to field

@@ -28,7 +28,7 @@ func NewMap() ControllerMap {
 //The designated structure for all elements
 type Element struct {
 	MongoId          bson.ObjectId          `bson:"_id,omitempty" json:"id"`
-	ControllerValues map[string]interface{} `bson:"controller_values,omitempty" json:"controller_values"`
+	ControllerValues map[string]interface{} `bson:"controller_values" json:"controller_values"`
 	Controller       string                 `bson:"controller" json:"controller"`
 	Template         string                 `bson:"template" json:"template"`
 	DynamicId        string                 `bson:"dynamic_id,omitempty" json:"dynamic_id"`

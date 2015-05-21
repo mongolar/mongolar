@@ -1,7 +1,8 @@
 package admin
 
 import (
-	//	"github.com/davecgh/go-spew/spew"
+	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/controller"
 	"github.com/mongolar/mongolar/form"
 	"github.com/mongolar/mongolar/services"
@@ -10,6 +11,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
 	"reflect"
+	"strings"
 )
 
 type AdminMap controller.ControllerMap
@@ -535,8 +537,8 @@ func Delete(w *wrapper.Wrapper) {
 }
 
 type ContentType struct {
-	Form    []*form.Field `bson:"form" json:"content_form"`
-	Type    string        `bson:"type" json:"type"`
+	Form    []*form.Field `bson:"form,omitempty" json:"content_form"`
+	Type    string        `bson:"type,omitempty" json:"type"`
 	MongoId bson.ObjectId `bson:"_id" json:"id"`
 }
 
@@ -558,30 +560,100 @@ func GetContentType(w *wrapper.Wrapper) {
 }
 
 func EditContentType(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
-	f := form.NewForm()
-	var ct ContentType
-	//var ct []map[string]string
-	if u[3] != "new" {
-		c := w.DbSession.DB("").C("content_types")
-		i := bson.M{"_id": bson.ObjectIdHex(u[3])}
-		err := c.Find(i).Select(bson.M{"form": 1}).One(&ct)
-		if err != nil {
-			w.SiteConfig.Logger.Error("Content Type not found " + u[3] + " : " + err.Error())
-			services.AddMessage("Your content types was not found "+u[3], "Error", w)
-			w.Serve()
-			return
+	if w.Post == nil {
+		u := url.UrlToMap(w.Request.URL.Path)
+		f := form.NewForm()
+		ct := new(ContentType)
+		if u[3] != "new" {
+			c := w.DbSession.DB("").C("content_types")
+			i := bson.M{"_id": bson.ObjectIdHex(u[3])}
+			err := c.Find(i).Select(bson.M{"form": 1}).One(ct)
+			if err != nil {
+				w.SiteConfig.Logger.Error("Content Type not found " + u[3] + " : " + err.Error())
+				services.AddMessage("Your content types was not found "+u[3], "Error", w)
+				w.Serve()
+				return
+			}
+			var elements []map[string]interface{}
+			for _, field := range ct.Form {
+				element := make(map[string]interface{})
+				element["type"] = field.Type
+				element["key"] = field.Key
+				element["label"] = field.TemplateOptions.Label
+				element["placeholder"] = field.TemplateOptions.Placeholder
+				element["rows"] = field.TemplateOptions.Rows
+				element["cols"] = field.TemplateOptions.Cols
+				element["options"] = ""
+				for _, opt := range field.TemplateOptions.Options {
+					element["options"] = fmt.Sprintf("%s%s|%s\n", element["options"], opt["name"], opt["value"])
+				}
+				elements = append(elements, element)
+			}
+			f.FormData["elements"] = elements
+		} else {
+			fd := make([]map[string]string, 1)
+			f.FormData["elements"] = fd
 		}
-		f.FormData["elements"] = ct.Form
+		f.AddRepeatSection("elements", "Add another field", FieldFormGroup())
+		w.SetPayload("form", f)
+		w.SetTemplate("admin/form.html")
+		w.Serve()
+		return
 	} else {
-		fd := make([]map[string]string, 1)
-		f.FormData["elements"] = fd
+		elements := reflect.ValueOf(w.Post["elements"])
+		f := form.NewForm()
+		for i := 0; i < elements.Len(); i++ {
+			var field *form.Field
+			element := elements.Index(i).Interface().(map[string]interface{})
+			switch element["type"].(string) {
+			case "input":
+				field = f.AddText(element["key"].(string), "text")
+			case "textarea":
+				field = f.AddTextArea(element["key"].(string))
+			case "radio":
+				values := strings.Split(element["options"].(string), "\n")
+				opt := make([]map[string]string, 0)
+				for _, value := range values {
+					namval := strings.Split(value, "|")
+					if len(namval) < 2 {
+						w.SiteConfig.Logger.Error("Attempt to set incorrect form option " + value + " by " + w.Request.Host)
+						services.AddMessage("Your options must be of the format Name|Value", "Error", w)
+						w.Serve()
+						return
+					}
+					newval := map[string]string{
+						"name":  namval[0],
+						"value": namval[1],
+					}
+					opt = append(opt, newval)
+				}
+				field = f.AddRadio(element["key"].(string), opt)
+			case "checkbox":
+				field = f.AddCheckBox(element["key"].(string))
+			default:
+				//TODO messaging and logging
+				return
+			}
+			if element["label"].(string) != "" && element["label"] != nil {
+				field.AddLabel(element["label"].(string))
+			}
+			if element["placeholder"].(string) != "" && element["placeholder"] != nil {
+				field.AddPlaceHolder(element["placeholder"].(string))
+			}
+			if element["rows"].(float64) != 0 && element["cols"] != 0 {
+				field.AddRowsCols(int(element["rows"].(float64)), int(element["cols"].(float64)))
+			}
+		}
+		e := bson.M{
+			"$set": bson.M{
+				"form": f.Fields,
+			},
+		}
+		s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
+		c := w.DbSession.DB("").C("content_types")
+		err := c.Update(s, e)
+		spew.Dump(err)
 	}
-	f.AddRepeatSection("elements", "Add another field", FieldFormGroup())
-	w.SetPayload("form", f)
-	w.SetTemplate("admin/form.html")
-	w.Serve()
-	return
 }
 
 func GetAllContentTypes(w *wrapper.Wrapper) {
@@ -595,18 +667,18 @@ func GetAllContentTypes(w *wrapper.Wrapper) {
 
 func FieldFormGroup() []*form.Field {
 	ft := []map[string]string{
-		map[string]string{"name": "Text Field", "value": "text"},
+		map[string]string{"name": "Text Field", "value": "input"},
 		map[string]string{"name": "TextArea Field", "value": "textarea"},
 		map[string]string{"name": "Radio Buttons", "value": "radio"},
 		map[string]string{"name": "Checkbox", "value": "checkbox"},
 	}
 	f := form.NewForm()
-	f.AddRadio("field_type", ft).AddLabel("Field Type").Required()
+	f.AddRadio("type", ft).AddLabel("Field Type").Required()
 	f.AddText("key", "text").AddLabel("Key").Required()
-	f.AddText("templateOptions.label", "text").AddLabel("Label")
-	f.AddText("templateOptions.placeholder", "text").AddLabel("Placeholder")
-	f.AddTextArea("templateOptions.options").AddLabel("Options").AddHideExpression("form.FormData.field_type != 'radio'")
-	f.AddText("cols", "text").AddLabel("Columns").AddHideExpression("form.FormData.field_type != 'textarea'")
-	f.AddText("rows", "text").AddLabel("Rows").AddHideExpression("form.FormData.field_type != 'textarea'")
+	f.AddText("label", "text").AddLabel("Label")
+	f.AddText("placeholder", "text").AddLabel("Placeholder")
+	f.AddTextArea("options").AddLabel("Options")
+	f.AddText("cols", "text").AddLabel("Columns")
+	f.AddText("rows", "text").AddLabel("Rows")
 	return f.Fields
 }
