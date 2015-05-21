@@ -74,10 +74,11 @@ func (a *AdminMenu) AdminMenu(w *wrapper.Wrapper) {
 }
 
 func AdminPaths(w *wrapper.Wrapper) {
-	//TODO: Log Errors here
 	pl, err := controller.PathList(w)
 	if err != nil {
-		w.SiteConfig.Logger.Error("Error getting path list: " + err.Error())
+		services.AddMessage("There was an error retrieving your site paths", "Error", w)
+		errmessage := fmt.Sprintf("Error getting path list: %s", err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
 	} else {
 		w.SetContent(pl)
 	}
@@ -107,8 +108,9 @@ func PathEditor(w *wrapper.Wrapper) {
 			p := controller.NewPath()
 			err := p.GetById(u[3], w)
 			if err != nil {
-				w.SiteConfig.Logger.Error("Path not found to edit for " + u[3] + " by " + w.Request.Host)
-				services.AddMessage("This path was not found", "Error", w)
+				errmessage := fmt.Sprintf("Could not retrieve path %s by %s: %s", u[3], w.Request.Host, err.Error())
+				w.SiteConfig.Logger.Error(errmessage)
+				services.AddMessage("Error retrieving path information.", "Error", w)
 				w.Serve()
 			} else {
 				f.FormData["wildcard"] = p.Wildcard
@@ -125,7 +127,8 @@ func PathEditor(w *wrapper.Wrapper) {
 	} else {
 		_, err := form.GetValidRegForm(w.Post["form_id"].(string), w)
 		if err != nil {
-			w.SiteConfig.Logger.Error("Attempt to access invalid form" + w.Post["form_id"].(string) + " by " + w.Request.Host)
+			errmessage := fmt.Sprintf("Attempt to access invalid form %s by %s.", w.Post["form_id"].(string), w.Request.Host)
+			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("Invalid Form", "Error", w)
 			w.Serve()
 		} else {
@@ -146,7 +149,8 @@ func PathEditor(w *wrapper.Wrapper) {
 				}
 				err := c.Insert(p)
 				if err != nil {
-					w.SiteConfig.Logger.Error("Unable to save new path by " + w.Request.Host + " : " + err.Error())
+					errmessage := fmt.Sprintf("Unable to save new path by %s: %s", w.Request.Host, err.Error())
+					w.SiteConfig.Logger.Error(errmessage)
 					services.AddMessage("There was a problem saving your path.", "Error", w)
 				} else {
 					services.AddMessage("Your element was saved.", "Success", w)
@@ -164,8 +168,9 @@ func PathEditor(w *wrapper.Wrapper) {
 				s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
 				err := c.Update(s, p)
 				if err != nil {
-					w.SiteConfig.Logger.Error("Unable to asave path " + w.Post["mongolarid"].(string) +
-						" by " + w.Request.Host + " : " + err.Error())
+					errmessage := fmt.Sprintf("Unable to save path %s by %s: %s", w.Post["mongolarid"].(string),
+						w.Request.Host, err.Error())
+					w.SiteConfig.Logger.Error(errmessage)
 					services.AddMessage("There was a problem saving your path.", "Error", w)
 				} else {
 					services.AddMessage("Your path was saved.", "Success", w)
@@ -183,7 +188,8 @@ func PathElements(w *wrapper.Wrapper) {
 	p := controller.NewPath()
 	err := p.GetById(u[3], w)
 	if err != nil {
-		w.SiteConfig.Logger.Error("Path not found to edit for " + u[3] + " by " + w.Request.Host)
+		errmessage := fmt.Sprintf("Path not found to edit for %s by %s ", u[3], w.Request.Host)
+		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("This path was not found", "Error", w)
 		w.Serve()
 	} else {
@@ -200,9 +206,9 @@ func Element(w *wrapper.Wrapper) {
 	e := controller.NewElement()
 	err := e.GetById(u[3], w)
 	if err != nil {
-		w.SiteConfig.Logger.Error("Element not found to edit for " + u[3] + " by " + w.Request.Host)
+		errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", u[3], w.Request.Host)
+		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("This element was not found", "Error", w)
-		w.Serve()
 	} else {
 		w.SetPayload("id", e.MongoId)
 		w.SetPayload("title", e.Title)
@@ -210,30 +216,34 @@ func Element(w *wrapper.Wrapper) {
 		if c, ok := e.ControllerValues["elements"]; ok {
 			w.SetPayload("elements", c)
 		}
-		w.Serve()
+		services.AddMessage("No elements found.", "Info", w)
 	}
+	w.Serve()
 }
 
 func ElementSort(w *wrapper.Wrapper) {
+	//TODO ERROR handling and messaging
 	u := url.UrlToMap(w.Request.URL.Path)
 	if w.Post == nil {
 		if u[3] == "paths" {
 			p := controller.NewPath()
 			err := p.GetById(u[4], w)
 			if err != nil {
-				w.SiteConfig.Logger.Error("Path not found to sort for " + u[4] + " by " + w.Request.Host)
+				errmessage := fmt.Sprintf("Path not found to sort for %s by %s", u[4], w.Request.Host)
+				w.SiteConfig.Logger.Error(errmessage)
 				services.AddMessage("This path was not found", "Error", w)
-				w.Serve()
-			} else {
-				w.SetPayload("elements", p.Elements)
 				w.Serve()
 				return
 			}
+			w.SetPayload("elements", p.Elements)
+			w.Serve()
+			return
 		} else if u[3] == "elements" {
 			e := controller.NewElement()
 			err := e.GetById(u[4], w)
 			if err != nil {
-				w.SiteConfig.Logger.Error("Element not found to sort for " + u[4] + " by " + w.Request.Host)
+				errmessage := fmt.Sprintf("Element not found to sort for %s by %s.", u[4], w.Request.Host)
+				w.SiteConfig.Logger.Error(errmessage)
 				services.AddMessage("This element was not found", "Error", w)
 				w.Serve()
 				return
@@ -249,9 +259,9 @@ func ElementSort(w *wrapper.Wrapper) {
 				w.Serve()
 				return
 			}
-		} else {
-			//TODO Illegal request
 		}
+		http.Error(w.Writer, "Forbidden", 403)
+		return
 	} else {
 		//TODO range over Post?
 		if u[3] == "paths" {
@@ -272,10 +282,11 @@ func ElementSort(w *wrapper.Wrapper) {
 			}
 			s := bson.M{"_id": bson.ObjectIdHex(u[4])}
 			c := w.DbSession.DB("").C("elements")
-			c.Update(s, p)
-		} else {
-			//TODO Illegal request
+			err := c.Update(s, p)
+			services.AddMessage("This has no elements assigned yet.", "Error", w)
 		}
+		http.Error(w.Writer, "Forbidden", 403)
+		return
 	}
 }
 func ElementEditor(w *wrapper.Wrapper) {
