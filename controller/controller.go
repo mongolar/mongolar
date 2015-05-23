@@ -30,7 +30,7 @@ type Element struct {
 	MongoId          bson.ObjectId          `bson:"_id,omitempty" json:"id"`
 	ControllerValues map[string]interface{} `bson:"controller_values" json:"controller_values"`
 	Controller       string                 `bson:"controller" json:"controller"`
-	Template         string                 `bson:"template" json:"template"`
+	Template         string                 `bson:"template,omitempty" json:"template,omitempty"`
 	DynamicId        string                 `bson:"dynamic_id,omitempty" json:"dynamic_id"`
 	Title            string                 `bson:"title"`
 }
@@ -76,7 +76,7 @@ type Path struct {
 
 // Constructor for elements
 func NewPath() Path {
-	e := make([]string, 1)
+	e := make([]string, 0)
 	p := Path{Elements: e}
 	return p
 }
@@ -90,7 +90,7 @@ func (p *Path) GetById(i string, w *wrapper.Wrapper) error {
 
 // Get all Paths
 func PathList(w *wrapper.Wrapper) ([]Path, error) {
-	pl := make([]Path, 1)
+	pl := make([]Path, 0)
 	c := w.DbSession.DB("").C("paths")
 	i := c.Find(nil).Limit(50).Iter()
 	err := i.All(&pl)

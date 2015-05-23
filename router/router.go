@@ -7,6 +7,7 @@ import (
 	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
 	"net/http"
+	"os"
 	"sort"
 )
 
@@ -56,6 +57,18 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// TODO Move this to a controller
 		case "assets":
 			d := s.Directory
+			f := d + "/" + r.URL.Path[1:]
+			info, err := os.Stat(f)
+			if err != nil {
+				if os.IsNotExist(err) {
+					http.NotFound(w, r)
+					return
+				}
+			}
+			if info.IsDir() {
+				http.NotFound(w, r)
+				return
+			}
 			http.ServeFile(w, r, d+"/"+r.URL.Path[1:])
 
 		// If path is ApiEndPoint this is an API request.

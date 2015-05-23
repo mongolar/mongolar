@@ -2,6 +2,8 @@ package form
 
 import (
 	//	"github.com/davecgh/go-spew/spew"
+	"fmt"
+	"github.com/mongolar/mongolar/services"
 	"github.com/mongolar/mongolar/wrapper"
 	"gopkg.in/mgo.v2/bson"
 )
@@ -134,6 +136,17 @@ func GetValidRegForm(i string, w *wrapper.Wrapper) (*FormRegister, error) {
 	c := w.DbSession.DB("").C("form_register")
 	b := bson.M{"session_id": w.Session.Id, "_id": bson.ObjectIdHex(i)}
 	err := c.Find(b).One(fr)
+	return fr, err
+}
+
+func GetValidRegFormM(i string, w *wrapper.Wrapper) (*FormRegister, error) {
+	fr, err := GetValidRegForm(i, w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Attempt to access invalid form %s by %s.", w.Post["form_id"].(string), w.Request.Host)
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Invalid Form", "Error", w)
+		w.Serve()
+	}
 	return fr, err
 }
 

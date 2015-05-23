@@ -1,3 +1,5 @@
+// Admin is a series of controllers to manage a Mongolar site
+
 package admin
 
 import (
@@ -16,16 +18,20 @@ import (
 
 type AdminMap controller.ControllerMap
 
+// A series of menu items to render on the admin page
 type AdminMenu struct {
-	MenuItems map[string]map[string]string `json:"menu_items"`
+	MenuItems []map[string]string `json:"menu_items"`
 }
 
+// Build a new admin instance and return AdminMap and menu to be altered
 func NewAdmin() (*AdminMap, *AdminMenu) {
-	mi := make(map[string]map[string]string)
-	amenu := AdminMenu{MenuItems: mi}
-	amenu.MenuItems["0"] = map[string]string{"title": "Home", "template": "admin/main_content_default.html"}
-	amenu.MenuItems["1"] = map[string]string{"title": "Content", "template": "admin/content_editor.html"}
-	amenu.MenuItems["2"] = map[string]string{"title": "Content Types", "template": "admin/content_types_editor.html"}
+	amenu := AdminMenu{
+		MenuItems: []map[string]string{
+			map[string]string{"title": "Home", "template": "admin/main_content_default.html"},
+			map[string]string{"title": "Content", "template": "admin/content_editor.html"},
+			map[string]string{"title": "Content Types", "template": "admin/content_types_editor.html"},
+		},
+	}
 	amap := &AdminMap{
 		"menu":               amenu.AdminMenu,
 		"paths":              AdminPaths,
@@ -37,10 +43,12 @@ func NewAdmin() (*AdminMap, *AdminMenu) {
 		"add_existing_child": AddExistingChild,
 		"all_content_types":  GetAllContentTypes,
 		"edit_content_type":  EditContentType,
+		"delete":             Delete,
 	}
 	return amap, &amenu
 }
 
+//Main controller for all admin functions
 func (a AdminMap) Admin(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	if c, ok := a[u[2]]; ok {
@@ -125,12 +133,9 @@ func PathEditor(w *wrapper.Wrapper) {
 		w.SetPayload("form", f)
 		w.Serve()
 	} else {
-		_, err := form.GetValidRegForm(w.Post["form_id"].(string), w)
+		_, err := form.GetValidRegFormM(w.Post["form_id"].(string), w)
 		if err != nil {
-			errmessage := fmt.Sprintf("Attempt to access invalid form %s by %s.", w.Post["form_id"].(string), w.Request.Host)
-			w.SiteConfig.Logger.Error(errmessage)
-			services.AddMessage("Invalid Form", "Error", w)
-			w.Serve()
+			return
 		} else {
 			c := w.DbSession.DB("").C("paths")
 			if w.Post["mongolarid"].(string) == "new" {
@@ -196,6 +201,9 @@ func PathElements(w *wrapper.Wrapper) {
 		w.SetPayload("path", p.Path)
 		w.SetPayload("title", p.Title)
 		w.SetPayload("elements", p.Elements)
+		if len(p.Elements) == 0 {
+			services.AddMessage("This path has no elements.", "Info", w)
+		}
 		w.Serve()
 	}
 
@@ -216,7 +224,6 @@ func Element(w *wrapper.Wrapper) {
 		if c, ok := e.ControllerValues["elements"]; ok {
 			w.SetPayload("elements", c)
 		}
-		services.AddMessage("No elements found.", "Info", w)
 	}
 	w.Serve()
 }
@@ -283,6 +290,13 @@ func ElementSort(w *wrapper.Wrapper) {
 			s := bson.M{"_id": bson.ObjectIdHex(u[4])}
 			c := w.DbSession.DB("").C("elements")
 			err := c.Update(s, p)
+			if err != nil {
+				errmessage := fmt.Sprintf("Unable to update element order %s by %s: %s", u[3], w.Request.Host, err.Error())
+				w.SiteConfig.Logger.Error(errmessage)
+				services.AddMessage("Unable to save elements.", "Error", w)
+				w.Serve()
+				return
+			}
 			services.AddMessage("This has no elements assigned yet.", "Error", w)
 		}
 		http.Error(w.Writer, "Forbidden", 403)
@@ -303,27 +317,24 @@ func ElementEditor(w *wrapper.Wrapper) {
 			e := controller.NewElement()
 			err := e.GetById(u[3], w)
 			if err != nil {
-				w.SiteConfig.Logger.Error("Element not found to edit for " + u[3] + " by " + w.Request.Host)
+				errmessage := fmt.Sprintf("Element not found to edit for %s by %s", u[3], w.Request.Host)
+				w.SiteConfig.Logger.Error(errmessage)
 				services.AddMessage("This element was not found", "Error", w)
 				w.Serve()
-			} else {
-				f.FormData["controller"] = e.Controller
-				f.FormData["title"] = e.Title
-				f.FormData["template"] = e.Template
-				f.FormData["dynamic_id"] = e.DynamicId
+				return
 			}
+			f.FormData["controller"] = e.Controller
+			f.FormData["title"] = e.Title
+			f.FormData["template"] = e.Template
+			f.FormData["dynamic_id"] = e.DynamicId
 		}
 		f.Register(w)
 		w.SetTemplate("admin/form.html")
 		w.SetPayload("form", f)
-		w.Serve()
-		return
 	} else {
-		_, err := form.GetValidRegForm(w.Post["form_id"].(string), w)
+		_, err := form.GetValidRegFormM(w.Post["form_id"].(string), w)
 		if err != nil {
-			w.SiteConfig.Logger.Error("Attempt to access invalid form" + w.Post["FormId"].(string) + " by " + w.Request.Host)
-			services.AddMessage("Invalid Form", "Error", w)
-			w.Serve()
+			return
 		} else {
 			c := w.DbSession.DB("").C("elements")
 			if w.Post["mongolarid"].(string) == "new" {
@@ -335,7 +346,8 @@ func ElementEditor(w *wrapper.Wrapper) {
 				}
 				err := c.Insert(p)
 				if err != nil {
-					w.SiteConfig.Logger.Error("Unable to save new element by " + w.Request.Host + " : " + err.Error())
+					errmessage := fmt.Sprintf("Unable to save new element by %s : %s", w.Request.Host, err.Error())
+					w.SiteConfig.Logger.Error(errmessage)
 					services.AddMessage("There was a problem saving your element.", "Error", w)
 				} else {
 					services.AddMessage("Your element was saved.", "Success", w)
@@ -352,8 +364,9 @@ func ElementEditor(w *wrapper.Wrapper) {
 				s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
 				err := c.Update(s, p)
 				if err != nil {
-					w.SiteConfig.Logger.Error("Unable to save element " + w.Post["mongolarid"].(string) +
-						" by " + w.Request.Host + " : " + err.Error())
+					errmessage := fmt.Sprintf("Unable to save element %s by %s : %s",
+						w.Post["mongolarid"].(string), w.Request.Host, err.Error())
+					w.SiteConfig.Logger.Error(errmessage)
 					services.AddMessage("There was a problem saving your element.", "Error", w)
 				} else {
 					services.AddMessage("Your element was saved.", "Success", w)
@@ -362,7 +375,7 @@ func ElementEditor(w *wrapper.Wrapper) {
 		}
 	}
 	w.Serve()
-
+	return
 }
 
 func ContentEditor(w *wrapper.Wrapper) {
@@ -371,9 +384,11 @@ func ContentEditor(w *wrapper.Wrapper) {
 		e := controller.NewElement()
 		err := e.GetById(u[3], w)
 		if err != nil {
-			w.SiteConfig.Logger.Error("Element not found to edit for " + u[3] + " by " + w.Request.Host)
+			errmessage := fmt.Sprintf("Element not found to edit for %s by %s", u[3], w.Request.Host)
+			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("This element was not found", "Error", w)
 			w.Serve()
+			return
 		}
 		c := w.DbSession.DB("").C("content_types")
 		t := bson.M{"type": e.ControllerValues["type"]}
@@ -382,10 +397,15 @@ func ContentEditor(w *wrapper.Wrapper) {
 		f := form.NewForm()
 		f.Fields = ct.Form
 		f.FormData = e.ControllerValues
+		f.Register(w)
 		w.SetPayload("form", f)
 		w.Serve()
 		return
 	} else {
+		_, err := form.GetValidRegFormM(w.Post["form_id"].(string), w)
+		if err != nil {
+			return
+		}
 		e := bson.M{
 			"$set": bson.M{
 				"controller_values.content": w.Post,
@@ -393,9 +413,10 @@ func ContentEditor(w *wrapper.Wrapper) {
 		}
 		s := bson.M{"_id": bson.ObjectIdHex(u[3])}
 		c := w.DbSession.DB("").C("elements")
-		err := c.Update(s, e)
+		err = c.Update(s, e)
 		if err != nil {
-			w.SiteConfig.Logger.Error("Element not saved " + u[3] + " by " + w.Request.Host)
+			errmessage := fmt.Sprintf("Element not saved %s by %s.", u[3], w.Request.Host)
+			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("Unable to save element.", "Error", w)
 			w.Serve()
 		}
@@ -408,22 +429,31 @@ func ContentTypeEditor(w *wrapper.Wrapper) {
 		e := controller.NewElement()
 		err := e.GetById(u[3], w)
 		if err != nil {
-			w.SiteConfig.Logger.Error("Element not found to edit for " + u[3] + " by " + w.Request.Host)
+			errmessage := fmt.Sprintf("Element not found to edit for %s by %s", u[3], w.Request.Host)
+			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("This element was not found", "Error", w)
 			w.Serve()
+			return
 		}
 		c := w.DbSession.DB("").C("content_types")
 		var cts []ContentType
-		c.Find(nil).Limit(50).Iter().All(&cts)
-		//for _, ct := range cts {
-		//	ct.Type
-		//}
+		err = c.Find(nil).Limit(50).Iter().All(&cts)
+		if err != nil {
+			errmessage := fmt.Sprintf("Unable to query all Content Types: %s", err.Error())
+			w.SiteConfig.Logger.Error(errmessage)
+			services.AddMessage("Unable to retrieve content types.", "Error", w)
+			w.Serve()
+			return
+		}
 		f := form.NewForm()
-		//f.FormData = e.ControllerValues["type"]
+		f.FormData["type"] = e.ControllerValues["type"]
+		f.Register(w)
 		w.SetPayload("form", f)
-		w.Serve()
-		return
 	} else {
+		_, err := form.GetValidRegFormM(w.Post["form_id"].(string), w)
+		if err != nil {
+			return
+		}
 		e := bson.M{
 			"$set": bson.M{
 				"controller_values.type": w.Post["type"],
@@ -431,13 +461,15 @@ func ContentTypeEditor(w *wrapper.Wrapper) {
 		}
 		s := bson.M{"_id": bson.ObjectIdHex(u[3])}
 		c := w.DbSession.DB("").C("content_types")
-		err := c.Update(s, e)
+		err = c.Update(s, e)
 		if err != nil {
-			w.SiteConfig.Logger.Error("Element not saved " + u[3] + " by " + w.Request.Host)
+			errmessage := fmt.Sprintf("Element not saved %s by %s", u[3], w.Request.Host)
+			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("Unable to save element.", "Error", w)
-			w.Serve()
 		}
 	}
+	w.Serve()
+	return
 }
 
 func AddChild(w *wrapper.Wrapper) {
@@ -448,7 +480,8 @@ func AddChild(w *wrapper.Wrapper) {
 	c := w.DbSession.DB("").C("elements")
 	err := c.Insert(e)
 	if err != nil {
-		w.SiteConfig.Logger.Error("Unable to create new element  by " + w.Request.Host + " : " + err.Error())
+		errmessage := fmt.Sprintf("Unable to create new element  by %s : %s", w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("Could not create a new element.", "Error", w)
 		w.Serve()
 		return
@@ -460,8 +493,10 @@ func AddChild(w *wrapper.Wrapper) {
 	} else if u[3] == "paths" {
 		f = "elements"
 	} else {
-		w.SiteConfig.Logger.Error("Unable to add child element " + e.MongoId.Hex() + " to " + u[4] + " : " + err.Error())
-		services.AddMessage("There was a problem, your elemeent was created but was not assigned to your "+u[3]+".", "Error", w)
+		errmessage := fmt.Sprintf("Invalid parent item type %s by %s", u[3], w.Request.Host)
+		w.SiteConfig.Logger.Error(errmessage)
+		message := fmt.Sprintf("Attempt to assign child to illegal parent %s.", u[3])
+		services.AddMessage(message, "Error", w)
 		w.Serve()
 		return
 
@@ -469,10 +504,10 @@ func AddChild(w *wrapper.Wrapper) {
 	i := bson.M{"_id": bson.ObjectIdHex(u[4])}
 	err = c.Update(i, bson.M{"$push": bson.M{f: e.MongoId.Hex()}})
 	if err != nil {
-		w.SiteConfig.Logger.Error("Unable to add child element " + e.MongoId.Hex() + " to " + u[4] + " : " + err.Error())
-		services.AddMessage("There was a problem, your elemeent was created but was not assigned to your "+u[3]+".", "Error", w)
-		w.Serve()
-		return
+		errmessage := fmt.Sprintf("Unable to add child element %s to %s : %s", e.MongoId.Hex(), u[4], err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		message := fmt.Sprintf("There was a problem, your elemeent was created but was not assigned to your %s.", u[3])
+		services.AddMessage(message, "Error", w)
 	}
 	services.AddMessage("You have added a new element.", "Success", w)
 	w.Serve()
@@ -483,7 +518,13 @@ func AddChild(w *wrapper.Wrapper) {
 func AllElements(w *wrapper.Wrapper) {
 	c := w.DbSession.DB("").C("elements")
 	var es []controller.Element
-	c.Find(nil).Limit(50).Iter().All(&es)
+	err := c.Find(nil).Limit(50).Iter().All(&es)
+	if err != nil {
+		errmessage := fmt.Sprintf("Unable to retrieve a list of all elements: %s", err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		message := fmt.Sprintf("There was a problem retrieving the element list.")
+		services.AddMessage(message, "Error", w)
+	}
 	w.SetPayload("elements", es)
 	w.Serve()
 	return
@@ -602,15 +643,20 @@ func EditContentType(w *wrapper.Wrapper) {
 			}
 			f.FormData["elements"] = elements
 		} else {
-			fd := make([]map[string]string, 1)
+			fd := make([]map[string]string, 0)
 			f.FormData["elements"] = fd
 		}
 		f.AddRepeatSection("elements", "Add another field", FieldFormGroup())
+		f.Register(w)
 		w.SetPayload("form", f)
 		w.SetTemplate("admin/form.html")
 		w.Serve()
 		return
 	} else {
+		_, err := form.GetValidRegFormM(w.Post["form_id"].(string), w)
+		if err != nil {
+			return
+		}
 		elements := reflect.ValueOf(w.Post["elements"])
 		f := form.NewForm()
 		for i := 0; i < elements.Len(); i++ {
@@ -662,7 +708,7 @@ func EditContentType(w *wrapper.Wrapper) {
 		}
 		s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
 		c := w.DbSession.DB("").C("content_types")
-		err := c.Update(s, e)
+		err = c.Update(s, e)
 		spew.Dump(err)
 	}
 }
