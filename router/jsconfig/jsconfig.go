@@ -16,7 +16,7 @@ const (
 				{{ end }}
 			]
 		);
-
+		
 		mongolar.constant('mongolarConfig', {
     			mongolar_url: '/{{ .APIEndPoint }}/',
     			templates_url: '/{{ .TemplateEndpoint }}/'}
@@ -29,7 +29,11 @@ const (
      				'http://{{.}}/**',
 				{{ end }}
    			]);
- 		});`
+ 		});
+		mongolar.config(['growlProvider', function(growlProvider) {
+		  growlProvider.globalTimeToLive(5000);
+		}]);
+		`
 )
 
 // Current available values.  This may be reconfigured if it gets too large.

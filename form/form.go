@@ -80,7 +80,7 @@ func (f *Form) AddSelect(k string, o []map[string]string) *Field {
 		Options: o,
 	}
 	fi := &Field{
-		Type:            "radio",
+		Type:            "select",
 		Key:             k,
 		TemplateOptions: fo,
 	}

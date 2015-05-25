@@ -105,7 +105,7 @@ func PathValues(w *wrapper.Wrapper) {
 	p := NewPath()
 	c := w.DbSession.DB("").C("paths")
 	u := w.Request.Header.Get("CurrentPath")
-	qp, err := p.pathMatch(u, c)
+	qp, err := p.pathMatch(u, "published", c)
 	if err != nil {
 		if err.Error() == "not found" {
 			if "/"+w.SiteConfig.FourOFour != u {
@@ -142,12 +142,12 @@ func PathValues(w *wrapper.Wrapper) {
 }
 
 // Path matching query
-func (p *Path) pathMatch(u string, c *mgo.Collection) (string, error) {
+func (p *Path) pathMatch(u string, s string, c *mgo.Collection) (string, error) {
 	var rejects []string
 	w := false
 	var err error
 	for {
-		b := bson.M{"path": u, "wildcard": w}
+		b := bson.M{"path": u, "wildcard": w, "status": s}
 		err = c.Find(b).One(p)
 		w = true
 		// If query doesnt return anything
