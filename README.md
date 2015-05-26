@@ -21,12 +21,7 @@ Mongolar serves along several ddifferent paths
  - default: If all the above routing does not work then the index.html will be served allowing AngularJS to take over routing.
 
 ###MongoDB
-MongoDb stores stuff like NoSQL
-
-
-##This sounds complicated
-
-It is and it isn't.
+MongoDb stores stuff like NoSQL Dbs do.
 
 ##Scalable
 
@@ -79,7 +74,7 @@ Example:
 EXAMPLE HERE
 ```
 ###3. Frontend
-I have provided a base public directory here. LINK HERE
+I have provided a base public directory [here](https://github.com/mongolar/public_directory_example).
 
 Clone the repository wherever you wish to edit your html, js and css for the wwebsite.
 
@@ -97,7 +92,7 @@ The only file that will be accessible from the root folder of this site is the i
 If you want to change that functionality just go into the router and change the folder name to whatever you want.
 
 ###4. MongoDB
-If you are new to MongoDB the easiest way to setup MongoDb is with Mongolabs.  They offer a free tier service that will allow you to test the system, but don't expect the free tier service to be performant.  Latency between requests and the fact that the free tier does not have many resources can impact site performance.
+If you are new to MongoDB the easiest way to setup MongoDb is with [Mongolabs](https://mongolab.com/).  They offer a free tier service that will allow you to test the system, but don't expect the free tier service to be performant.  Latency between requests and the fact that the free tier does not have many resources can impact site performance.
 
 Go to their site, create a database, and add a user to the database and they will provide the information to login from your Mongolar site.
 
@@ -110,7 +105,7 @@ You may need to run as root, depending on port and permissions of your OS.
 ```bash
 sudo -E go run mongolar.go
 ```
-You should be running, let me know if your not in the issue que.
+You should be running, let me know if you have problems in the issue que.
 
 
 ##This is a very early BETA
@@ -128,11 +123,11 @@ First and foremost is my amazing wife.  She has really been patient with my effo
 The Angular community.  They have to be the most supportive group of developers I have ever worked with.
 The below package/library providers:
 
-angular-formly - By far the best form generation tool I have ever used.
-davecgh/go-spew - This package was a livesaver
-mgo -  Could not have done it without a MongoDb driver
-spf13/viper
-Sirupsen/logrus
+[formly-js](https://github.com/formly-js/angular-formly) - By far the best form generation tool I have ever used.
+[davecgh/go-spew](https://github.com/davecgh/go-spew) - This package was a livesaver
+[mgo](https://labix.org/mgo) -  Could not have done it without a MongoDb driver
+[spf13/viper](https://github.com/spf13/viper)
+[Sirupsen/logrus](https://github.com/Sirupsen/logrus)
 
 ##More information
 Visit the issue que or read the Wiki.
@@ -147,3 +142,6 @@ Create an issue
   - Kahn: a cli to talk to your mongolar server while it is running.
   - Clustering
 
+##This sounds complicated
+
+It is and it isn't.
