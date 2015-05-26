@@ -27,8 +27,7 @@ type SiteConfig struct {
 	APIEndPoint       string
 	Controllers       []string
 	OAuthLogins       map[string]map[string]string
-	LoginSuccess      string
-	LoginFailure      string
+	LoginURLs         map[string]string
 }
 
 // Constructor for SiteConfig

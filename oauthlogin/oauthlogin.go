@@ -4,11 +4,13 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
-	"github.com/davecgh/go-spew/spew"
+	"fmt"
+	//"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/controller"
 	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
 	"golang.org/x/oauth2"
+	"gopkg.in/mgo.v2/bson"
 	"net/http"
 )
 
@@ -79,36 +81,55 @@ func (lo *LoginMap) Callback(w *wrapper.Wrapper) {
 			sc := w.SiteConfig.OAuthLogins[u[3]]
 			login := lo.Logins[u[3]]
 			if lo.State != s {
-				w.SiteConfig.Logger.Error("invalid oauth state, expected " + lo.State + ", got " + s)
-				http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginFailure, 301)
+				errmessage := fmt.Sprintf("Invalid oauth state, expected %s, got %s", lo.State, s)
+				w.SiteConfig.Logger.Error(errmessage)
+				http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginURLs["failure"], 301)
 				return
 			}
 			login.SetConfig(sc, "", "")
 			code := w.Request.FormValue("code")
-			err := login.GetToken(code)
+			token, err := login.GetToken(code)
 			if err != nil {
-				w.SiteConfig.Logger.Error("Exchange() failed with " + err.Error())
-				http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginFailure, 301)
+				errmessage := fmt.Sprintf("Exchange() failed with %s", err.Error())
+				w.SiteConfig.Logger.Error(errmessage)
+				http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginURLs["failure"], 301)
 				return
 			}
 			u := login.GetUser()
-			err = u.Set()
-			w.Session.Token = login.Token
-			w.Session.UserId = u.MongoId
-			w.SetSession()
+			err = u.Set(w)
+			if err != nil {
+				errmessage := fmt.Sprintf("Unable to set user: %s", err.Error())
+				w.SiteConfig.Logger.Error(errmessage)
+				http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginURLs["failure"], 301)
+				return
+			}
+			err = w.SetSessionValue("user_id", u.MongoId)
+			if err != nil {
+				errmessage := fmt.Sprintf("Unable to set user id on session: %s", err.Error())
+				w.SiteConfig.Logger.Error(errmessage)
+				http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginURLs["failure"], 301)
+				return
+			}
+			err = w.SetSessionValue("token", token)
+			if err != nil {
+				errmessage := fmt.Sprintf("Unable to set token on session: %s", err.Error())
+				w.SiteConfig.Logger.Error(errmessage)
+				http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginURLs["failure"], 301)
+				return
+			}
+			http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginURLs["success"], 301)
 			return
 		}
 	}
 	http.Error(w.Writer, "Forbidden", 403)
 	return
-	//TODO link session to user
 }
 
 type Login interface {
 	SetConfig(map[string]string, string, string)
 	GetUrl() string
 	GetUser() *User
-	GetToken(string) error
+	GetToken(string) (*oauth2.Token, error)
 }
 
 type LoginStructure struct {
@@ -173,12 +194,12 @@ func (gh *GitHub) GetUser() *User {
 
 }
 
-func (gh *GitHub) GetToken(code string) error {
+func (gh *GitHub) GetToken(code string) (*oauth2.Token, error) {
 	token, err := gh.Config.Exchange(oauth2.NoContext, code)
 	if err == nil {
 		gh.Token = token
 	}
-	return err
+	return token, err
 }
 
 // move below to new package
@@ -191,7 +212,7 @@ type User struct {
 }
 
 func (u *User) Set(w *wrapper.Wrapper) error {
-	c := w.DbSession.DB("").C("user")
+	c := w.DbSession.DB("").C("users")
 	tmpuser := new(User)
 	s := bson.M{"id": u.Id, "type": u.Type}
 	err := c.Find(s).One(tmpuser)
@@ -208,5 +229,14 @@ func (u *User) Set(w *wrapper.Wrapper) error {
 	}
 	u.MongoId = tmpuser.MongoId
 	err = c.Update(bson.M{"_id": u.MongoId}, u)
+	return err
+}
+
+func (u *User) Get(w *wrapper.Wrapper) error {
+	c := w.DbSession.DB("").C("users")
+	id := bson.M{}
+	w.GetSessionValue("user_id", id)
+	s := bson.M{"id": id}
+	err := c.Find(s).One(u)
 	return err
 }

@@ -4,7 +4,7 @@ import (
 	"github.com/mongolar/mongolar/admin"
 	"github.com/mongolar/mongolar/configs"
 	"github.com/mongolar/mongolar/controller"
-	//"github.com/mongolar/mongolar/oauthlogin"
+	"github.com/mongolar/mongolar/oauthlogin"
 	//"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/router"
 	"gopkg.in/mgo.v2"
@@ -14,7 +14,7 @@ import (
 
 func main() {
 	amap, _ := admin.NewAdmin()
-	//lmap := oauthlogin.NewLoginMap()
+	lmap := oauthlogin.NewLoginMap()
 	cm := controller.NewMap()
 	cm["domian_public_value"] = controller.DomainPublicValue
 	cm["path"] = controller.PathValues
@@ -22,7 +22,7 @@ func main() {
 	cm["wrapper"] = controller.WrapperValues
 	cm["slug"] = controller.SlugValues
 	cm["admin"] = amap.Admin
-	//cm["login"] = lmap.Login
+	cm["login"] = lmap.Login
 	Serve(cm)
 }
 
@@ -40,8 +40,8 @@ func EnsureIndexes(configs *configs.Configs) {
 		var duration time.Duration = time.Duration(site_config.SessionExpiration * time.Hour)
 		i := mgo.Index{
 			Key:         []string{"updated"},
-			Unique:      true,
-			DropDups:    true,
+			Unique:      false,
+			DropDups:    false,
 			Background:  true,
 			Sparse:      false,
 			ExpireAfter: duration,

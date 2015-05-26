@@ -7,6 +7,7 @@ package controller
 
 import (
 	//	"github.com/davecgh/go-spew/spew"
+	"fmt"
 	"github.com/mongolar/mongolar/services"
 	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
@@ -127,7 +128,8 @@ func PathValues(w *wrapper.Wrapper) {
 		e := NewElement()
 		err = e.GetById(eid, w)
 		if err != nil {
-			w.SiteConfig.Logger.Error("Content not found " + eid + " by " + w.Request.Host)
+			errmessage := fmt.Sprintf("Content not found %s : %s", eid, err.Error())
+			w.SiteConfig.Logger.Error(errmessage)
 		}
 		ev["mongolartemplate"] = e.Template
 		ev["mongolartype"] = e.Controller
@@ -181,7 +183,8 @@ func ContentValues(w *wrapper.Wrapper) {
 	e := NewElement()
 	err := e.GetValidElement(u[2], u[1], w)
 	if err != nil {
-		w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
+		errmessage := fmt.Sprintf("Content not found %s : %s", u[2], err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("There was a problem loading some content on your page.", "Error", w)
 		w.Serve()
 		return
@@ -193,7 +196,8 @@ func ContentValues(w *wrapper.Wrapper) {
 		w.Serve()
 		return
 	}
-	w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
+	errmessage := fmt.Sprintf("Content not found %s : %s", u[2], err.Error())
+	w.SiteConfig.Logger.Error(errmessage)
 	services.AddMessage("There was a problem loading some content on your page.", "Error", w)
 	w.Serve()
 	return
@@ -205,7 +209,8 @@ func WrapperValues(w *wrapper.Wrapper) {
 	e := NewElement()
 	err := e.GetValidElement(u[2], u[1], w)
 	if err != nil {
-		w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
+		errmessage := fmt.Sprintf("Content not found %s : %s", u[2], err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("There was a problem loading some content on your page.", "Error", w)
 		w.Serve()
 		return
@@ -221,7 +226,8 @@ func WrapperValues(w *wrapper.Wrapper) {
 		e := NewElement()
 		err = e.GetById(eid, w)
 		if err != nil {
-			w.SiteConfig.Logger.Error("Content not found " + eid + " by " + w.Request.Host)
+			errmessage := fmt.Sprintf("Content not found %s : %s", eid, err.Error())
+			w.SiteConfig.Logger.Error(errmessage)
 		} else {
 			ev["mongolartemplate"] = e.Template
 			ev["mongolartype"] = e.Controller
@@ -239,7 +245,8 @@ func SlugValues(w *wrapper.Wrapper) {
 	es := NewElement()
 	err := es.GetValidElement(u[2], u[1], w)
 	if err != nil {
-		w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
+		errmessage := fmt.Sprintf("Content not found %s : %s", u[2], err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("There was a problem loading some content on your page.", "Error", w)
 		w.Serve()
 		return
@@ -248,7 +255,8 @@ func SlugValues(w *wrapper.Wrapper) {
 	e := NewElement()
 	err = e.GetById(i.(string), w)
 	if err != nil {
-		w.SiteConfig.Logger.Error("Content not found " + u[2] + " by " + w.Request.Host)
+		errmessage := fmt.Sprintf("Content not found %s : %s", u[2], err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("There was a problem loading some content on your page.", "Error", w)
 		w.Serve()
 		return

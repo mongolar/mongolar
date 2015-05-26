@@ -160,9 +160,10 @@ func PathEditor(w *wrapper.Wrapper) {
 					errmessage := fmt.Sprintf("Unable to save new path by %s: %s", w.Request.Host, err.Error())
 					w.SiteConfig.Logger.Error(errmessage)
 					services.AddMessage("There was a problem saving your path.", "Error", w)
-				} else {
-					services.AddMessage("Your element was saved.", "Success", w)
+					w.Serve()
+					return
 				}
+				services.AddMessage("Your path was saved.", "Success", w)
 			} else {
 				p := bson.M{
 					"$set": bson.M{
@@ -180,18 +181,20 @@ func PathEditor(w *wrapper.Wrapper) {
 						w.Request.Host, err.Error())
 					w.SiteConfig.Logger.Error(errmessage)
 					services.AddMessage("There was a problem saving your path.", "Error", w)
+					w.Serve()
+					return
 				} else {
-					dynamic := services.Dynamic{
-						Target:     "pathbar",
-						Controller: "admin/paths",
-						Template:   "admin/path_list.html",
-					}
-					services.SetDynamic(dynamic, w)
 					services.AddMessage("Your path was saved.", "Success", w)
 				}
-				w.Serve()
-				return
 			}
+			dynamic := services.Dynamic{
+				Target:     "pathbar",
+				Controller: "admin/paths",
+				Template:   "admin/path_list.html",
+			}
+			services.SetDynamic(dynamic, w)
+			w.Serve()
+			return
 		}
 
 	}
@@ -334,8 +337,8 @@ func Sort(w *wrapper.Wrapper) {
 			}
 			dynamic := services.Dynamic{
 				Target:     u[4],
-				Controller: "admin/path_elements",
-				Template:   "admin/path_elements.html",
+				Controller: "admin/element",
+				Template:   "admin/element.html",
 				Id:         u[4],
 			}
 			services.SetDynamic(dynamic, w)
@@ -590,7 +593,26 @@ func AddChild(w *wrapper.Wrapper) {
 		w.SiteConfig.Logger.Error(errmessage)
 		message := fmt.Sprintf("There was a problem, your elemeent was created but was not assigned to your %s.", u[3])
 		services.AddMessage(message, "Error", w)
+		w.Serve()
+		return
 	}
+	var dynamic services.Dynamic
+	if u[3] == "elements" {
+		dynamic = services.Dynamic{
+			Target:     u[4],
+			Controller: "admin/element",
+			Template:   "admin/element.html",
+			Id:         u[4],
+		}
+	} else if u[3] == "paths" {
+		dynamic = services.Dynamic{
+			Target:     "centereditor",
+			Controller: "admin/path_elements",
+			Template:   "admin/path_elements.html",
+			Id:         u[4],
+		}
+	}
+	services.SetDynamic(dynamic, w)
 	services.AddMessage("You have added a new element.", "Success", w)
 	w.Serve()
 	return
@@ -668,6 +690,19 @@ func Delete(w *wrapper.Wrapper) {
 			w.Serve()
 			return
 		}
+		dynamic := services.Dynamic{
+			Target:   u[4],
+			Template: "default.html",
+		}
+		services.SetDynamic(dynamic, w)
+	}
+	if u[3] == "paths" {
+		dynamic := services.Dynamic{
+			Target:     "pathbar",
+			Controller: "admin/paths",
+			Template:   "admin/path_list.html",
+		}
+		services.SetDynamic(dynamic, w)
 	}
 	services.AddMessage("Successfully deleted "+u[3], "Success", w)
 	w.Serve()

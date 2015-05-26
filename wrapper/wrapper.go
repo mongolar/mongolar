@@ -5,6 +5,8 @@ package wrapper
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	//	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/configs"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -30,15 +32,21 @@ func New(w http.ResponseWriter, r *http.Request, s *configs.SiteConfig) *Wrapper
 	if r.Method == "POST" {
 		wr.Post, err = formPostData(r)
 		if err != nil {
-			//s.Logger.Error("Could not load Post Data: " + err.Error())
+			errmessage := fmt.Sprintf("Could not load Post Data: %s", err.Error())
+			wr.SiteConfig.Logger.Error(errmessage)
 		}
 	}
 	wr.DbSession = s.DbSession.Copy()
 	//Get session
 	err = wr.NewSession()
+	if err != nil {
+		errmessage := fmt.Sprintf("Unable to create new session: %s", err.Error())
+		wr.SiteConfig.Logger.Error(errmessage)
+	}
 	err = wr.SetSession()
 	if err != nil {
-		//TODO, logs and such Do something here
+		errmessage := fmt.Sprintf("Unable to save session to db sessions: %s", err.Error())
+		wr.SiteConfig.Logger.Error(errmessage)
 	}
 	// Define payload
 	wr.Payload = make(map[string]interface{})
@@ -106,8 +114,6 @@ func (w *Wrapper) Serve() {
 // Wrapper structure for Sessions
 type Session struct {
 	Id      bson.ObjectId `bson:"_id"`
-	UserId  bson.ObjectId `bson:"user_id,omitempty"`
-	Token   string        `bson:"token,omitempty"`
 	Updated time.Time     `bson:"updated"`
 }
 
@@ -145,7 +151,7 @@ func (w *Wrapper) NewSession() error {
 func (w *Wrapper) SetSession() error {
 	w.Session.Updated = time.Now()
 	c := w.DbSession.DB("").C("sessions")
-	_, err := c.Upsert(bson.M{"_id": w.Session.Id}, bson.M{"$set": bson.M{"_id": w.Session.Id}})
+	_, err := c.Upsert(bson.M{"_id": w.Session.Id}, bson.M{"$set": bson.M{"_id": w.Session.Id, "updated": w.Session.Updated}})
 	if err != nil {
 		return err
 	}
