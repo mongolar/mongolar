@@ -31,9 +31,12 @@ It is and it isn't.
 ##Scalable
 
 This package seeks to achieve scalability in several ways.
+
 Each Mongolar server instance is stateless.  You can spin up as many servers as you wish behind a load balancer, and there is not extra configuration.
+
 Every web request is a microtransaction for individual pieces of content, vs one monoloithic request for a single web page.  So intensive processes do not hold up the entire page load.
 Every piece of content (read API request) is individually addressable so if situated behind a tool like varnish, you can easily cache content without making requests to the system.
+
 MongoDB seems to scale rather well, at least for these purposes.
 
 ## Demo
@@ -48,6 +51,7 @@ You can clone this repository anywhere you wish.
 
 ###2. Configuration
 Mongolar currently only has one configuration file for a server and as many site files as you wish
+
 All configurations are in YAML format
 
 The default location for a server config would be here "/etc/mongolar", if this does not work for you you can set the "MONGOLAR_SERVER_CONFIG" to the folder you want to use.
@@ -60,7 +64,9 @@ Example:
 ```
 
 Based on the server config Mongolar will attempt to load all site configuration files into memory, so given the above configuration you would create a yaml:
+
 "/etc/mongolar/enabled/my_site.yaml" <--yaml suffix required
+
 Ideally you would create your configs in /etc/mongolar/available/my_site.yaml and then symlink to the file, making configs easier to manage.
 
 Example:
@@ -69,8 +75,11 @@ EXAMPLE HERE
 ```
 ###3. Frontend
 I have provided a base public directory here. LINK HERE
+
 Clone the repository wherever you wish to edit your html, js and css for the wwebsite.
+
 I am just going to provide instructions on bower installation
+
 Inside the directory run
 
 ```bash
@@ -79,15 +88,19 @@ bower install mongolar-js
 This will install all the js libraries required in your index.html
 
 The only file that will be accessible from the root folder of this site is the index.html.  Everything else must go in the assets folder.
+
 If you want to change that functionality just go into the router and change the folder name to whatever you want.
 
 ###4. MongoDB
 If you are new to MongoDB the easiest way to setup MongoDb is with Mongolabs.
+
 Go to their site, create a database, and add a user to the database and they will provide the information to login from your Mongolar site.
+
 You can seed the database from an export provided here LINK HERE
 
 ###5. Finalize
 Add your MongoDB credentials and the site root directory to the configs file and boot mongolar.
+
 You may need to run as root, depending on port and permissions of your OS.
 ```bash
 sudo -E go run mongolar.go
