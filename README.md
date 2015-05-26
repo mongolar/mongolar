@@ -4,18 +4,18 @@ Mongolar is a AngularJS driven scalable Content Management System written in Ang
 
 ##Basics
 ###AngularJS
-Essentially AngularJS bootstraps itself upon page load.  It then begins to process any "mongolar" directives, loading content to the page.
+Essentialy AngularJS bootstraps itself upon page load.  It then begins to process any "mongolar" directives, loading content to the page.
 
 Mongolar directives in AngularJS perform api calls based on settings in the directive that give the address for the call, an id, a template and a dynamic id (an element id that makes dynamic page content loading easier).
 
-The simplest implementation for a directive would be to load page elements from a path and then the returned values would then create more directives to subseqquently make more API requests
+The simplest implementation for a directive would be to load page elements from a path and then the returned values would then create more directives to subsequently make more API requests
 
 ###Go
 
 The Mongolar binary will work as a webserver/API server.
 
-Mongolar serves along several ddifferent paths
- - /assets : Holds all html assets
+Mongolar serves along several different paths
+ - /assets : Holds all html, css, and js assets
  - /mongolarconfig.js : This is a site specific js file that loads all the mongolar-js specific configurations for a particular site
  - /apiendpoint : This a per site configurable endpoint for api requests.  This can be any url friendly string
  - default: If all the above routing does not work then the index.html will be served allowing AngularJS to take over routing.
