@@ -76,7 +76,7 @@ EXAMPLE HERE
 ###3. Frontend
 I have provided a base public directory [here](https://github.com/mongolar/public_directory_example).
 
-Clone the repository wherever you wish to edit your html, js and css for the wwebsite.
+Clone the repository wherever you wish to edit your html, js and css for the website.
 
 I am just going to provide instructions on bower installation
 
@@ -85,7 +85,7 @@ Inside the directory run
 ```bash
 bower install mongolar-js
 ```
-This will install all the js libraries required in your index.html
+This will install all the js libraries required in your index.html in a folder called assets.
 
 The only file that will be accessible from the root folder of this site is the index.html.  Everything else must go in the assets folder.
 
@@ -113,20 +113,27 @@ This is in no way production ready.  There is still a lot to be done.
 
 ##Admin and OAuth controllers
 I wrote two packages that are included with this code repository called admin and oauth, they are not well written and I rushed through them.
-I wanted to create a ui where people could understand what this project does.  Those controller packages should not be considered production ready, 
+I wanted to create a UI where people could understand what this project does.  Those controller packages should not be considered production ready, 
 and may not even be developed further.
 If they do get developed further (read as severely overhauled), you can expect them to eventually be broken out to separate projects.
 
 ##Credits
 There are several credits needed to be doled out.
+
 First and foremost is my amazing wife.  She has really been patient with my efforts here.  She is really the best thing that has happened to me.
+
 The Angular community.  They have to be the most supportive group of developers I have ever worked with.
+
 The below package/library providers:
 
 [formly-js](https://github.com/formly-js/angular-formly) - By far the best form generation tool I have ever used.
+
 [davecgh/go-spew](https://github.com/davecgh/go-spew) - This package was a livesaver
+
 [mgo](https://labix.org/mgo) -  Could not have done it without a MongoDb driver
+
 [spf13/viper](https://github.com/spf13/viper)
+
 [Sirupsen/logrus](https://github.com/Sirupsen/logrus)
 
 ##More information
