@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	//	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/configs"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -169,7 +168,7 @@ func (w *Wrapper) SetSessionValue(k string, v interface{}) error {
 }
 
 // Get a session value by key.
-func (w *Wrapper) GetSessionValue(n string, i *interface{}) error {
+func (w *Wrapper) GetSessionValue(n string, i interface{}) error {
 	c := w.DbSession.DB("").C("sessions")
 	err := c.Find(bson.M{"_id": w.Session.Id}).Select(bson.M{n: 1}).One(i)
 	if err != nil {

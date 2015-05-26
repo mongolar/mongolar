@@ -4,9 +4,9 @@ package admin
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/controller"
 	"github.com/mongolar/mongolar/form"
+	"github.com/mongolar/mongolar/oauthlogin"
 	"github.com/mongolar/mongolar/services"
 	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
@@ -57,9 +57,8 @@ func (a AdminMap) Admin(w *wrapper.Wrapper) {
 	if c, ok := a[u[2]]; ok {
 		if validateAdmin(w) {
 			c(w)
-		} else {
-			http.Error(w.Writer, "Forbidden", 403)
 		}
+		return
 	} else {
 		http.Error(w.Writer, "Forbidden", 403)
 		return
@@ -67,14 +66,22 @@ func (a AdminMap) Admin(w *wrapper.Wrapper) {
 }
 
 func validateAdmin(w *wrapper.Wrapper) bool {
-	//var roles []string
-	//uid := w.Session.UserId
-	//TODO load user here
-	//for _, role := range roles {
-	//	if role == "admin" {
-	return true
-	//	}
-	//}
+	user := new(oauthlogin.User)
+	err := user.Get(w)
+	if err != nil {
+		services.Redirect(w.SiteConfig.LoginURLs["login"], w)
+		w.Serve()
+		return false
+	}
+	if user.Roles != nil {
+		for _, r := range user.Roles {
+			if r == "admin" {
+				return true
+			}
+		}
+	}
+	services.Redirect(w.SiteConfig.LoginURLs["access_denied"], w)
+	w.Serve()
 	return false
 }
 
@@ -225,6 +232,10 @@ func PathElements(w *wrapper.Wrapper) {
 func Element(w *wrapper.Wrapper) {
 	u := url.UrlToMap(w.Request.URL.Path)
 	e := controller.NewElement()
+	if _, ok := u[3]; !ok {
+		http.Error(w.Writer, "Forbidden", 403)
+		return
+	}
 	err := e.GetById(u[3], w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", u[3], w.Request.Host)
@@ -417,6 +428,13 @@ func ElementEditor(w *wrapper.Wrapper) {
 					services.AddMessage("There was a problem saving your element.", "Error", w)
 				} else {
 					services.AddMessage("Your element was saved.", "Success", w)
+					dynamic := services.Dynamic{
+						Target:     w.Post["mongolarid"].(string),
+						Id:         w.Post["mongolarid"].(string),
+						Controller: "admin/element",
+						Template:   "admin/element.html",
+					}
+					services.SetDynamic(dynamic, w)
 				}
 			}
 		}
@@ -550,8 +568,14 @@ func ContentEditor(w *wrapper.Wrapper) {
 			services.AddMessage("Unable to save element.", "Error", w)
 		} else {
 			services.AddMessage("Element content saved.", "Success", w)
+			dynamic := services.Dynamic{
+				Target:     w.Post["mongolarid"].(string),
+				Id:         w.Post["mongolarid"].(string),
+				Controller: "admin/element",
+				Template:   "admin/element.html",
+			}
+			services.SetDynamic(dynamic, w)
 		}
-		spew.Dump(w.Post["mongolarid"])
 	}
 	w.Serve()
 	return
@@ -741,7 +765,7 @@ func EditContentType(w *wrapper.Wrapper) {
 		if u[3] != "new" {
 			c := w.DbSession.DB("").C("content_types")
 			i := bson.M{"_id": bson.ObjectIdHex(u[3])}
-			err := c.Find(i).Select(bson.M{"form": 1}).One(ct)
+			err := c.Find(i).One(ct)
 			if err != nil {
 				errmessage := fmt.Sprintf("Content Type not found %s : %s", u[3], err.Error())
 				w.SiteConfig.Logger.Error(errmessage)
@@ -765,10 +789,13 @@ func EditContentType(w *wrapper.Wrapper) {
 				elements = append(elements, element)
 			}
 			f.FormData["elements"] = elements
+			f.FormData["content_type"] = ct.Type
 		} else {
 			fd := make([]map[string]string, 0)
 			f.FormData["elements"] = fd
+			f.FormData["content_type"] = ""
 		}
+		f.AddText("content_type", "text").AddLabel("Content Type Name")
 		f.AddRepeatSection("elements", "Add another field", FieldFormGroup())
 		f.Register(w)
 		w.SetPayload("form", f)
@@ -833,14 +860,21 @@ func EditContentType(w *wrapper.Wrapper) {
 				}
 			}
 		}
-		e := bson.M{
-			"$set": bson.M{
-				"form": f.Fields,
-			},
+
+		var id bson.ObjectId
+		if w.Post["mongolarid"].(string) == "new" {
+			id = bson.NewObjectId()
+		} else {
+			id = bson.ObjectIdHex(w.Post["mongolarid"].(string))
 		}
-		s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
+		ct := ContentType{
+			Form:    f.Fields,
+			Type:    w.Post["type"].(string),
+			MongoId: id,
+		}
+		s := bson.M{"_id": id}
 		c := w.DbSession.DB("").C("content_types")
-		err = c.Update(s, e)
+		_, err = c.Upsert(s, ct)
 		if err != nil {
 			errmessage := fmt.Sprintf("Cannnot save content type %s : %s", w.Post["mongolarid"].(string), err.Error())
 			w.SiteConfig.Logger.Error(errmessage)
@@ -849,6 +883,12 @@ func EditContentType(w *wrapper.Wrapper) {
 			return
 		}
 		services.AddMessage("Content type saved.", "Success", w)
+		dynamic := services.Dynamic{
+			Target:     "contenttypelist",
+			Controller: "admin/all_content_types",
+			Template:   "admin/content_type_list.html",
+		}
+		services.SetDynamic(dynamic, w)
 		w.Serve()
 		return
 	}

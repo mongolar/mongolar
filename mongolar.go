@@ -5,7 +5,6 @@ import (
 	"github.com/mongolar/mongolar/configs"
 	"github.com/mongolar/mongolar/controller"
 	"github.com/mongolar/mongolar/oauthlogin"
-	//"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/router"
 	"gopkg.in/mgo.v2"
 	"net/http"

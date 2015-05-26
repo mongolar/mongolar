@@ -4,8 +4,8 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
-	//"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/controller"
 	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
@@ -209,6 +209,7 @@ type User struct {
 	Id      int           `json:"id" bson:"id"`
 	Name    string        `json:"login" bson:"name"`
 	Type    string        `bson:"type"`
+	Roles   []string      `bson:"roles,omitempty"`
 }
 
 func (u *User) Set(w *wrapper.Wrapper) error {
@@ -228,15 +229,23 @@ func (u *User) Set(w *wrapper.Wrapper) error {
 		return err
 	}
 	u.MongoId = tmpuser.MongoId
-	err = c.Update(bson.M{"_id": u.MongoId}, u)
+	err = c.Update(bson.M{"_id": u.MongoId}, bson.M{"$set": u})
 	return err
 }
 
 func (u *User) Get(w *wrapper.Wrapper) error {
 	c := w.DbSession.DB("").C("users")
-	id := bson.M{}
-	w.GetSessionValue("user_id", id)
-	s := bson.M{"id": id}
-	err := c.Find(s).One(u)
-	return err
+	var id bson.M
+	w.GetSessionValue("user_id", &id)
+	if id == nil {
+		err := errors.New("User not found")
+		return err
+	}
+	if user_id, ok := id["user_id"]; ok {
+		err := c.Find(bson.M{"_id": user_id}).One(u)
+		return err
+	} else {
+		err := errors.New("User not found")
+		return err
+	}
 }

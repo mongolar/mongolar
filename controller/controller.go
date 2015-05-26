@@ -6,7 +6,6 @@
 package controller
 
 import (
-	//	"github.com/davecgh/go-spew/spew"
 	"fmt"
 	"github.com/mongolar/mongolar/services"
 	"github.com/mongolar/mongolar/url"
@@ -196,7 +195,7 @@ func ContentValues(w *wrapper.Wrapper) {
 		w.Serve()
 		return
 	}
-	errmessage := fmt.Sprintf("Content not found %s : %s", u[2], err.Error())
+	errmessage := fmt.Sprintf("Content not found %s", u[2])
 	w.SiteConfig.Logger.Error(errmessage)
 	services.AddMessage("There was a problem loading some content on your page.", "Error", w)
 	w.Serve()
