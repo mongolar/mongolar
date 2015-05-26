@@ -21,8 +21,8 @@ Mongolar serves along several ddifferent paths
  - default: If all the above routing does not work then the index.html will be served allowing AngularJS to take over routing.
 
 ###MongoDB
-This system was written with heavy reads in mind.  Most web content will be heavy on the reads, light on the writes.
-I also wanted a NoSQL Db that was easy to setup, learn and scale.
+MongoDb stores stuff like NoSQL
+
 
 ##This sounds complicated
 
@@ -34,7 +34,12 @@ This package seeks to achieve scalability in several ways.
 
 Each Mongolar server instance is stateless.  You can spin up as many servers as you wish behind a load balancer, and there is not extra configuration.
 
+All html is cacheable and can be served through a cdn.
+
+No templating is performed on the server.
+
 Every web request is a microtransaction for individual pieces of content, vs one monoloithic request for a single web page.  So intensive processes do not hold up the entire page load.
+
 Every piece of content (read API request) is individually addressable so if situated behind a tool like varnish, you can easily cache content without making requests to the system.
 
 MongoDB seems to scale rather well, at least for these purposes.
@@ -92,7 +97,7 @@ The only file that will be accessible from the root folder of this site is the i
 If you want to change that functionality just go into the router and change the folder name to whatever you want.
 
 ###4. MongoDB
-If you are new to MongoDB the easiest way to setup MongoDb is with Mongolabs.
+If you are new to MongoDB the easiest way to setup MongoDb is with Mongolabs.  They offer a free tier service that will allow you to test the system, but don't expect the free tier service to be performant.  Latency between requests and the fact that the free tier does not have many resources can impact site performance.
 
 Go to their site, create a database, and add a user to the database and they will provide the information to login from your Mongolar site.
 
@@ -105,4 +110,40 @@ You may need to run as root, depending on port and permissions of your OS.
 ```bash
 sudo -E go run mongolar.go
 ```
+You should be running, let me know if your not in the issue que.
+
+
+##This is a very early BETA
+This is in no way production ready.  There is still a lot to be done.
+
+##Admin and OAuth controllers
+I wrote two packages that are included with this code repository called admin and oauth, they are not well written and I rushed through them.
+I wanted to create a ui where people could understand what this project does.  Those controller packages should not be considered production ready, 
+and may not even be developed further.
+If they do get developed further (read as severely overhauled), you can expect them to eventually be broken out to separate projects.
+
+##Credits
+There are several credits needed to be doled out.
+First and foremost is my amazing wife.  She has really been patient with my efforts here.  She is really the best thing that has happened to me.
+The Angular community.  They have to be the most supportive group of developers I have ever worked with.
+The below package/library providers:
+
+angular-formly - By far the best form generation tool I have ever used.
+davecgh/go-spew - This package was a livesaver
+mgo -  Could not have done it without a MongoDb driver
+spf13/viper
+Sirupsen/logrus
+
+##More information
+Visit the issue que or read the Wiki.
+
+##Want to help?
+Create an issue
+
+##Roadmap
+  - Code Cleanup
+  - Tests
+  - Mock wrapper for testing
+  - Kahn: a cli to talk to your mongolar server while it is running.
+  - Clustering
 
