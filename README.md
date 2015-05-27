@@ -172,7 +172,13 @@ If you are new to MongoDB the easiest way to setup MongoDb is with [Mongolabs](h
 
 Go to their site, create a database, and add a user to the database and they will provide the information to login from your Mongolar site.
 
-You can seed the database from an export provided here LINK HERE
+You can seed the database from an export provided [here](https://github.com/mongolar/seed_database).
+
+To import you will need to use mongorestore, check with your OS and how to install.
+
+```bash
+mongorestore -h the_endpoint_mongolabs provided -d database_name -u user_name -p password the_directory_you_just_cloned
+```
 
 ###5. Finalize
 Add your MongoDB credentials and the site root directory to the configs file and boot mongolar.
