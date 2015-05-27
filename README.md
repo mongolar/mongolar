@@ -71,7 +71,47 @@ Ideally you would create your configs in /etc/mongolar/available/my_site.yaml an
 
 Example:
 ```yaml
-EXAMPLE HERE
+MongoDb:
+        user: my_db_user
+        password: my_password
+        host: "db_domain:12345"
+        db: my_db
+Directory: "/my/files/directory"
+Aliases:
+        - mongolar.org
+        - test-1.com
+        - test-1.1.com
+PublicValues:
+        "test" : "Test Value"
+FourOFour: "page_not_found"
+AngularModules:
+        - "formly"
+        - "formlyBootstrap"
+        - "angular-growl"
+        - "ui.bootstrap"
+        - "ngSanitize"
+        - "ui.sortable"
+TemplateEndpoint: "assets/templates"
+SessionExpiration: 10
+APIEndPoint: "my_end_point"
+Controllers:
+        - "path"
+        - "content"
+        - "wrapper"
+        - "slug"
+        - "admin"
+        - "domain_public_value"
+        - "login"
+OAuthLogins:
+        "github":
+                "client_id": "client_id_here"
+                "client_secret": "client_secret_here"
+                "login_text": "Login with github"
+LoginURLs: 
+        "login": "/login"
+        "success" : "/login/success"
+        "failure": "/login/failure"
+        "access_denied": "/access_denied"
 ```
 ###3. Frontend
 I have provided a base public directory [here](https://github.com/mongolar/public_directory_example).
