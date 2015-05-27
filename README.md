@@ -59,8 +59,10 @@ The default location for a server config would be here "/etc/mongolar", if this 
 Example:
 ```yaml
 "Port": "80"
-"SitesDirectory": "/etc/mongolar/enabled/" #Directory where site configs will be stored
-"LogDirectory": "/var/log/mongolar/" #Directory for logs
+#Directory where site configs will be stored
+"SitesDirectory": "/etc/mongolar/enabled/"
+#Directory for logs
+"LogDirectory": "/var/log/mongolar/"
 ```
 
 Based on the server config Mongolar will attempt to load all site configuration files into memory, so given the above configuration you would create a yaml:
@@ -224,7 +226,7 @@ It is and it isn't.
 
 ##Disclaimer
 
-I learned Go writing this project, so there are some issues...
+I learned Go writing this project, and I got this far in two months of my free time (which I have little) so there are some issues...
 Here is a list things I know need to be fixed.
 - Element loading from mgo,  It needs to accept structures to avoid interfaces and reflection.
 - Post data, it is being parsed by the wrapper and this responsibility should be passed to the controllers, so controllers can marshall their own expectations.
