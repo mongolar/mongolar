@@ -87,11 +87,13 @@ Aliases:
         - mongolar.org
         - test-1.com
         - test-1.1.com
-# Public values are values that apply site wide, and can safely be served stright fro the config
+# Public values are values that apply site wide, 
+# and can safely be served stright from the config
 # An example may be your google analytics code
 PublicValues:
         "test" : "Test Value"
-# Page not found, you can set this to whatever you want.  Requires the page be built for url
+# Page not found, you can set this to whatever you want.
+# Requires the page be built for the url
 # REQUIRED
 FourOFour: "/page_not_found"
 # Per site angular module loading, this will be added to the mongolar config
@@ -115,8 +117,10 @@ SessionExpiration: 10
 # The location where your API can be reached in your domain, can be any string
 # REQUIRED
 APIEndPoint: "my_end_point"
-# Each Website must specify  which controllers it can utilize.  Even if the controller is compiled in the binary,
-# if it is not listed here it will be forbidden. This allows you to restrict access to controllers per site.
+# Each Website must specify  which controllers it can utilize.
+# Even if the controller is compiled in the binary,
+# if it is not listed here it will be forbidden.
+# This allows you to restrict access to controllers per site.
 # REQUIRED
 Controllers:
         - "path"
@@ -126,7 +130,8 @@ Controllers:
         - "admin"
         - "domain_public_value"
         - "login"
-# For the current incarnation of Mongolar this works, but will most likely be changed
+# For the current incarnation of Mongolar this works,
+# but will most likely be changed
 # Stores OAuthlogins, currently only supports github
 OAuthLogins:
         "github":
