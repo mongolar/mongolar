@@ -59,7 +59,7 @@ The default location for a server config would be here "/etc/mongolar", if this 
 Example:
 ```yaml
 "Port": "80"
-"SitesDirectory": "/etc/mongolar/enabled"
+"SitesDirectory": "/etc/mongolar/enabled/" #Directory where site configs will be stored
 "LogDirectory": "/var/log/mongolar/" #Directory for logs
 ```
 
@@ -71,29 +71,53 @@ Ideally you would create your configs in /etc/mongolar/available/my_site.yaml an
 
 Example:
 ```yaml
+# The Mongodb connection
+# REQUIRED
 MongoDb:
         user: my_db_user
         password: my_password
         host: "db_domain:12345"
         db: my_db
+# Where you will store site configurations
+# REQUIRED
 Directory: "/my/files/directory"
+# All the domains that will apply to this site
+# REQUIRED
 Aliases:
         - mongolar.org
         - test-1.com
         - test-1.1.com
+# Public values are values that apply site wide, and can safely be served stright fro the config
+# An example may be your google analytics code
 PublicValues:
         "test" : "Test Value"
-FourOFour: "page_not_found"
+# Page not found, you can set this to whatever you want.  Requires the page be built for url
+# REQUIRED
+FourOFour: "/page_not_found"
+# Per site angular module loading, this will be added to the mongolar config
+# REQUIRED
 AngularModules:
-        - "formly"
-        - "formlyBootstrap"
-        - "angular-growl"
+        - "formly" #Required for forms
+        - "formlyBootstrap" #Other formly templates available
+        - "angular-growl" #
         - "ui.bootstrap"
         - "ngSanitize"
         - "ui.sortable"
+# Where templates will originate from, this can be a cdn
+# REQUIRED
 TemplateEndpoint: "assets/templates"
+# Foreign domains allows AngularJS to load assets from domains outside your own
+# This is required if you set your templates from a cdn
+ForeignDomains: "my.foo.com"
+# When to expire Session after so many hours
+# REQUIRED
 SessionExpiration: 10
+# The location where your API can be reached in your domain, can be any string
+# REQUIRED
 APIEndPoint: "my_end_point"
+# Each Website must specify  which controllers it can utilize.  Even if the controller is compiled in the binary,
+# if it is not listed here it will be forbidden. This allows you to restrict access to controllers per site.
+# REQUIRED
 Controllers:
         - "path"
         - "content"
@@ -102,17 +126,21 @@ Controllers:
         - "admin"
         - "domain_public_value"
         - "login"
+# For the current incarnation of Mongolar this works, but will most likely be changed
+# Stores OAuthlogins, currently only supports github
 OAuthLogins:
         "github":
                 "client_id": "client_id_here"
                 "client_secret": "client_secret_here"
                 "login_text": "Login with github"
+# This is a standard set of urls where you can expect to send users for login functions etc.
 LoginURLs: 
         "login": "/login"
         "success" : "/login/success"
         "failure": "/login/failure"
         "access_denied": "/access_denied"
 ```
+
 ###3. Frontend
 I have provided a base public directory [here](https://github.com/mongolar/public_directory_example).
 
@@ -147,15 +175,9 @@ sudo -E go run mongolar.go
 ```
 You should be running, let me know if you have problems in the issue que.
 
-
 ##This is a very early BETA
 This is in no way production ready.  There is still a lot to be done.
 
-##Admin and OAuth controllers
-I wrote two packages that are included with this code repository called admin and oauth, they are not well written and I rushed through them.
-I wanted to create a UI where people could understand what this project does.  Those controller packages should not be considered production ready, 
-and may not even be developed further.
-If they do get developed further (read as severely overhauled), you can expect them to eventually be broken out to separate projects.
 
 ##Credits
 There are several credits needed to be doled out.
@@ -176,13 +198,15 @@ The below package/library providers:
 
 [Sirupsen/logrus](https://github.com/Sirupsen/logrus)
 
+This list will grow for sure.
+
 ##More information
 Visit the issue que or read the Wiki.
 
 ##Want to help?
-Create an issue
+Fork it!
 
-##Roadmap
+##Feature Roadmap
   - Code Cleanup
   - Tests
   - Mock wrapper for testing
@@ -192,3 +216,25 @@ Create an issue
 ##This sounds complicated
 
 It is and it isn't.
+
+##Disclaimer
+
+I learned Go writing this project, so there are some issues...
+Here is a list things I know need to be fixed.
+- Element loading from mgo,  It needs to accept structures to avoid interfaces and reflection.
+- Post data, it is being parsed by the wrapper and this responsibility should be passed to the controllers, so controllers can marshall their own expectations.
+- Logic to test for Post should be in the controller and should be based off the method
+- Sessions are upserting on every page request, this needs to be improved (would love input on this one)
+- Packages need to be broken into smaller files.
+- The API URL parsing is incorrect but works
+- URL parameters need to be validated to avoid panics in the controllers
+- ObjectIds need to be validated prior to being added to bson.M
+
+This list goes on.
+
+##Admin and OAuth controllers
+I wrote two packages that are included with this code repository called admin and oauth, they are not well written and I rushed through them.
+I wanted to create a UI where people could understand what this project does.  Those controller packages should not be considered production ready, 
+and may not even be developed further.
+
+If they do get developed further (read as severely overhauled), you can expect them to eventually be broken out to separate projects.
