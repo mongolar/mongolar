@@ -140,7 +140,8 @@ OAuthLogins:
                 "client_id": "client_id_here"
                 "client_secret": "client_secret_here"
                 "login_text": "Login with github"
-# This is a standard set of urls where you can expect to send users for login functions etc.
+# This is a standard set of urls where you can expect to send
+# users for login functions etc.
 LoginURLs: 
         "login": "/login"
         "success" : "/login/success"
