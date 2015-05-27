@@ -35,7 +35,7 @@ No templating is performed on the server.
 
 Every web request is a microtransaction for individual pieces of content, vs one monoloithic request for a single web page.  So intensive processes do not hold up the entire page load.
 
-Every piece of content (read API request) is individually addressable so if situated behind a tool like varnish, you can easily cache content without making requests to the system.
+Every piece of page content (read API request) is individually addressable so if situated behind a tool like varnish, you can pick and choose caching behavior.
 
 MongoDB seems to scale rather well, at least for these purposes.
 
@@ -183,6 +183,36 @@ sudo -E go run mongolar.go
 ```
 You should be running, let me know if you have problems in the issue que.
 
+###5.1 Access Admin UI
+
+If you are using the seed DB and want to access the admin ui, you will have to do the following.
+Login using the your github credentials under "/login"
+Now under mongolabs, go to your db, under the "users" collection.  Your login should be the only document.
+Edit that record and add the following to the root of your document
+```json
+"roles": [
+	"admin"
+]
+```
+Make sure you have the correct commas after the value above the roles value.
+
+Example from mine:
+```json
+{
+    "_id": {
+        "$oid": "the object id"
+    },
+    "email": "my email address@gmail.com",
+    "id": 1111111,
+    "name": "jasonrichardsmith",
+    "type": "github",
+    "roles": [
+        "admin"
+    ]
+}
+```
+Values were changed to protect the innocent.
+
 ##This is a very early BETA
 This is in no way production ready.  There is still a lot to be done.
 
@@ -232,13 +262,22 @@ Here is a list things I know need to be fixed.
 - Element loading from mgo,  It needs to accept structures to avoid interfaces and reflection.
 - Post data, it is being parsed by the wrapper and this responsibility should be passed to the controllers, so controllers can marshall their own expectations.
 - Logic to test for Post should be in the controller and should be based off the method
-- Sessions are upserting on every page request, this needs to be improved (would love input on this one)
+- Sessions are upserting on every api request (which is atomic), this needs to be improved (would love input on this one)
 - Packages need to be broken into smaller files.
 - The API URL parsing is incorrect but works
 - URL parameters need to be validated to avoid panics in the controllers
 - ObjectIds need to be validated prior to being added to bson.M
 
 This list goes on.
+
+##Slug values and Wildcard paths
+The system does support wildcard paths which means, if an explicit path does not match it will attempt to retrieve the wildcard path.
+Angular then appends the rest of the url (the part after the wildcard match) to the header of each subsequent request.
+This means you can have one a "/blog" path that loads the same way each time but loads data based on a slug value.
+You can see the [slug controller](https://github.com/mongolar/mongolar/blob/master/controller/controller.go#L242) on how this is achieved.
+
+I have not built anything in the Admin UI to administer this.
+
 
 ##Admin and OAuth controllers
 I wrote two packages that are included with this code repository called admin and oauth, they are not well written and I rushed through them.
