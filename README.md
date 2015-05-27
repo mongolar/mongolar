@@ -60,7 +60,7 @@ Example:
 ```yaml
 "Port": "80"
 "SitesDirectory": "/etc/mongolar/enabled"
-"LogDirectory": "/var/log/mongolar/" <!--Directory for logs -->
+"LogDirectory": "/var/log/mongolar/" #Directory for logs
 ```
 
 Based on the server config Mongolar will attempt to load all site configuration files into memory, so given the above configuration you would create a yaml:
