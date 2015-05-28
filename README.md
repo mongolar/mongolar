@@ -187,7 +187,7 @@ Add your MongoDB credentials and the site root directory to the configs file and
 
 You may need to run as root, depending on port and permissions of your OS.
 ```bash
-sudo -E go run mongolar.go
+sudo -E mongolar
 ```
 You should be running, let me know if you have problems in the issue que.
 
