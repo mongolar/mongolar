@@ -47,7 +47,9 @@ I plan to release a demo for this server shortly.  In the demo you will be able 
 To setup the go server you will do several things (assuming go is already setup on your system):
 
 ###1. Download mongolar.
-You can clone this repository anywhere you wish.
+```bash
+go get github.com/mongolar/mongolar
+```
 
 ###2. Configuration
 Mongolar currently only has one configuration file for a server and as many site files as you wish
