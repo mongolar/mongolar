@@ -6,6 +6,7 @@ import (
 	"github.com/mongolar/mongolar/router/jsconfig"
 	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
+	"net"
 	"net/http"
 	"os"
 	"sort"
@@ -33,9 +34,9 @@ func New(a configs.Aliases, s configs.SitesMap, c controller.ControllerMap) *Rou
 
 // The Serve HTTP method to qualify as a handler interface.
 func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-
+	host, _, _ := net.SplitHostPort(r.Host)
 	// Does domain exist
-	if d, ok := ro.Aliases[r.Host]; ok {
+	if d, ok := ro.Aliases[host]; ok {
 
 		pathvalues := url.UrlToMap(r.URL.Path)
 

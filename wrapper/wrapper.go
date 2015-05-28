@@ -9,6 +9,7 @@ import (
 	"github.com/mongolar/mongolar/configs"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"net"
 	"net/http"
 	"time"
 )
@@ -129,12 +130,13 @@ func (w *Wrapper) NewSession() error {
 	}
 	//  If cookie is not set, set one
 	if c == nil {
+		host, _, _ := net.SplitHostPort(w.Request.Host)
 		se.Id = bson.NewObjectId()
 		c = &http.Cookie{
 			Name:   "m_session_id",
 			Value:  se.Id.Hex(),
 			Path:   "/",
-			Domain: w.Request.Host,
+			Domain: host,
 		}
 	} else {
 		se.Id = bson.ObjectIdHex(c.Value)
