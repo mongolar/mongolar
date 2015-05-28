@@ -194,7 +194,19 @@ You should be running, let me know if you have problems in the issue que.
 ###5.1 Access Admin UI
 
 If you are using the seed DB and want to access the admin ui, you will have to do the following.
+####5.1.1
+Setup an application for github login
+
+The callback is:
+your domain + your api end point from the config + "login/callback"
+
+####5.1.2
+Enter your client id and seceret in the site configuration and restart the server
+
+####5.1.3
 Login using the your github credentials under "/login"
+
+####5.1.4
 Now under mongolabs, go to your db, under the "users" collection.  Your login should be the only document.
 Edit that record and add the following to the root of your document
 ```json
@@ -219,7 +231,11 @@ Example from mine:
     ]
 }
 ```
+
 Values were changed to protect the innocent.
+
+####5.1.5
+Now you should be able to visit the "/admin" url
 
 ##This is a very early BETA
 This is in no way production ready.  There is still a lot to be done.
