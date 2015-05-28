@@ -195,13 +195,13 @@ You should be running, let me know if you have problems in the issue que.
 
 If you are using the seed DB and want to access the admin ui, you will have to do the following.
 ####5.1.1
-Setup an application for github login
+Setup an application for github Oauth
 
 The callback is:
 your domain + your api end point from the config + "login/callback"
 
 ####5.1.2
-Enter your client id and seceret in the site configuration and restart the server
+Enter your client id and secret in the site configuration and restart the server
 
 ####5.1.3
 Login using the your github credentials under "/login"
