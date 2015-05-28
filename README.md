@@ -56,7 +56,7 @@ Mongolar currently only has one configuration file for a server and as many site
 
 All configurations are in YAML format
 
-The default location for a server config would be here "/etc/mongolar", if this does not work for you you can set a "MONGOLAR_SERVER_CONFIG" environment variable to the folder you want to use.
+The default location for a server config would be here "/etc/mongolar/mongolar.yaml", if this does not work for you you can set a "MONGOLAR_SERVER_CONFIG" environment variable to the folder you want to use.
 
 Example:
 ```yaml
