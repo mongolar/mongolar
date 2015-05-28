@@ -237,6 +237,8 @@ Values were changed to protect the innocent.
 ####5.1.5
 Now you should be able to visit the "/admin" url
 
+This functionality will be moved to the khan cli app.
+
 ##This is a very early BETA
 This is in no way production ready.  There is still a lot to be done.
 
