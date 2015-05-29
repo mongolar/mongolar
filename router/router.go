@@ -6,10 +6,10 @@ import (
 	"github.com/mongolar/mongolar/router/jsconfig"
 	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
-	"net"
 	"net/http"
 	"os"
 	"sort"
+	"strings"
 )
 
 // The Router should have everything needed to server multiple sites from one go instance
