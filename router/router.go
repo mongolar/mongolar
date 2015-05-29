@@ -34,9 +34,9 @@ func New(a configs.Aliases, s configs.SitesMap, c controller.ControllerMap) *Rou
 
 // The Serve HTTP method to qualify as a handler interface.
 func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	host, _, _ := net.SplitHostPort(r.Host)
+	host := strings.Split(r.Host, ":")
 	// Does domain exist
-	if d, ok := ro.Aliases[host]; ok {
+	if d, ok := ro.Aliases[host[0]]; ok {
 
 		pathvalues := url.UrlToMap(r.URL.Path)
 
