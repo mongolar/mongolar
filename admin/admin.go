@@ -869,7 +869,7 @@ func EditContentType(w *wrapper.Wrapper) {
 		}
 		ct := ContentType{
 			Form:    f.Fields,
-			Type:    w.Post["type"].(string),
+			Type:    w.Post["content_type"].(string),
 			MongoId: id,
 		}
 		s := bson.M{"_id": id}
