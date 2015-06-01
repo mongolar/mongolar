@@ -4,12 +4,12 @@ import (
 	"github.com/mongolar/mongolar/configs"
 	"github.com/mongolar/mongolar/controller"
 	"github.com/mongolar/mongolar/router/jsconfig"
-	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
 	"net"
 	"net/http"
 	"os"
 	"sort"
+	"strings"
 )
 
 // The Router should have everything needed to server multiple sites from one go instance
@@ -38,7 +38,7 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	// Does domain exist
 	if d, ok := ro.Aliases[host]; ok {
 
-		pathvalues := url.UrlToMap(r.URL.Path)
+		pathvalues := strings.Split(r.URL.Path, "/")
 
 		// Set the the site config to an easy to use value.
 		s := ro.Sites[d]
@@ -58,7 +58,7 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		// TODO Move this to a controller
 		case "assets":
 			d := s.Directory
-			f := d + "/" + r.URL.Path[1:]
+			f := d + r.URL.Path
 			info, err := os.Stat(f)
 			if err != nil {
 				if os.IsNotExist(err) {
@@ -70,7 +70,7 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				http.NotFound(w, r)
 				return
 			}
-			http.ServeFile(w, r, d+"/"+r.URL.Path[1:])
+			http.ServeFile(w, r, f)
 
 		// If path is ApiEndPoint this is an API request.
 		case s.APIEndPoint:
