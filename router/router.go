@@ -1,7 +1,6 @@
 package router
 
 import (
-	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/configs"
 	"github.com/mongolar/mongolar/controller"
 	"github.com/mongolar/mongolar/router/jsconfig"
@@ -40,7 +39,6 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		pathvalues := strings.Split(r.URL.Path, "/")
 		pathvalues = pathvalues[1:]
-		spew.Dump(pathvalues[0])
 		// Set the the site config to an easy to use value.
 		s := ro.Sites[d]
 		switch pathvalues[0] {
