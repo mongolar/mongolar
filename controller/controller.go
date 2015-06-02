@@ -8,7 +8,6 @@ package controller
 import (
 	"fmt"
 	"github.com/mongolar/mongolar/services"
-	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -169,10 +168,8 @@ func (p *Path) pathMatch(u string, s string, c *mgo.Collection) (string, error) 
 
 // The controller function for Values found in the Site Configuration
 func DomainPublicValue(w *wrapper.Wrapper) {
-	// Get second value in url path
-	p := url.UrlToMap(w.Request.URL.Path)
 	v := make(map[string]interface{})
-	v[p[2]] = w.SiteConfig.PublicValues[p[2]]
+	v[w.APIParams[0]] = w.SiteConfig.PublicValues[w.APIParams[0]]
 	w.SetContent(v)
 	w.Serve()
 	return
@@ -180,11 +177,10 @@ func DomainPublicValue(w *wrapper.Wrapper) {
 
 // The controller function for Values found directly in the controller values of the element
 func ContentValues(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
 	e := NewElement()
-	err := e.GetValidElement(u[2], u[1], w)
+	err := e.GetValidElement(w.APIParams[0], 'content', w)
 	if err != nil {
-		errmessage := fmt.Sprintf("Content not found %s : %s", u[2], err.Error())
+		errmessage := fmt.Sprintf("Content not found %s : %s", w.APIParams[1], err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("There was a problem loading some content on your page.", "Error", w)
 		w.Serve()
@@ -197,7 +193,7 @@ func ContentValues(w *wrapper.Wrapper) {
 		w.Serve()
 		return
 	}
-	errmessage := fmt.Sprintf("Content not found %s", u[2])
+	errmessage := fmt.Sprintf("Content not found %s", w.APIParams[0])
 	w.SiteConfig.Logger.Error(errmessage)
 	services.AddMessage("There was a problem loading some content on your page.", "Error", w)
 	w.Serve()
@@ -206,11 +202,10 @@ func ContentValues(w *wrapper.Wrapper) {
 
 // The controller function for Values found directly in the controller values of the element
 func WrapperValues(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
 	e := NewElement()
-	err := e.GetValidElement(u[2], u[1], w)
+	err := e.GetValidElement(w.APIParams[0], 'wrapper', w)
 	if err != nil {
-		errmessage := fmt.Sprintf("Content not found %s : %s", u[2], err.Error())
+		errmessage := fmt.Sprintf("Content not found %s : %s", w.APIParams[0], err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("There was a problem loading some content on your page.", "Error", w)
 		w.Serve()
@@ -244,11 +239,10 @@ func WrapperValues(w *wrapper.Wrapper) {
 
 // The controller function for elements that are context specific
 func SlugValues(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
 	es := NewElement()
-	err := es.GetValidElement(u[2], u[1], w)
+	err := es.GetValidElement(w.APIParams[0], 'slug', w)
 	if err != nil {
-		errmessage := fmt.Sprintf("Content not found %s : %s", u[2], err.Error())
+		errmessage := fmt.Sprintf("Content not found %s : %s", w.APIParams[0], err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("There was a problem loading some content on your page.", "Error", w)
 		w.Serve()
@@ -265,7 +259,7 @@ func SlugValues(w *wrapper.Wrapper) {
 	e := NewElement()
 	err = e.GetById(i.(string), w)
 	if err != nil {
-		errmessage := fmt.Sprintf("Content not found %s : %s", u[2], err.Error())
+		errmessage := fmt.Sprintf("Content not found %s : %s", w.APIParams[0], err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("There was a problem loading some content on your page.", "Error", w)
 		w.Serve()
