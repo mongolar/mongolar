@@ -33,6 +33,7 @@ type Element struct {
 	Template         string                 `bson:"template,omitempty" json:"template,omitempty"`
 	DynamicId        string                 `bson:"dynamic_id,omitempty" json:"dynamic_id"`
 	Title            string                 `bson:"title"`
+	Classes          string                 `bson:"classes"`
 }
 
 // Constructor for elements
@@ -132,6 +133,7 @@ func PathValues(w *wrapper.Wrapper) {
 		}
 		ev["mongolartemplate"] = e.Template
 		ev["mongolartype"] = e.Controller
+		ev["mongolarclasses"] = e.Classes
 		ev["mongolarid"] = eid
 		v = append(v, ev)
 	}
@@ -231,9 +233,11 @@ func WrapperValues(w *wrapper.Wrapper) {
 			ev["mongolartemplate"] = e.Template
 			ev["mongolartype"] = e.Controller
 			ev["mongolarid"] = eid
+			ev["mongolarclasses"] = e.Classes
 			v = append(v, ev)
 		}
 	}
+	w.SetClasses(e.Classes)
 	w.SetContent(v)
 	w.Serve()
 }

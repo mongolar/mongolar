@@ -369,6 +369,7 @@ func ElementEditor(w *wrapper.Wrapper) {
 		f.AddText("controller", "text").AddLabel("Controller")
 		f.AddText("template", "text").AddLabel("Template")
 		f.AddText("dynamic_id", "text").AddLabel("Dynamic Id")
+		f.AddText("classes", "text").AddLabel("Classes")
 		f.AddText("element_id", "text").Hidden()
 		u := url.UrlToMap(w.Request.URL.Path)
 		if u[3] != "new" {
@@ -385,6 +386,7 @@ func ElementEditor(w *wrapper.Wrapper) {
 			f.FormData["title"] = e.Title
 			f.FormData["template"] = e.Template
 			f.FormData["dynamic_id"] = e.DynamicId
+			f.FormData["classes"] = e.Classes
 		}
 		f.Register(w)
 		w.SetTemplate("admin/form.html")
@@ -401,6 +403,7 @@ func ElementEditor(w *wrapper.Wrapper) {
 					DynamicId:  w.Post["dynamic_id"].(string),
 					Template:   w.Post["template"].(string),
 					Title:      w.Post["title"].(string),
+					Classes:    w.Post["classes"].(string),
 				}
 				err := c.Insert(p)
 				if err != nil {
@@ -417,6 +420,7 @@ func ElementEditor(w *wrapper.Wrapper) {
 						"title":      w.Post["title"].(string),
 						"dynamic_id": w.Post["dynamic_id"].(string),
 						"controller": w.Post["controller"].(string),
+						"classes":    w.Post["classes"].(string),
 					},
 				}
 				s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
