@@ -1,6 +1,7 @@
 package router
 
 import (
+	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/configs"
 	"github.com/mongolar/mongolar/controller"
 	"github.com/mongolar/mongolar/router/jsconfig"
@@ -38,7 +39,8 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if d, ok := ro.Aliases[host[0]]; ok {
 
 		pathvalues := strings.Split(r.URL.Path, "/")
-
+		pathvalues = pathvalues[1:]
+		spew.Dump(pathvalues[0])
 		// Set the the site config to an easy to use value.
 		s := ro.Sites[d]
 		switch pathvalues[0] {
@@ -78,8 +80,10 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				w.Header().Set("Content-Type", "application/json")
 				// Build a wrapper for the controller
 				wr := wrapper.New(w, r, s)
+				wr.Shift()
 				//If the controller exists call it
-				if c, ok := ro.Controllers[pathvalues[1]]; ok {
+				if c, ok := ro.Controllers[wr.APIParams[0]]; ok {
+					wr.Shift()
 					c(wr)
 					return
 				} else {

@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/mongolar/mongolar/controller"
-	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
 	"golang.org/x/oauth2"
 	"gopkg.in/mgo.v2/bson"
@@ -42,8 +41,8 @@ func StateString() string {
 }
 
 func (l *LoginMap) Login(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
-	if controller, ok := l.Controllers[u[2]]; ok {
+	if controller, ok := l.Controllers[w.APIParams[0]]; ok {
+		w.Shift()
 		controller(w)
 		return
 	}
@@ -52,10 +51,9 @@ func (l *LoginMap) Login(w *wrapper.Wrapper) {
 }
 
 func (lo *LoginMap) LoginUrls(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
 	us := make(map[string]map[string]string)
 	for k, l := range w.SiteConfig.OAuthLogins {
-		c := "http://" + w.Request.Host + "/" + u[0] + "/" + u[1] + "/callback/" + k
+		c := "http://" + w.Request.Host + "/" + w.SiteConfig.APIEndPoint + "/login/callback/" + k
 		login := lo.Logins[k]
 		login.SetConfig(l, c, lo.State)
 		u := login.GetUrl()
@@ -74,12 +72,11 @@ func (lo *LoginMap) Logout(w *wrapper.Wrapper) {
 }
 
 func (lo *LoginMap) Callback(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
-	if _, ok := w.SiteConfig.OAuthLogins[u[3]]; ok {
-		if _, ok := lo.Logins[u[3]]; ok {
+	if _, ok := w.SiteConfig.OAuthLogins[w.APIParams[0]]; ok {
+		if _, ok := lo.Logins[w.APIParams[0]]; ok {
 			s := w.Request.FormValue("state")
-			sc := w.SiteConfig.OAuthLogins[u[3]]
-			login := lo.Logins[u[3]]
+			sc := w.SiteConfig.OAuthLogins[w.APIParams[0]]
+			login := lo.Logins[w.APIParams[0]]
 			if lo.State != s {
 				errmessage := fmt.Sprintf("Invalid oauth state, expected %s, got %s", lo.State, s)
 				w.SiteConfig.Logger.Error(errmessage)

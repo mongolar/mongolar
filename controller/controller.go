@@ -178,7 +178,7 @@ func DomainPublicValue(w *wrapper.Wrapper) {
 // The controller function for Values found directly in the controller values of the element
 func ContentValues(w *wrapper.Wrapper) {
 	e := NewElement()
-	err := e.GetValidElement(w.APIParams[0], 'content', w)
+	err := e.GetValidElement(w.APIParams[0], "content", w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Content not found %s : %s", w.APIParams[1], err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
@@ -203,7 +203,7 @@ func ContentValues(w *wrapper.Wrapper) {
 // The controller function for Values found directly in the controller values of the element
 func WrapperValues(w *wrapper.Wrapper) {
 	e := NewElement()
-	err := e.GetValidElement(w.APIParams[0], 'wrapper', w)
+	err := e.GetValidElement(w.APIParams[0], "wrapper", w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Content not found %s : %s", w.APIParams[0], err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
@@ -240,7 +240,7 @@ func WrapperValues(w *wrapper.Wrapper) {
 // The controller function for elements that are context specific
 func SlugValues(w *wrapper.Wrapper) {
 	es := NewElement()
-	err := es.GetValidElement(w.APIParams[0], 'slug', w)
+	err := es.GetValidElement(w.APIParams[0], "slug", w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Content not found %s : %s", w.APIParams[0], err.Error())
 		w.SiteConfig.Logger.Error(errmessage)

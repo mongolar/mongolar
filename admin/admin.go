@@ -8,7 +8,6 @@ import (
 	"github.com/mongolar/mongolar/form"
 	"github.com/mongolar/mongolar/oauthlogin"
 	"github.com/mongolar/mongolar/services"
-	"github.com/mongolar/mongolar/url"
 	"github.com/mongolar/mongolar/wrapper"
 	"gopkg.in/mgo.v2/bson"
 	"net/http"
@@ -53,9 +52,9 @@ func NewAdmin() (*AdminMap, *AdminMenu) {
 
 //Main controller for all admin functions
 func (a AdminMap) Admin(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
-	if c, ok := a[u[2]]; ok {
+	if c, ok := a[w.APIParams[0]]; ok {
 		if validateAdmin(w) {
+			w.Shift()
 			c(w)
 		}
 		return
@@ -121,12 +120,11 @@ func PathEditor(w *wrapper.Wrapper) {
 		}
 		f.AddRadio("status", o).AddLabel("Status")
 		f.AddText("path_id", "text").Hidden()
-		u := url.UrlToMap(w.Request.URL.Path)
-		if u[3] != "new" {
+		if w.APIParams[0] != "new" {
 			p := controller.NewPath()
-			err := p.GetById(u[3], w)
+			err := p.GetById(w.APIParams[0], w)
 			if err != nil {
-				errmessage := fmt.Sprintf("Could not retrieve path %s by %s: %s", u[3], w.Request.Host, err.Error())
+				errmessage := fmt.Sprintf("Could not retrieve path %s by %s: %s", w.APIParams[0], w.Request.Host, err.Error())
 				w.SiteConfig.Logger.Error(errmessage)
 				services.AddMessage("Error retrieving path information.", "Error", w)
 				w.Serve()
@@ -208,17 +206,16 @@ func PathEditor(w *wrapper.Wrapper) {
 }
 
 func PathElements(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
 	p := controller.NewPath()
-	err := p.GetById(u[3], w)
+	err := p.GetById(w.APIParams[0], w)
 	if err != nil {
-		errmessage := fmt.Sprintf("Path not found to edit for %s by %s ", u[3], w.Request.Host)
+		errmessage := fmt.Sprintf("Path not found to edit for %s by %s ", w.APIParams[0], w.Request.Host)
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("This path was not found", "Error", w)
 		w.Serve()
 	} else {
 		w.SetPayload("path", p.Path)
-		w.SetPayload("id", u[3])
+		w.SetPayload("id", w.APIParams[0])
 		w.SetPayload("title", p.Title)
 		w.SetPayload("elements", p.Elements)
 		if len(p.Elements) == 0 {
@@ -230,15 +227,14 @@ func PathElements(w *wrapper.Wrapper) {
 }
 
 func Element(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
 	e := controller.NewElement()
-	if _, ok := u[3]; !ok {
+	if len(w.APIParams) == 0 {
 		http.Error(w.Writer, "Forbidden", 403)
 		return
 	}
-	err := e.GetById(u[3], w)
+	err := e.GetById(w.APIParams[0], w)
 	if err != nil {
-		errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", u[3], w.Request.Host)
+		errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", w.APIParams[0], w.Request.Host)
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("This element was not found", "Error", w)
 	} else {
@@ -256,13 +252,12 @@ func Element(w *wrapper.Wrapper) {
 }
 
 func Sort(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
 	if w.Post == nil {
-		if u[3] == "paths" {
+		if w.APIParams[0] == "paths" {
 			p := controller.NewPath()
-			err := p.GetById(u[4], w)
+			err := p.GetById(w.APIParams[1], w)
 			if err != nil {
-				errmessage := fmt.Sprintf("Path not found to sort for %s by %s", u[4], w.Request.Host)
+				errmessage := fmt.Sprintf("Path not found to sort for %s by %s", w.APIParams[1], w.Request.Host)
 				w.SiteConfig.Logger.Error(errmessage)
 				services.AddMessage("This path was not found", "Error", w)
 				w.Serve()
@@ -275,11 +270,11 @@ func Sort(w *wrapper.Wrapper) {
 			w.SetTemplate("admin/element_sorter.html")
 			w.Serve()
 			return
-		} else if u[3] == "elements" {
+		} else if w.APIParams[0] == "elements" {
 			e := controller.NewElement()
-			err := e.GetById(u[4], w)
+			err := e.GetById(w.APIParams[1], w)
 			if err != nil {
-				errmessage := fmt.Sprintf("Element not found to sort for %s by %s.", u[4], w.Request.Host)
+				errmessage := fmt.Sprintf("Element not found to sort for %s by %s.", w.APIParams[1], w.Request.Host)
 				w.SiteConfig.Logger.Error(errmessage)
 				services.AddMessage("This element was not found", "Error", w)
 				w.Serve()
@@ -303,17 +298,17 @@ func Sort(w *wrapper.Wrapper) {
 		http.Error(w.Writer, "Forbidden", 403)
 		return
 	} else {
-		if u[3] == "paths" {
+		if w.APIParams[0] == "paths" {
 			p := bson.M{
 				"$set": bson.M{
 					"elements": w.Post["elements"],
 				},
 			}
-			s := bson.M{"_id": bson.ObjectIdHex(u[4])}
+			s := bson.M{"_id": bson.ObjectIdHex(w.APIParams[1])}
 			c := w.DbSession.DB("").C("paths")
 			err := c.Update(s, p)
 			if err != nil {
-				errmessage := fmt.Sprintf("Unable to update path order %s by %s: %s", u[3], w.Request.Host, err.Error())
+				errmessage := fmt.Sprintf("Unable to update path order %s by %s: %s", w.APIParams[0], w.Request.Host, err.Error())
 				w.SiteConfig.Logger.Error(errmessage)
 				services.AddMessage("Unable to save elements.", "Error", w)
 				w.Serve()
@@ -323,34 +318,34 @@ func Sort(w *wrapper.Wrapper) {
 				Target:     "centereditor",
 				Controller: "admin/path_elements",
 				Template:   "admin/path_elements.html",
-				Id:         u[4],
+				Id:         w.APIParams[1],
 			}
 			services.SetDynamic(dynamic, w)
 			services.AddMessage("You elements have been updated.", "Success", w)
 			w.Serve()
 			return
 
-		} else if u[3] == "elements" {
+		} else if w.APIParams[0] == "elements" {
 			p := bson.M{
 				"$set": bson.M{
 					"controller_values.elements": w.Post["elements"],
 				},
 			}
-			s := bson.M{"_id": bson.ObjectIdHex(u[4])}
+			s := bson.M{"_id": bson.ObjectIdHex(w.APIParams[1])}
 			c := w.DbSession.DB("").C("elements")
 			err := c.Update(s, p)
 			if err != nil {
-				errmessage := fmt.Sprintf("Unable to update element order %s by %s: %s", u[3], w.Request.Host, err.Error())
+				errmessage := fmt.Sprintf("Unable to update element order %s by %s: %s", w.APIParams[0], w.Request.Host, err.Error())
 				w.SiteConfig.Logger.Error(errmessage)
 				services.AddMessage("Unable to save elements.", "Error", w)
 				w.Serve()
 				return
 			}
 			dynamic := services.Dynamic{
-				Target:     u[4],
+				Target:     w.APIParams[1],
 				Controller: "admin/element",
 				Template:   "admin/element.html",
-				Id:         u[4],
+				Id:         w.APIParams[1],
 			}
 			services.SetDynamic(dynamic, w)
 			services.AddMessage("You elements have been updated.", "Success", w)
@@ -371,12 +366,11 @@ func ElementEditor(w *wrapper.Wrapper) {
 		f.AddText("dynamic_id", "text").AddLabel("Dynamic Id")
 		f.AddText("classes", "text").AddLabel("Classes")
 		f.AddText("element_id", "text").Hidden()
-		u := url.UrlToMap(w.Request.URL.Path)
-		if u[3] != "new" {
+		if w.APIParams[0] != "new" {
 			e := controller.NewElement()
-			err := e.GetById(u[3], w)
+			err := e.GetById(w.APIParams[0], w)
 			if err != nil {
-				errmessage := fmt.Sprintf("Element not found to edit for %s by %s", u[3], w.Request.Host)
+				errmessage := fmt.Sprintf("Element not found to edit for %s by %s", w.APIParams[0], w.Request.Host)
 				w.SiteConfig.Logger.Error(errmessage)
 				services.AddMessage("This element was not found", "Error", w)
 				w.Serve()
@@ -448,12 +442,11 @@ func ElementEditor(w *wrapper.Wrapper) {
 }
 
 func ContentTypeEditor(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
 	if w.Post == nil {
 		e := controller.NewElement()
-		err := e.GetById(u[3], w)
+		err := e.GetById(w.APIParams[0], w)
 		if err != nil {
-			errmessage := fmt.Sprintf("Element not found to edit for %s by %s", u[3], w.Request.Host)
+			errmessage := fmt.Sprintf("Element not found to edit for %s by %s", w.APIParams[0], w.Request.Host)
 			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("This element was not found", "Error", w)
 			w.Serve()
@@ -501,7 +494,7 @@ func ContentTypeEditor(w *wrapper.Wrapper) {
 		c := w.DbSession.DB("").C("elements")
 		err = c.Update(s, e)
 		if err != nil {
-			errmessage := fmt.Sprintf("Element not saved %s by %s", u[3], w.Request.Host)
+			errmessage := fmt.Sprintf("Element not saved %s by %s", w.APIParams[0], w.Request.Host)
 			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("Unable to save element.", "Error", w)
 		} else {
@@ -513,11 +506,10 @@ func ContentTypeEditor(w *wrapper.Wrapper) {
 }
 
 func ContentEditor(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
 	e := controller.NewElement()
-	err := e.GetById(u[3], w)
+	err := e.GetById(w.APIParams[0], w)
 	if err != nil {
-		errmessage := fmt.Sprintf("Element not found to edit for %s by %s", u[3], w.Request.Host)
+		errmessage := fmt.Sprintf("Element not found to edit for %s by %s", w.APIParams[0], w.Request.Host)
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("This element was not found", "Error", w)
 		w.Serve()
@@ -567,7 +559,7 @@ func ContentEditor(w *wrapper.Wrapper) {
 		c := w.DbSession.DB("").C("elements")
 		err = c.Update(s, e)
 		if err != nil {
-			errmessage := fmt.Sprintf("Element not saved %s by %s", u[3], w.Request.Host)
+			errmessage := fmt.Sprintf("Element not saved %s by %s", w.APIParams[0], w.Request.Host)
 			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("Unable to save element.", "Error", w)
 		} else {
@@ -586,7 +578,6 @@ func ContentEditor(w *wrapper.Wrapper) {
 }
 
 func AddChild(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
 	e := controller.NewElement()
 	e.MongoId = bson.NewObjectId()
 	e.Title = "New Element"
@@ -599,45 +590,45 @@ func AddChild(w *wrapper.Wrapper) {
 		w.Serve()
 		return
 	}
-	c = w.DbSession.DB("").C(u[3])
+	c = w.DbSession.DB("").C(w.APIParams[0])
 	f := ""
-	if u[3] == "elements" {
+	if w.APIParams[0] == "elements" {
 		f = "controller_values.elements"
-	} else if u[3] == "paths" {
+	} else if w.APIParams[0] == "paths" {
 		f = "elements"
 	} else {
-		errmessage := fmt.Sprintf("Invalid parent item type %s by %s", u[3], w.Request.Host)
+		errmessage := fmt.Sprintf("Invalid parent item type %s by %s", w.APIParams[0], w.Request.Host)
 		w.SiteConfig.Logger.Error(errmessage)
-		message := fmt.Sprintf("Attempt to assign child to illegal parent %s.", u[3])
+		message := fmt.Sprintf("Attempt to assign child to illegal parent %s.", w.APIParams[0])
 		services.AddMessage(message, "Error", w)
 		w.Serve()
 		return
 
 	}
-	i := bson.M{"_id": bson.ObjectIdHex(u[4])}
+	i := bson.M{"_id": bson.ObjectIdHex(w.APIParams[1])}
 	err = c.Update(i, bson.M{"$push": bson.M{f: e.MongoId.Hex()}})
 	if err != nil {
-		errmessage := fmt.Sprintf("Unable to add child element %s to %s : %s", e.MongoId.Hex(), u[4], err.Error())
+		errmessage := fmt.Sprintf("Unable to add child element %s to %s : %s", e.MongoId.Hex(), w.APIParams[1], err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
-		message := fmt.Sprintf("There was a problem, your elemeent was created but was not assigned to your %s.", u[3])
+		message := fmt.Sprintf("There was a problem, your elemeent was created but was not assigned to your %s.", w.APIParams[0])
 		services.AddMessage(message, "Error", w)
 		w.Serve()
 		return
 	}
 	var dynamic services.Dynamic
-	if u[3] == "elements" {
+	if w.APIParams[0] == "elements" {
 		dynamic = services.Dynamic{
-			Target:     u[4],
+			Target:     w.APIParams[1],
 			Controller: "admin/element",
 			Template:   "admin/element.html",
-			Id:         u[4],
+			Id:         w.APIParams[1],
 		}
-	} else if u[3] == "paths" {
+	} else if w.APIParams[0] == "paths" {
 		dynamic = services.Dynamic{
 			Target:     "centereditor",
 			Controller: "admin/path_elements",
 			Template:   "admin/path_elements.html",
-			Id:         u[4],
+			Id:         w.APIParams[1],
 		}
 	}
 	services.SetDynamic(dynamic, w)
@@ -663,19 +654,18 @@ func AllElements(w *wrapper.Wrapper) {
 }
 
 func AddExistingChild(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
-	c := w.DbSession.DB("").C(u[3])
-	i := bson.M{"_id": bson.ObjectIdHex(u[4])}
+	c := w.DbSession.DB("").C(w.APIParams[0])
+	i := bson.M{"_id": bson.ObjectIdHex(w.APIParams[1])}
 	var f string
-	if u[3] == "elements" {
+	if w.APIParams[0] == "elements" {
 		f = "controller_values.elements"
 	}
-	if u[3] == "paths" {
+	if w.APIParams[0] == "paths" {
 		f = "elements"
 	}
-	err := c.Update(i, bson.M{"$push": bson.M{f: u[5]}})
+	err := c.Update(i, bson.M{"$push": bson.M{f: w.APIParams[2]}})
 	if err != nil {
-		errmessage := fmt.Sprintf("Unable to assign child %s to %s : %s", u[5], u[4], err.Error())
+		errmessage := fmt.Sprintf("Unable to assign child %s to %s : %s", w.APIParams[2], w.APIParams[1], err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("Unable to add child element", "Error", w)
 		w.Serve()
@@ -685,46 +675,45 @@ func AddExistingChild(w *wrapper.Wrapper) {
 }
 
 func Delete(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
-	c := w.DbSession.DB("").C(u[3])
-	i := bson.M{"_id": bson.ObjectIdHex(u[4])}
+	c := w.DbSession.DB("").C(w.APIParams[0])
+	i := bson.M{"_id": bson.ObjectIdHex(w.APIParams[1])}
 	err := c.Remove(i)
 	if err != nil {
-		errmessage := fmt.Sprintf("Unable to delete %s %s : %s", u[3], u[4], err.Error())
+		errmessage := fmt.Sprintf("Unable to delete %s %s : %s", w.APIParams[0], w.APIParams[1], err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("Unable to delete.", "Error", w)
 		w.Serve()
 		return
 	}
-	if u[3] == "elements" {
-		s := bson.M{"controller_values.elements": u[4]}
-		d := bson.M{"$pull": bson.M{"controller_values.elements": u[4]}}
+	if w.APIParams[0] == "elements" {
+		s := bson.M{"controller_values.elements": w.APIParams[1]}
+		d := bson.M{"$pull": bson.M{"controller_values.elements": w.APIParams[1]}}
 		_, err := c.UpdateAll(s, d)
 		if err != nil {
-			errmessage := fmt.Sprintf("Unable to delete reference to %s %s : %s", u[3], u[4], err.Error())
+			errmessage := fmt.Sprintf("Unable to delete reference to %s %s : %s", w.APIParams[0], w.APIParams[1], err.Error())
 			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("Unable to delete all references to your element.", "Error", w)
 			w.Serve()
 			return
 		}
-		s = bson.M{"elements": u[4]}
-		d = bson.M{"$pull": bson.M{"elements": u[4]}}
+		s = bson.M{"elements": w.APIParams[1]}
+		d = bson.M{"$pull": bson.M{"elements": w.APIParams[1]}}
 		c := w.DbSession.DB("").C("paths")
 		_, err = c.UpdateAll(s, d)
 		if err != nil {
-			errmessage := fmt.Sprintf("Unable to delete reference to %s %s : %s", u[3], u[4], err.Error())
+			errmessage := fmt.Sprintf("Unable to delete reference to %s %s : %s", w.APIParams[0], w.APIParams[1], err.Error())
 			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("Unable to delete all references to your element.", "Error", w)
 			w.Serve()
 			return
 		}
 		dynamic := services.Dynamic{
-			Target:   u[4],
+			Target:   w.APIParams[1],
 			Template: "default.html",
 		}
 		services.SetDynamic(dynamic, w)
 	}
-	if u[3] == "paths" {
+	if w.APIParams[0] == "paths" {
 		dynamic := services.Dynamic{
 			Target:     "pathbar",
 			Controller: "admin/paths",
@@ -732,7 +721,7 @@ func Delete(w *wrapper.Wrapper) {
 		}
 		services.SetDynamic(dynamic, w)
 	}
-	services.AddMessage("Successfully deleted "+u[3], "Success", w)
+	services.AddMessage("Successfully deleted "+w.APIParams[0], "Success", w)
 	w.Serve()
 	return
 }
@@ -744,13 +733,12 @@ type ContentType struct {
 }
 
 func GetContentType(w *wrapper.Wrapper) {
-	u := url.UrlToMap(w.Request.URL.Path)
 	c := w.DbSession.DB("").C("content_types")
-	i := bson.M{"_id": bson.ObjectIdHex(u[3])}
+	i := bson.M{"_id": bson.ObjectIdHex(w.APIParams[0])}
 	var ct ContentType
 	err := c.Find(i).One(&ct)
 	if err != nil {
-		errmessage := fmt.Sprintf("Content Type not found %s : %s", u[3], err.Error())
+		errmessage := fmt.Sprintf("Content Type not found %s : %s", w.APIParams[0], err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("Your content types was not found.", "Error", w)
 		w.Serve()
@@ -763,15 +751,14 @@ func GetContentType(w *wrapper.Wrapper) {
 
 func EditContentType(w *wrapper.Wrapper) {
 	if w.Post == nil {
-		u := url.UrlToMap(w.Request.URL.Path)
 		f := form.NewForm()
 		ct := new(ContentType)
-		if u[3] != "new" {
+		if w.APIParams[0] != "new" {
 			c := w.DbSession.DB("").C("content_types")
-			i := bson.M{"_id": bson.ObjectIdHex(u[3])}
+			i := bson.M{"_id": bson.ObjectIdHex(w.APIParams[0])}
 			err := c.Find(i).One(ct)
 			if err != nil {
-				errmessage := fmt.Sprintf("Content Type not found %s : %s", u[3], err.Error())
+				errmessage := fmt.Sprintf("Content Type not found %s : %s", w.APIParams[0], err.Error())
 				w.SiteConfig.Logger.Error(errmessage)
 				services.AddMessage("Your content types was not found ", "Error", w)
 				w.Serve()
