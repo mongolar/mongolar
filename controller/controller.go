@@ -28,11 +28,12 @@ func NewMap() ControllerMap {
 //The designated structure for all elements
 type Element struct {
 	MongoId          bson.ObjectId          `bson:"_id,omitempty" json:"id"`
-	ControllerValues map[string]interface{} `bson:"controller_values" json:"controller_values"`
+	ControllerValues map[string]interface{} `bson:"controller_values,omitempty" json:"controller_values"`
 	Controller       string                 `bson:"controller" json:"controller"`
 	Template         string                 `bson:"template,omitempty" json:"template,omitempty"`
 	DynamicId        string                 `bson:"dynamic_id,omitempty" json:"dynamic_id"`
 	Title            string                 `bson:"title"`
+	Classes          string                 `bson:"classes"`
 }
 
 // Constructor for elements
@@ -132,10 +133,11 @@ func PathValues(w *wrapper.Wrapper) {
 		}
 		ev["mongolartemplate"] = e.Template
 		ev["mongolartype"] = e.Controller
+		ev["mongolarclasses"] = e.Classes
 		ev["mongolarid"] = eid
 		v = append(v, ev)
 	}
-	w.Writer.Header().Add("QueryParameters", qp)
+	w.SetPayload("mongolar_slug", qp)
 	w.SetContent(v)
 	w.SetTemplate(p.Template)
 	w.Serve()
@@ -231,9 +233,11 @@ func WrapperValues(w *wrapper.Wrapper) {
 			ev["mongolartemplate"] = e.Template
 			ev["mongolartype"] = e.Controller
 			ev["mongolarid"] = eid
+			ev["mongolarclasses"] = e.Classes
 			v = append(v, ev)
 		}
 	}
+	w.SetClasses(e.Classes)
 	w.SetContent(v)
 	w.Serve()
 }
@@ -250,7 +254,14 @@ func SlugValues(w *wrapper.Wrapper) {
 		w.Serve()
 		return
 	}
-	i := es.ControllerValues[w.Request.Header.Get("QueryParameter")]
+	if _, ok := es.ControllerValues[w.Request.Header.Get("Slug")]; !ok {
+		errmessage := fmt.Sprintf("Slug content not found for query %s", w.Request.Header.Get("QueryParameter"))
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("There was a problem loading some content on your page.", "Error", w)
+		w.Serve()
+		return
+	}
+	i := es.ControllerValues[w.Request.Header.Get("Slug")]
 	e := NewElement()
 	err = e.GetById(i.(string), w)
 	if err != nil {
@@ -262,6 +273,6 @@ func SlugValues(w *wrapper.Wrapper) {
 	}
 	w.SetTemplate(e.Template)
 	w.SetDynamicId(e.DynamicId)
-	w.SetContent(e.ControllerValues)
+	w.SetContent(e.ControllerValues["content"])
 	w.Serve()
 }

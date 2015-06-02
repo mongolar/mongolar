@@ -11,6 +11,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"net"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -23,6 +24,7 @@ type Wrapper struct {
 	Session    *Session               // Session for user
 	Payload    map[string]interface{} // This is the sum of the payload that will be returned to the user
 	DbSession  *mgo.Session           // The master MongoDb session that gets copied
+	APIParams  []string
 }
 
 //Constructor for the Wrapper
@@ -50,7 +52,14 @@ func New(w http.ResponseWriter, r *http.Request, s *configs.SiteConfig) *Wrapper
 	}
 	// Define payload
 	wr.Payload = make(map[string]interface{})
+	wr.APIParams = strings.Split(r.URL.Path, "/")
+	wr.Shift()
 	return &wr
+}
+
+// Shift API Params over by one
+func (w *Wrapper) Shift() {
+	w.APIParams = w.APIParams[1:]
 }
 
 // Load post data from AngulaJS
@@ -68,6 +77,11 @@ func (w *Wrapper) SetContent(c interface{}) {
 // Helper function for the controller to easily add its final content to the Payload
 func (w *Wrapper) SetTemplate(t string) {
 	w.SetPayload("mongolartemplate", t)
+}
+
+// Helper function for the controller to easily add its final content to the Payload
+func (w *Wrapper) SetClasses(c string) {
+	w.SetPayload("mongolarclasses", c)
 }
 
 // Helper function for the controller to easily add its final content to the Payload

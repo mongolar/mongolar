@@ -109,6 +109,7 @@ AngularModules:
         - "ui.bootstrap"
         - "ngSanitize"
         - "ui.sortable"
+        - "btford.markdown"
 # Where templates will originate from, this can be a cdn
 # REQUIRED
 TemplateEndpoint: "assets/templates"
