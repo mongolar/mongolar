@@ -45,7 +45,9 @@ func NewAdmin() (*AdminMap, *AdminMenu) {
 		"delete":             Delete,
 		"sort_children":      Sort,
 		"content":            ContentEditor,
+		"menu_editor":        MenuEditor,
 		"content_type":       ContentTypeEditor,
+		"orphans":            OrphanElements,
 	}
 	return amap, &amenu
 }
@@ -215,7 +217,6 @@ func PathElements(w *wrapper.Wrapper) {
 		w.Serve()
 	} else {
 		w.SetPayload("path", p.Path)
-		w.SetPayload("id", w.APIParams[0])
 		w.SetPayload("title", p.Title)
 		w.SetPayload("elements", p.Elements)
 		if len(p.Elements) == 0 {
@@ -224,6 +225,73 @@ func PathElements(w *wrapper.Wrapper) {
 		w.Serve()
 	}
 
+}
+
+func OrphanElements(w *wrapper.Wrapper) {
+	assigned := make([]bson.M, 0)
+	paths, err := controller.PathList(w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Could not retrieve path elements for orphan list: %s", err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Could not retrieve path elements.", "Error", w)
+		w.Serve()
+	}
+	for _, path := range paths {
+		for _, element := range path.Elements {
+			id := bson.M{"_id": bson.ObjectIdHex(element)}
+			assigned = append(assigned, id)
+		}
+	}
+	wrappers := make([]controller.Element, 0)
+	c := w.DbSession.DB("").C("elements")
+	s := bson.M{"type": "wrapper"}
+	i := c.Find(s).Limit(50).Iter()
+	err = i.All(&wrappers)
+	if err != nil {
+		errmessage := fmt.Sprintf("Could not retrieve wrapper elements for orphan list: %s", err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Could not retrieve wrapper elements.", "Error", w)
+		w.Serve()
+	}
+	for _, wrapper := range wrappers {
+		if _, ok := wrapper.ControllerValues["elements"]; ok {
+			es := reflect.ValueOf(wrapper.ControllerValues["elements"])
+			for i := 0; i < es.Len(); i++ {
+				elementid := es.Index(i)
+				id := bson.M{"_id": bson.ObjectIdHex(elementid.Interface().(string))}
+				assigned = append(assigned, id)
+			}
+		}
+	}
+	slugs := make([]controller.Element, 0)
+	s = bson.M{"type": "slug"}
+	i = c.Find(s).Limit(50).Iter()
+	err = i.All(&slugs)
+	if err != nil {
+		errmessage := fmt.Sprintf("Could not retrieve slug elements for orphan list: %s", err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Could not retrieve slug elements.", "Error", w)
+		w.Serve()
+	}
+	for _, slug := range slugs {
+		for _, element := range slug.ControllerValues {
+			id := bson.M{"_id": bson.ObjectIdHex(element.(string))}
+			assigned = append(assigned, id)
+		}
+	}
+	unassigned := new([]controller.Element)
+	s = bson.M{"_id": bson.M{"$nin": assigned}}
+	i = c.Find(s).Limit(50).Iter()
+	err = i.All(unassigned)
+	if err != nil {
+		errmessage := fmt.Sprintf("Could not retrieve unassigned elements: %s", err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Could not retrieve unassigned elements.", "Error", w)
+		w.Serve()
+	}
+	w.SetPayload("elements", unassigned)
+	w.Serve()
+	return
 }
 
 func Element(w *wrapper.Wrapper) {
@@ -249,6 +317,52 @@ func Element(w *wrapper.Wrapper) {
 		}
 	}
 	w.Serve()
+}
+
+func MenuEditor(w *wrapper.Wrapper) {
+	if w.Post == nil {
+		if len(w.APIParams) == 0 {
+			http.Error(w.Writer, "Forbidden", 403)
+			return
+		}
+		e := controller.NewElement()
+		err := e.GetById(w.APIParams[0], w)
+		if err != nil {
+			errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", w.APIParams[0], w.Request.Host)
+			w.SiteConfig.Logger.Error(errmessage)
+			services.AddMessage("This element was not found", "Error", w)
+		} else {
+			w.SetPayload("menu", e.ControllerValues)
+			w.SetPayload("title", e.Title)
+		}
+		w.Serve()
+	} else {
+		p := bson.M{
+			"$set": bson.M{
+				"controller_values": w.Post["menu"],
+			},
+		}
+		s := bson.M{"_id": bson.ObjectIdHex(w.APIParams[1])}
+		c := w.DbSession.DB("").C("elements")
+		err := c.Update(s, p)
+		if err != nil {
+			errmessage := fmt.Sprintf("Unable to update menu element %s by %s: %s", w.APIParams[0], w.Request.Host, err.Error())
+			w.SiteConfig.Logger.Error(errmessage)
+			services.AddMessage("Unable to save menu element.", "Error", w)
+			w.Serve()
+			return
+		}
+		dynamic := services.Dynamic{
+			Target:     "bottomeditor",
+			Controller: "",
+			Template:   "",
+			Id:         "",
+		}
+		services.SetDynamic(dynamic, w)
+		services.AddMessage("You menu element have been updated.", "Success", w)
+		w.Serve()
+	}
+
 }
 
 func Sort(w *wrapper.Wrapper) {

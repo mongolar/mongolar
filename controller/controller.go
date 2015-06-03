@@ -63,6 +63,18 @@ func (e *Element) GetValidElement(i string, c string, w *wrapper.Wrapper) error 
 	return err
 }
 
+// Get all Elements
+func ElementList(w *wrapper.Wrapper) ([]Element, error) {
+	el := make([]Element, 0)
+	c := w.DbSession.DB("").C("elements")
+	i := c.Find(nil).Limit(50).Iter()
+	err := i.All(&el)
+	if err != nil {
+		return nil, err
+	}
+	return el, nil
+}
+
 //The designated structure for all elements
 type Path struct {
 	MongoId  bson.ObjectId `bson:"_id,omitempty" json:"id"`
