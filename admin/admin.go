@@ -228,7 +228,7 @@ func PathElements(w *wrapper.Wrapper) {
 }
 
 func OrphanElements(w *wrapper.Wrapper) {
-	assigned := make([]bson.M, 0)
+	assigned := make([]bson.ObjectId, 0)
 	paths, err := controller.PathList(w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Could not retrieve path elements for orphan list: %s", err.Error())
@@ -238,13 +238,13 @@ func OrphanElements(w *wrapper.Wrapper) {
 	}
 	for _, path := range paths {
 		for _, element := range path.Elements {
-			id := bson.M{"_id": bson.ObjectIdHex(element)}
+			id := bson.ObjectIdHex(element)
 			assigned = append(assigned, id)
 		}
 	}
 	wrappers := make([]controller.Element, 0)
 	c := w.DbSession.DB("").C("elements")
-	s := bson.M{"type": "wrapper"}
+	s := bson.M{"controller": "wrapper"}
 	i := c.Find(s).Limit(50).Iter()
 	err = i.All(&wrappers)
 	if err != nil {
@@ -258,13 +258,13 @@ func OrphanElements(w *wrapper.Wrapper) {
 			es := reflect.ValueOf(wrapper.ControllerValues["elements"])
 			for i := 0; i < es.Len(); i++ {
 				elementid := es.Index(i)
-				id := bson.M{"_id": bson.ObjectIdHex(elementid.Interface().(string))}
+				id := bson.ObjectIdHex(elementid.Interface().(string))
 				assigned = append(assigned, id)
 			}
 		}
 	}
 	slugs := make([]controller.Element, 0)
-	s = bson.M{"type": "slug"}
+	s = bson.M{"controller": "slug"}
 	i = c.Find(s).Limit(50).Iter()
 	err = i.All(&slugs)
 	if err != nil {
@@ -275,7 +275,8 @@ func OrphanElements(w *wrapper.Wrapper) {
 	}
 	for _, slug := range slugs {
 		for _, element := range slug.ControllerValues {
-			id := bson.M{"_id": bson.ObjectIdHex(element.(string))}
+
+			id := bson.ObjectIdHex(element.(string))
 			assigned = append(assigned, id)
 		}
 	}
