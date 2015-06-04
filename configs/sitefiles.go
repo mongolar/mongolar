@@ -1,6 +1,7 @@
 package configs
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"path/filepath"
@@ -23,6 +24,10 @@ func (s SiteFiles) getSiteConfigFiles() {
 	glob := ServerConfig.SitesDirectory + "*.yaml"
 	files, err := filepath.Glob(glob)
 	if err != nil {
+		log.Fatal(err)
+	}
+	if len(files) == 0 {
+		err := errors.New("No configurations found")
 		log.Fatal(err)
 	}
 	for key, value := range files {
