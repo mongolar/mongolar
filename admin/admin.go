@@ -639,6 +639,13 @@ func ContentEditor(w *wrapper.Wrapper) {
 		w.Serve()
 		return
 	}
+	if _, ok := e.ControllerValues["type"]; !ok {
+		errmessage := fmt.Sprintf("No content type set for %s", w.APIParams[0], w.Request.Host)
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("This element doesn't have a content type set.  Set a content type to edit values.", "Error", w)
+		w.Serve()
+		return
+	}
 	c := w.DbSession.DB("").C("content_types")
 	var ct ContentType
 	s := bson.M{"type": e.ControllerValues["type"]}
