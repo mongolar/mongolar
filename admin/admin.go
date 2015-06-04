@@ -670,6 +670,7 @@ func ContentEditor(w *wrapper.Wrapper) {
 			f.FormData = make(map[string]interface{})
 		}
 		f.Register(w)
+		w.SetTemplate("admin/form.html")
 		w.SetPayload("form", f)
 	} else {
 		_, err := form.GetValidRegFormM(w.Post["form_id"].(string), w)
