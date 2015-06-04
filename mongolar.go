@@ -36,7 +36,7 @@ func EnsureIndexes(configs *configs.Configs) {
 	for _, site_config := range configs.SitesMap {
 		db_session := site_config.DbSession.Copy()
 		defer db_session.Close()
-		var duration time.Duration = time.Duration(site_config.SessionExpiration * time.Hour)
+		duration := time.Duration(site_config.SessionExpiration * time.Hour)
 		i := mgo.Index{
 			Key:         []string{"updated"},
 			Unique:      false,
@@ -64,6 +64,17 @@ func EnsureIndexes(configs *configs.Configs) {
 			Sparse:     false,
 		}
 		c = db_session.DB("").C("users")
+		duration = time.Duration(2 * time.Hour)
+		c.EnsureIndex(i)
+		i = mgo.Index{
+			Key:         []string{"created"},
+			Unique:      false,
+			DropDups:    false,
+			Background:  true,
+			Sparse:      false,
+			ExpireAfter: duration,
+		}
+		c = db_session.DB("").C("forms")
 		c.EnsureIndex(i)
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"github.com/mongolar/mongolar/services"
 	"github.com/mongolar/mongolar/wrapper"
 	"gopkg.in/mgo.v2/bson"
+	"time"
 )
 
 // Basic form structure, required by Formly
@@ -108,6 +109,7 @@ func (f *Form) Register(w *wrapper.Wrapper) error {
 		FormFields: f.Fields,
 		FormId:     f.FormId,
 		SessionId:  w.Session.Id,
+		Created:    time.Now(),
 	}
 	c := w.DbSession.DB("").C("form_register")
 	err := c.Insert(fr)
@@ -119,6 +121,7 @@ type FormRegister struct {
 	FormFields []*Field      `bson:"fields"`
 	FormId     bson.ObjectId `bson:"_id"`
 	SessionId  bson.ObjectId `bson:"session_id"`
+	Created    time.Time     `bson:"created"`
 }
 
 // Retrieve a previously registered form by id

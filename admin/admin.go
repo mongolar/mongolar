@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"reflect"
 	"strings"
+	"unicode"
 )
 
 type AdminMap controller.ControllerMap
@@ -216,6 +217,7 @@ func PathElements(w *wrapper.Wrapper) {
 		services.AddMessage("This path was not found", "Error", w)
 		w.Serve()
 	} else {
+		w.SetPayload("id", w.APIParams[0])
 		w.SetPayload("path", p.Path)
 		w.SetPayload("title", p.Title)
 		w.SetPayload("elements", p.Elements)
@@ -476,7 +478,14 @@ func ElementEditor(w *wrapper.Wrapper) {
 
 		f := form.NewForm()
 		f.AddText("title", "text").AddLabel("Title")
-		f.AddText("controller", "text").AddLabel("Controller")
+		op := make([]map[string]string, 0)
+		for _, ec := range w.SiteConfig.ElementControllers {
+			uc := []rune(ec)
+			uc[0] = unicode.ToUpper(uc[0])
+			name := string(uc)
+			op = append(op, map[string]string{"name": name, "value": ec})
+		}
+		f.AddSelect("controller", op).AddLabel("Controller")
 		f.AddText("template", "text").AddLabel("Template")
 		f.AddText("dynamic_id", "text").AddLabel("Dynamic Id")
 		f.AddText("classes", "text").AddLabel("Classes")
