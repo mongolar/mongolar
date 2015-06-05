@@ -124,6 +124,19 @@ type FormRegister struct {
 	Created    time.Time     `bson:"created"`
 }
 
+// Check for missing required fields.
+func (fr *FormRegister) ValidateRequired(formData map[string]interface{}) (map[string]string, error) {
+	missing := make(map[string]string)
+	for _, f := range fr.FormFields {
+		if f.TemplateOptions.Required == true {
+			if _, ok := formData[f.Key]; !ok {
+				missing[f.Key] = f.TemplateOptions.Label
+			}
+		}
+	}
+	return missing
+}
+
 // Retrieve a previously registered form by id
 func GetRegisteredForm(i string, w *wrapper.Wrapper) (*FormRegister, error) {
 	fr := new(FormRegister)
@@ -163,8 +176,8 @@ type Field struct {
 
 type TemplateOptions struct {
 	Options     []map[string]string `json:"options,omitempty" bson:"options,omitempty"`
-	Label       string              `json:"label,omitempty" bson:"label,omitempty"`
-	Required    bool                `json:"required,omitempty" bson:"required,omitempty"`
+	Label       string              `json:"label,omitempty" bson:"label"`
+	Required    bool                `json:"required,omitempty" bson:"required"`
 	Placeholder string              `json:"placeholder,omitempty" bson:"placeholder,omitempty"`
 	Rows        int                 `json:"rows,omitempty" bson:"rows,omitempty"`
 	Cols        int                 `json:"cols,omitempty" bson:"cols,omitempty"`
