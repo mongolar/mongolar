@@ -12,22 +12,23 @@ import (
 
 // Individual Site Configuration Type
 type SiteConfig struct {
-	MongoDb           map[string]string      //Configuration for MongoDB Connection
-	Directory         string                 // Directory for html and assets
-	Aliases           []string               // Site Aliases/Domains
-	SessionExpiration time.Duration          // When to expire a users Session
-	TemplateEndpoint  string                 // URL where will be stored
-	ForeignDomains    []string               // This will whitelist domains for loading assets from other domains
-	AngularModules    []string               // A slice of angularjs modules to load
-	PublicValues      map[string]string      // These values can be directly invoked from the domain controller
-	Misc              map[string]interface{} // Where you can store any other value not defined here
-	Logger            *logrus.Logger         // Logrus logger
-	DbSession         *mgo.Session           // The master MongoDb session that gets copied
-	FourOFour         string
-	APIEndPoint       string
-	Controllers       []string
-	OAuthLogins       map[string]map[string]string
-	LoginURLs         map[string]string
+	MongoDb            map[string]string      //Configuration for MongoDB Connection
+	Directory          string                 // Directory for html and assets
+	Aliases            []string               // Site Aliases/Domains
+	SessionExpiration  time.Duration          // When to expire a users Session
+	TemplateEndpoint   string                 // URL where will be stored
+	ForeignDomains     []string               // This will whitelist domains for loading assets from other domains
+	AngularModules     []string               // A slice of angularjs modules to load
+	PublicValues       map[string]string      // These values can be directly invoked from the domain controller
+	Misc               map[string]interface{} // Where you can store any other value not defined here
+	Logger             *logrus.Logger         // Logrus logger
+	DbSession          *mgo.Session           // The master MongoDb session that gets copied
+	FourOFour          string
+	APIEndPoint        string
+	Controllers        []string
+	OAuthLogins        map[string]map[string]string
+	LoginURLs          map[string]string
+	ElementControllers []string
 }
 
 // Constructor for SiteConfig
