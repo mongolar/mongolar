@@ -31,7 +31,7 @@ type Element struct {
 	Controller       string                 `bson:"controller" json:"controller"`
 	Template         string                 `bson:"template,omitempty" json:"template,omitempty"`
 	DynamicId        string                 `bson:"dynamic_id,omitempty" json:"dynamic_id"`
-	Title            string                 `bson:"title"`
+	Title            string                 `bson:"title" json:"title"`
 	Classes          string                 `bson:"classes"`
 }
 

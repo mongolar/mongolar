@@ -292,6 +292,7 @@ func OrphanElements(w *wrapper.Wrapper) {
 		services.AddMessage("Could not retrieve unassigned elements.", "Error", w)
 		w.Serve()
 	}
+	w.SetTemplate("admin/orphan_path_elements.html")
 	w.SetPayload("elements", unassigned)
 	w.Serve()
 	return
