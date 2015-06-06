@@ -125,7 +125,7 @@ type FormRegister struct {
 }
 
 // Check for missing required fields.
-func (fr *FormRegister) ValidateRequired(formData map[string]interface{}) (map[string]string, error) {
+func (fr *FormRegister) ValidateRequired(formData map[string]interface{}) map[string]string {
 	missing := make(map[string]string)
 	for _, f := range fr.FormFields {
 		if f.TemplateOptions.Required == true {
