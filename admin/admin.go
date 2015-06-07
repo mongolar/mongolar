@@ -33,7 +33,7 @@ func NewAdmin() (*AdminMap, *AdminMenu) {
 		},
 	}
 	amap := &AdminMap{
-		"menu":               amenu.AdminMenu,
+		"admin_menu":         amenu.AdminMenu,
 		"paths":              AdminPaths,
 		"path_elements":      PathElements,
 		"path_editor":        PathEditor,
@@ -46,7 +46,7 @@ func NewAdmin() (*AdminMap, *AdminMenu) {
 		"delete":             Delete,
 		"sort_children":      Sort,
 		"content":            ContentEditor,
-		"menu_editor":        MenuEditor,
+		"menu":               MenuEditor,
 		"content_type":       ContentTypeEditor,
 		"orphans":            OrphanElements,
 	}
@@ -106,7 +106,7 @@ func AdminPaths(w *wrapper.Wrapper) {
 }
 
 func PathEditor(w *wrapper.Wrapper) {
-	if w.Post == nil {
+	if w.Request.Method != "POST" {
 		ops := []string{"published", "unpublished"}
 		f := form.NewForm()
 		f.AddText("title", "text").AddLabel("Title")
@@ -144,6 +144,8 @@ func PathEditor(w *wrapper.Wrapper) {
 		w.SetPayload("form", f)
 		w.Serve()
 	} else {
+		p := make(map[string]interface{})
+		err := json.NewDecoder(r.Body).Decode(&p)
 		_, err := form.GetValidRegFormM(w.Post["form_id"].(string), w)
 		if err != nil {
 			return
@@ -324,7 +326,7 @@ func Element(w *wrapper.Wrapper) {
 }
 
 func MenuEditor(w *wrapper.Wrapper) {
-	if w.Post == nil {
+	if w.Request.Method != "POST" {
 		if len(w.APIParams) == 0 {
 			http.Error(w.Writer, "Forbidden", 403)
 			return
@@ -370,7 +372,7 @@ func MenuEditor(w *wrapper.Wrapper) {
 }
 
 func Sort(w *wrapper.Wrapper) {
-	if w.Post == nil {
+	if w.Request.Method != "POST" {
 		if w.APIParams[0] == "paths" {
 			p := controller.NewPath()
 			err := p.GetById(w.APIParams[1], w)
@@ -475,8 +477,7 @@ func Sort(w *wrapper.Wrapper) {
 	}
 }
 func ElementEditor(w *wrapper.Wrapper) {
-	if w.Post == nil {
-
+	if w.Request.Method != "POST" {
 		f := form.NewForm()
 		f.AddText("title", "text").AddLabel("Title")
 		op := make([]map[string]string, 0)
@@ -567,7 +568,7 @@ func ElementEditor(w *wrapper.Wrapper) {
 }
 
 func ContentTypeEditor(w *wrapper.Wrapper) {
-	if w.Post == nil {
+	if w.Request.Method != "POST" {
 		e := controller.NewElement()
 		err := e.GetById(w.APIParams[0], w)
 		if err != nil {
@@ -658,7 +659,7 @@ func ContentEditor(w *wrapper.Wrapper) {
 		w.Serve()
 		return
 	}
-	if w.Post == nil {
+	if w.Request.Method != "POST" {
 		if e.Controller != "content" {
 			http.Error(w.Writer, "Forbidden", 403)
 			return
@@ -883,7 +884,7 @@ func GetContentType(w *wrapper.Wrapper) {
 }
 
 func EditContentType(w *wrapper.Wrapper) {
-	if w.Post == nil {
+	if w.Request.Method != "POST" {
 		f := form.NewForm()
 		ct := new(ContentType)
 		if w.APIParams[0] != "new" {
