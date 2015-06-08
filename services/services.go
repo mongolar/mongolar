@@ -5,10 +5,15 @@ import (
 )
 
 // Add a message to be served
-// TODO: This needs to be fixed.
 func AddMessage(t string, s string, w *wrapper.Wrapper) {
-	m := map[string]string{"text": t, "severity": s}
-	w.SetPayload("mongolar_messages", []map[string]string{m})
+	message := map[string]string{"text": t, "severity": s}
+	messages, err := w.GetAPayload("mongolar_messages")
+	if err != nil {
+		messages = []map[string]string{message}
+	} else {
+		messages = append(messages.([]map[string]string), message)
+	}
+	w.SetPayload("mongolar_messages", messages)
 }
 
 func ClearMessage(w *wrapper.Wrapper) {

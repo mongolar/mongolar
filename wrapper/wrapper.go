@@ -16,7 +16,6 @@ import (
 type Wrapper struct {
 	Writer     http.ResponseWriter    // The response writer
 	Request    *http.Request          // The request
-	Post       map[string]interface{} // Post data from AngularJS
 	SiteConfig *configs.SiteConfig    // The configuration for the site being accessed
 	Session    *Session               // Session for user
 	Payload    map[string]interface{} // This is the sum of the payload that will be returned to the user
@@ -28,13 +27,6 @@ type Wrapper struct {
 func New(w http.ResponseWriter, r *http.Request, s *configs.SiteConfig) *Wrapper {
 	wr := Wrapper{Writer: w, Request: r, SiteConfig: s}
 	var err error
-	if r.Method == "POST" {
-		wr.Post, err = formPostData(r)
-		if err != nil {
-			errmessage := fmt.Sprintf("Could not load Post Data: %s", err.Error())
-			wr.SiteConfig.Logger.Error(errmessage)
-		}
-	}
 	wr.DbSession = s.DbSession.Copy()
 	//Get session
 	err = wr.NewSession()
@@ -93,8 +85,8 @@ func (w *Wrapper) SetPayload(n string, v interface{}) {
 
 // Gets payload based on a keyvalue
 func (w *Wrapper) GetAPayload(n string) (interface{}, error) {
-	if v, ok := w.Payload[n]; ok {
-		return v, nil
+	if _, ok := w.Payload[n]; ok {
+		return w.Payload[n], nil
 	}
 	err := errors.New("Payload value not set")
 	return nil, err

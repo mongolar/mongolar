@@ -3,6 +3,7 @@
 package admin
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/mongolar/mongolar/controller"
 	"github.com/mongolar/mongolar/form"
@@ -109,9 +110,9 @@ func PathEditor(w *wrapper.Wrapper) {
 	if w.Request.Method != "POST" {
 		ops := []string{"published", "unpublished"}
 		f := form.NewForm()
-		f.AddText("title", "text").AddLabel("Title")
-		f.AddText("path", "text").AddLabel("Path")
-		f.AddText("template", "text").AddLabel("Template")
+		f.AddText("title", "text").AddLabel("Title").Required()
+		f.AddText("path", "text").AddLabel("Path").Required()
+		f.AddText("template", "text").AddLabel("Template").Required()
 		f.AddCheckBox("wildcard").AddLabel("Wildcard")
 		o := make([]map[string]string, 0)
 		for _, op := range ops {
@@ -121,7 +122,7 @@ func PathEditor(w *wrapper.Wrapper) {
 			}
 			o = append(o, r)
 		}
-		f.AddRadio("status", o).AddLabel("Status")
+		f.AddRadio("status", o).AddLabel("Status").Required()
 		f.AddText("path_id", "text").Hidden()
 		if w.APIParams[0] != "new" {
 			p := controller.NewPath()
@@ -144,26 +145,25 @@ func PathEditor(w *wrapper.Wrapper) {
 		w.SetPayload("form", f)
 		w.Serve()
 	} else {
-		p := make(map[string]interface{})
-		err := json.NewDecoder(r.Body).Decode(&p)
-		_, err := form.GetValidRegFormM(w.Post["form_id"].(string), w)
+		post := make(map[string]interface{})
+		err := form.GetValidFormData(w, &post)
 		if err != nil {
 			return
 		} else {
 			c := w.DbSession.DB("").C("paths")
-			if w.Post["mongolarid"].(string) == "new" {
+			if post["mongolarid"].(string) == "new" {
 				var wc bool
-				if c, ok := w.Post["wildcard"]; ok {
+				if c, ok := post["wildcard"]; ok {
 					wc = c.(bool)
 				} else {
 					wc = false
 				}
 				p := controller.Path{
 					Wildcard: wc,
-					Path:     w.Post["path"].(string),
-					Template: w.Post["template"].(string),
-					Title:    w.Post["title"].(string),
-					Status:   w.Post["status"].(string),
+					Path:     post["path"].(string),
+					Template: post["template"].(string),
+					Title:    post["title"].(string),
+					Status:   post["status"].(string),
 				}
 				err := c.Insert(p)
 				if err != nil {
@@ -177,17 +177,17 @@ func PathEditor(w *wrapper.Wrapper) {
 			} else {
 				p := bson.M{
 					"$set": bson.M{
-						"wildcard": w.Post["wildcard"].(bool),
-						"path":     w.Post["path"].(string),
-						"template": w.Post["template"].(string),
-						"title":    w.Post["title"].(string),
-						"status":   w.Post["status"].(string),
+						"wildcard": post["wildcard"].(bool),
+						"path":     post["path"].(string),
+						"template": post["template"].(string),
+						"title":    post["title"].(string),
+						"status":   post["status"].(string),
 					},
 				}
-				s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
+				s := bson.M{"_id": bson.ObjectIdHex(post["mongolarid"].(string))}
 				err := c.Update(s, p)
 				if err != nil {
-					errmessage := fmt.Sprintf("Unable to save path %s by %s: %s", w.Post["mongolarid"].(string),
+					errmessage := fmt.Sprintf("Unable to save path %s by %s: %s", post["mongolarid"].(string),
 						w.Request.Host, err.Error())
 					w.SiteConfig.Logger.Error(errmessage)
 					services.AddMessage("There was a problem saving your path.", "Error", w)
@@ -343,14 +343,23 @@ func MenuEditor(w *wrapper.Wrapper) {
 		}
 		w.Serve()
 	} else {
+		post := make(map[string]interface{})
+		err := json.NewDecoder(w.Request.Body).Decode(&post)
+		if err != nil {
+			errmessage := fmt.Sprintf("Unable to update marshall menu elements by %s: %s", w.Request.Host, err.Error())
+			w.SiteConfig.Logger.Error(errmessage)
+			services.AddMessage("Unable to save menu element.", "Error", w)
+			w.Serve()
+			return
+		}
 		p := bson.M{
 			"$set": bson.M{
-				"controller_values": w.Post["menu"],
+				"controller_values": post["menu"],
 			},
 		}
 		s := bson.M{"_id": bson.ObjectIdHex(w.APIParams[1])}
 		c := w.DbSession.DB("").C("elements")
-		err := c.Update(s, p)
+		err = c.Update(s, p)
 		if err != nil {
 			errmessage := fmt.Sprintf("Unable to update menu element %s by %s: %s", w.APIParams[0], w.Request.Host, err.Error())
 			w.SiteConfig.Logger.Error(errmessage)
@@ -418,10 +427,19 @@ func Sort(w *wrapper.Wrapper) {
 		http.Error(w.Writer, "Forbidden", 403)
 		return
 	} else {
+		post := make(map[string]interface{})
+		err := json.NewDecoder(w.Request.Body).Decode(&post)
+		if err != nil {
+			errmessage := fmt.Sprintf("Unable to marshall sort elements %s by %s: %s", w.APIParams[0], w.Request.Host, err.Error())
+			w.SiteConfig.Logger.Error(errmessage)
+			services.AddMessage("Unable to save elements.", "Error", w)
+			w.Serve()
+			return
+		}
 		if w.APIParams[0] == "paths" {
 			p := bson.M{
 				"$set": bson.M{
-					"elements": w.Post["elements"],
+					"elements": post["elements"],
 				},
 			}
 			s := bson.M{"_id": bson.ObjectIdHex(w.APIParams[1])}
@@ -446,14 +464,23 @@ func Sort(w *wrapper.Wrapper) {
 			return
 
 		} else if w.APIParams[0] == "elements" {
+			post := make(map[string]interface{})
+			err := json.NewDecoder(w.Request.Body).Decode(&post)
+			if err != nil {
+				errmessage := fmt.Sprintf("Unable to marshall element %s by %s: %s", w.APIParams[0], w.Request.Host, err.Error())
+				w.SiteConfig.Logger.Error(errmessage)
+				services.AddMessage("Unable to save elements.", "Error", w)
+				w.Serve()
+				return
+			}
 			p := bson.M{
 				"$set": bson.M{
-					"controller_values.elements": w.Post["elements"],
+					"controller_values.elements": post["elements"],
 				},
 			}
 			s := bson.M{"_id": bson.ObjectIdHex(w.APIParams[1])}
 			c := w.DbSession.DB("").C("elements")
-			err := c.Update(s, p)
+			err = c.Update(s, p)
 			if err != nil {
 				errmessage := fmt.Sprintf("Unable to update element order %s by %s: %s", w.APIParams[0], w.Request.Host, err.Error())
 				w.SiteConfig.Logger.Error(errmessage)
@@ -512,18 +539,19 @@ func ElementEditor(w *wrapper.Wrapper) {
 		w.SetTemplate("admin/form.html")
 		w.SetPayload("form", f)
 	} else {
-		_, err := form.GetValidRegFormM(w.Post["form_id"].(string), w)
+		post := make(map[string]string)
+		err := form.GetValidFormData(w, &post)
 		if err != nil {
 			return
 		} else {
 			c := w.DbSession.DB("").C("elements")
-			if w.Post["mongolarid"].(string) == "new" {
+			if post["mongolarid"] == "new" {
 				p := controller.Element{
-					Controller: w.Post["controller"].(string),
-					DynamicId:  w.Post["dynamic_id"].(string),
-					Template:   w.Post["template"].(string),
-					Title:      w.Post["title"].(string),
-					Classes:    w.Post["classes"].(string),
+					Controller: post["controller"],
+					DynamicId:  post["dynamic_id"],
+					Template:   post["template"],
+					Title:      post["title"],
+					Classes:    post["classes"],
 				}
 				err := c.Insert(p)
 				if err != nil {
@@ -536,25 +564,25 @@ func ElementEditor(w *wrapper.Wrapper) {
 			} else {
 				p := bson.M{
 					"$set": bson.M{
-						"template":   w.Post["template"].(string),
-						"title":      w.Post["title"].(string),
-						"dynamic_id": w.Post["dynamic_id"].(string),
-						"controller": w.Post["controller"].(string),
-						"classes":    w.Post["classes"].(string),
+						"template":   post["template"],
+						"title":      post["title"],
+						"dynamic_id": post["dynamic_id"],
+						"controller": post["controller"],
+						"classes":    post["classes"],
 					},
 				}
-				s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
+				s := bson.M{"_id": bson.ObjectIdHex(post["mongolarid"])}
 				err := c.Update(s, p)
 				if err != nil {
 					errmessage := fmt.Sprintf("Unable to save element %s by %s : %s",
-						w.Post["mongolarid"].(string), w.Request.Host, err.Error())
+						post["mongolarid"], w.Request.Host, err.Error())
 					w.SiteConfig.Logger.Error(errmessage)
 					services.AddMessage("There was a problem saving your element.", "Error", w)
 				} else {
 					services.AddMessage("Your element was saved.", "Success", w)
 					dynamic := services.Dynamic{
-						Target:     w.Post["mongolarid"].(string),
-						Id:         w.Post["mongolarid"].(string),
+						Target:     post["mongolarid"],
+						Id:         post["mongolarid"],
 						Controller: "admin/element",
 						Template:   "admin/element.html",
 					}
@@ -607,16 +635,17 @@ func ContentTypeEditor(w *wrapper.Wrapper) {
 		w.SetTemplate("admin/form.html")
 		w.SetPayload("form", f)
 	} else {
-		_, err := form.GetValidRegFormM(w.Post["form_id"].(string), w)
+		post := make(map[string]string)
+		err := form.GetValidFormData(w, &post)
 		if err != nil {
 			return
 		}
 		e := bson.M{
 			"$set": bson.M{
-				"controller_values.type": w.Post["type"],
+				"controller_values.type": post["type"],
 			},
 		}
-		s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
+		s := bson.M{"_id": bson.ObjectIdHex(post["mongolarid"])}
 		c := w.DbSession.DB("").C("elements")
 		err = c.Update(s, e)
 		if err != nil {
@@ -675,21 +704,22 @@ func ContentEditor(w *wrapper.Wrapper) {
 		w.SetTemplate("admin/form.html")
 		w.SetPayload("form", f)
 	} else {
-		_, err := form.GetValidRegFormM(w.Post["form_id"].(string), w)
+		post := make(map[string]interface{})
+		err := form.GetValidFormData(w, &post)
 		if err != nil {
 			return
 		}
 
 		content_values := make(map[string]string)
 		for _, field := range ct.Form {
-			content_values[field.Key] = w.Post[field.Key].(string)
+			content_values[field.Key] = post[field.Key].(string)
 		}
 		e := bson.M{
 			"$set": bson.M{
 				"controller_values.content": content_values,
 			},
 		}
-		s := bson.M{"_id": bson.ObjectIdHex(w.Post["mongolarid"].(string))}
+		s := bson.M{"_id": bson.ObjectIdHex(post["mongolarid"].(string))}
 		c := w.DbSession.DB("").C("elements")
 		err = c.Update(s, e)
 		if err != nil {
@@ -699,8 +729,8 @@ func ContentEditor(w *wrapper.Wrapper) {
 		} else {
 			services.AddMessage("Element content saved.", "Success", w)
 			dynamic := services.Dynamic{
-				Target:     w.Post["mongolarid"].(string),
-				Id:         w.Post["mongolarid"].(string),
+				Target:     post["mongolarid"].(string),
+				Id:         post["mongolarid"].(string),
 				Controller: "admin/element",
 				Template:   "admin/element.html",
 			}
@@ -788,6 +818,7 @@ func AllElements(w *wrapper.Wrapper) {
 }
 
 func AddExistingChild(w *wrapper.Wrapper) {
+	//Needs fixing
 	c := w.DbSession.DB("").C(w.APIParams[0])
 	i := bson.M{"_id": bson.ObjectIdHex(w.APIParams[1])}
 	var f string
@@ -928,11 +959,12 @@ func EditContentType(w *wrapper.Wrapper) {
 		w.Serve()
 		return
 	} else {
-		_, err := form.GetValidRegFormM(w.Post["form_id"].(string), w)
+		post := make(map[string]interface{})
+		err := form.GetValidFormData(w, &post)
 		if err != nil {
 			return
 		}
-		elements := reflect.ValueOf(w.Post["elements"])
+		elements := reflect.ValueOf(post["elements"])
 		f := form.NewForm()
 		for i := 0; i < elements.Len(); i++ {
 			var field *form.Field
@@ -987,21 +1019,21 @@ func EditContentType(w *wrapper.Wrapper) {
 		}
 
 		var id bson.ObjectId
-		if w.Post["mongolarid"].(string) == "new" {
+		if post["mongolarid"].(string) == "new" {
 			id = bson.NewObjectId()
 		} else {
-			id = bson.ObjectIdHex(w.Post["mongolarid"].(string))
+			id = bson.ObjectIdHex(post["mongolarid"].(string))
 		}
 		ct := ContentType{
 			Form:    f.Fields,
-			Type:    w.Post["content_type"].(string),
+			Type:    post["content_type"].(string),
 			MongoId: id,
 		}
 		s := bson.M{"_id": id}
 		c := w.DbSession.DB("").C("content_types")
 		_, err = c.Upsert(s, ct)
 		if err != nil {
-			errmessage := fmt.Sprintf("Cannnot save content type %s : %s", w.Post["mongolarid"].(string), err.Error())
+			errmessage := fmt.Sprintf("Cannnot save content type %s : %s", post["mongolarid"].(string), err.Error())
 			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("Unable to save content type.", "Error", w)
 			w.Serve()

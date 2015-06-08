@@ -1,6 +1,8 @@
 package form
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/mongolar/mongolar/services"
 	"github.com/mongolar/mongolar/wrapper"
@@ -124,12 +126,61 @@ type FormRegister struct {
 	Created    time.Time     `bson:"created"`
 }
 
+func GetValidFormData(w *wrapper.Wrapper, post interface{}) error {
+	p := make([]byte, w.Request.ContentLength)
+	_, err := w.Request.Body.Read(p)
+	if err != nil {
+		errmessage := fmt.Sprintf("Error processing post values %s: %s", w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("There was an issue processing your form.", "Error", w)
+		w.Serve()
+		return errors.New("Could not marshall Post values")
+	}
+	data := make(map[string]interface{})
+	err = json.Unmarshal(p, &data)
+	if err != nil {
+		errmessage := fmt.Sprintf("Error processing post values %s: %s", w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("There was an issue processing your form.", "Error", w)
+		w.Serve()
+		return errors.New("Could not marshall Post values")
+	}
+	err = json.Unmarshal(p, post)
+	if err != nil {
+		errmessage := fmt.Sprintf("Error processing post values %s: %s", w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("There was an issue processing your form.", "Error", w)
+		w.Serve()
+		return errors.New("Could not marshall Post values")
+	}
+	register, reg_err := GetFormRegister(data["form_id"].(string), w)
+	if reg_err != nil {
+		errmessage := fmt.Sprintf("Invalid or expired form %s: %s", w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Your form was expired, please try again.", "Error", w)
+		w.Serve()
+		return errors.New("Inalid or expired form")
+	}
+	missing := register.ValidateRequired(data)
+	if len(missing) > 0 {
+		for _, label := range missing {
+
+			message := fmt.Sprintf("%s is required.", label)
+			services.AddMessage(message, "Error", w)
+		}
+		w.Serve()
+		return errors.New("missing fields")
+	}
+	return nil
+
+}
+
 // Check for missing required fields.
-func (fr *FormRegister) ValidateRequired(formData map[string]interface{}) map[string]string {
+func (fr *FormRegister) ValidateRequired(data map[string]interface{}) map[string]string {
 	missing := make(map[string]string)
 	for _, f := range fr.FormFields {
 		if f.TemplateOptions.Required == true {
-			if _, ok := formData[f.Key]; !ok {
+			if _, ok := data[f.Key]; !ok {
 				missing[f.Key] = f.TemplateOptions.Label
 			}
 		}
@@ -138,7 +189,7 @@ func (fr *FormRegister) ValidateRequired(formData map[string]interface{}) map[st
 }
 
 // Retrieve a previously registered form by id
-func GetRegisteredForm(i string, w *wrapper.Wrapper) (*FormRegister, error) {
+func GetFormRegister(i string, w *wrapper.Wrapper) (*FormRegister, error) {
 	fr := new(FormRegister)
 	c := w.DbSession.DB("").C("form_register")
 	err := c.FindId(bson.ObjectIdHex(i)).One(fr)
@@ -154,17 +205,6 @@ func GetValidRegForm(i string, w *wrapper.Wrapper) (*FormRegister, error) {
 	return fr, err
 }
 
-func GetValidRegFormM(i string, w *wrapper.Wrapper) (*FormRegister, error) {
-	fr, err := GetValidRegForm(i, w)
-	if err != nil {
-		errmessage := fmt.Sprintf("Attempt to access invalid form %s by %s.", w.Post["form_id"].(string), w.Request.Host)
-		w.SiteConfig.Logger.Error(errmessage)
-		services.AddMessage("Invalid Form", "Error", w)
-		w.Serve()
-	}
-	return fr, err
-}
-
 // Form fields structure
 type Field struct {
 	Type            string           `json:"type" bson:"type"`
@@ -172,6 +212,7 @@ type Field struct {
 	Key             string           `json:"key" bson:"key"`
 	TemplateOptions *TemplateOptions `json:"templateOptions" bson:"templateOptions"`
 	HideExpression  string           `json:"hideExpression,omitempty" bson:"hideExpression"`
+	Validator       string           `json:"-" bson:"validator,omitempty"`
 }
 
 type TemplateOptions struct {
