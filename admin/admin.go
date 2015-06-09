@@ -503,6 +503,7 @@ func Sort(w *wrapper.Wrapper) {
 		return
 	}
 }
+
 func ElementEditor(w *wrapper.Wrapper) {
 	if w.Request.Method != "POST" {
 		f := form.NewForm()
@@ -741,6 +742,67 @@ func ContentEditor(w *wrapper.Wrapper) {
 	return
 }
 
+func SlugUrlEditor(w *wrapper.Wrapper) {
+	if w.Request.Method != "POST" {
+		e := controller.NewElement()
+		err := e.GetById(w.APIParams[0], w)
+		if err != nil {
+			errmessage := fmt.Sprintf("Element not found to edit for %s by %s", w.APIParams[0], w.Request.Host)
+			w.SiteConfig.Logger.Error(errmessage)
+			services.AddMessage("This element was not found", "Error", w)
+			w.Serve()
+			return
+		}
+		f := form.NewForm()
+		for slug, id := range e.ControllerValues {
+			f.AddText(id.(string), "text")
+			f.FormData[id.(string)] = slug
+			e := controller.NewElement()
+			err = e.GetById(id.(string), w)
+			if err != nil {
+				errmessage := fmt.Sprintf("Content not found %s : %s", w.APIParams[0], err.Error())
+				w.SiteConfig.Logger.Error(errmessage)
+				services.AddMessage("There was a problem loading some slug elements.", "Error", w)
+				w.Serve()
+				return
+			}
+			f.AddText(id.(string), "text").AddLabel(e.Title).Required()
+
+		}
+		f.Register(w)
+		w.SetTemplate("admin/form.html")
+		w.SetPayload("form", f)
+		w.Serve()
+		return
+	} else {
+		post := make(map[string]string)
+		err := form.GetValidFormData(w, &post)
+		if err != nil {
+			return
+		}
+		vals := make(map[string]string)
+		for id, slug := range post {
+			if bson.IsObjectIdHex(id) {
+				vals[slug] = id
+			}
+		}
+		cv := bson.M{"controller_values": vals}
+		s := bson.M{"_id": bson.ObjectIdHex(post["mongolarid"])}
+		c := w.DbSession.DB("").C("elements")
+		err = c.Update(s, cv)
+		if err != nil {
+			errmessage := fmt.Sprintf("Element not saved %s by %s", w.APIParams[0], w.Request.Host)
+			w.SiteConfig.Logger.Error(errmessage)
+			services.AddMessage("Unable to save element.", "Error", w)
+			w.Serve()
+			return
+		}
+		services.AddMessage("Element content type saved.", "Success", w)
+		w.Serve()
+		return
+	}
+}
+
 func AddChild(w *wrapper.Wrapper) {
 	e := controller.NewElement()
 	e.MongoId = bson.NewObjectId()
@@ -809,8 +871,9 @@ func AllElements(w *wrapper.Wrapper) {
 	if err != nil {
 		errmessage := fmt.Sprintf("Unable to retrieve a list of all elements: %s", err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
-		message := fmt.Sprintf("There was a problem retrieving the element list.")
-		services.AddMessage(message, "Error", w)
+		services.AddMessage("There was a problem retrieving the element list.", "Error", w)
+		w.Serve()
+		return
 	}
 	w.SetPayload("elements", es)
 	w.Serve()
@@ -818,25 +881,76 @@ func AllElements(w *wrapper.Wrapper) {
 }
 
 func AddExistingChild(w *wrapper.Wrapper) {
-	//Needs fixing
-	c := w.DbSession.DB("").C(w.APIParams[0])
-	i := bson.M{"_id": bson.ObjectIdHex(w.APIParams[1])}
-	var f string
-	if w.APIParams[0] == "elements" {
-		f = "controller_values.elements"
-	}
-	if w.APIParams[0] == "paths" {
-		f = "elements"
-	}
-	err := c.Update(i, bson.M{"$push": bson.M{f: w.APIParams[2]}})
-	if err != nil {
-		errmessage := fmt.Sprintf("Unable to assign child %s to %s : %s", w.APIParams[2], w.APIParams[1], err.Error())
-		w.SiteConfig.Logger.Error(errmessage)
-		services.AddMessage("Unable to add child element", "Error", w)
+	if w.Request.Method != "POST" {
+		c := w.DbSession.DB("").C("elements")
+		var elements []controller.Element
+		err := c.Find(nil).Limit(50).Iter().All(&elements)
+		if err != nil {
+			errmessage := fmt.Sprintf("Unable to retrieve a list of all elements: %s", err.Error())
+			w.SiteConfig.Logger.Error(errmessage)
+			services.AddMessage("There was a problem retrieving the element list.", "Error", w)
+			w.Serve()
+			return
+		}
+		options := make([]map[string]string, 0)
+		for _, element := range elements {
+			option := map[string]string{"name": element.Title, "value": element.MongoId.Hex()}
+			options = append(options, option)
+		}
+		f := form.NewForm()
+		f.AddSelect("element", options).AddLabel("Element").Required()
+		element := controller.NewElement()
+		if w.APIParams[1] == "elements" {
+			err := element.GetById(w.APIParams[1], w)
+			if err != nil {
+				errmessage := fmt.Sprintf("Unable to retrieve a parent element: %s", err.Error())
+				w.SiteConfig.Logger.Error(errmessage)
+				services.AddMessage("There was a problem retrieving your form.", "Error", w)
+				w.Serve()
+				return
+			}
+			if element.Controller == "slug" {
+				f.AddText("slug", "text").Required()
+			}
+		}
+		f.Register(w)
+		w.SetTemplate("admin/form.html")
+		w.SetPayload("form", f)
+		w.Serve()
+		return
+	} else {
+		post := make(map[string]string)
+		err := form.GetValidFormData(w, &post)
+		if err != nil {
+			return
+		}
+		c := w.DbSession.DB("").C(w.APIParams[0])
+		i := bson.M{"_id": bson.ObjectIdHex(w.APIParams[1])}
+		if w.APIParams[0] == "elements" {
+			if slug, ok := post["slug"]; ok {
+				f := "controller_values"
+				p := map[string]string{slug: post["element"]}
+				err = c.Update(i, bson.M{"$push": bson.M{f: p}})
+			} else {
+				f := "controller_values.elements"
+				err = c.Update(i, bson.M{"$push": bson.M{f: post["element"]}})
+			}
+		}
+		if w.APIParams[0] == "paths" {
+			f := "elements"
+			err = c.Update(i, bson.M{"$push": bson.M{f: post["element"]}})
+		}
+		if err != nil {
+			errmessage := fmt.Sprintf("Unable to assign child %s to %s : %s", w.APIParams[2], w.APIParams[1], err.Error())
+			w.SiteConfig.Logger.Error(errmessage)
+			services.AddMessage("Unable to add child element", "Error", w)
+			w.Serve()
+			return
+		}
+		services.AddMessage("Child element added", "Success", w)
 		w.Serve()
 		return
 	}
-	services.AddMessage("Child element added", "Error", w)
 }
 
 func Delete(w *wrapper.Wrapper) {
