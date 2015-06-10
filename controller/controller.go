@@ -80,7 +80,7 @@ type Path struct {
 	MongoId  bson.ObjectId `bson:"_id,omitempty" json:"id"`
 	Path     string        `bson:"path" json:"path"`
 	Wildcard bool          `bson:"wildcard" json:"wildcard"`
-	Elements []string      `bson:"elements,omitempty" json:"elements"`
+	Elements []string      `bson:"elements,omitempty" json:"elements,omitempty"`
 	Template string        `bson:"template" json:"template"`
 	Status   string        `bson:"status" json:"status"`
 	Title    string        `bson:"title" json:"title"`

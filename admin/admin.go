@@ -133,11 +133,7 @@ func PathEditor(w *wrapper.Wrapper) {
 				services.AddMessage("Error retrieving path information.", "Error", w)
 				w.Serve()
 			} else {
-				f.FormData["wildcard"] = p.Wildcard
-				f.FormData["template"] = p.Template
-				f.FormData["path"] = p.Path
-				f.FormData["status"] = p.Status
-				f.FormData["title"] = p.Title
+				f.FormData = p
 			}
 		}
 		f.Register(w)
@@ -145,27 +141,19 @@ func PathEditor(w *wrapper.Wrapper) {
 		w.SetPayload("form", f)
 		w.Serve()
 	} else {
-		post := make(map[string]interface{})
-		err := form.GetValidFormData(w, &post)
+		type PathPost struct {
+			*controller.Path
+			Id string `json:"mongolarid"`
+		}
+		realpath := controller.NewPath()
+		path := PathPost{&realpath, ""}
+		err := form.GetValidFormData(w, &path)
 		if err != nil {
 			return
 		} else {
 			c := w.DbSession.DB("").C("paths")
-			if post["mongolarid"].(string) == "new" {
-				var wc bool
-				if c, ok := post["wildcard"]; ok {
-					wc = c.(bool)
-				} else {
-					wc = false
-				}
-				p := controller.Path{
-					Wildcard: wc,
-					Path:     post["path"].(string),
-					Template: post["template"].(string),
-					Title:    post["title"].(string),
-					Status:   post["status"].(string),
-				}
-				err := c.Insert(p)
+			if path.Id == "new" {
+				err := c.Insert(realpath)
 				if err != nil {
 					errmessage := fmt.Sprintf("Unable to save new path by %s: %s", w.Request.Host, err.Error())
 					w.SiteConfig.Logger.Error(errmessage)
@@ -176,18 +164,12 @@ func PathEditor(w *wrapper.Wrapper) {
 				services.AddMessage("Your path was saved.", "Success", w)
 			} else {
 				p := bson.M{
-					"$set": bson.M{
-						"wildcard": post["wildcard"].(bool),
-						"path":     post["path"].(string),
-						"template": post["template"].(string),
-						"title":    post["title"].(string),
-						"status":   post["status"].(string),
-					},
+					"$set": realpath,
 				}
-				s := bson.M{"_id": bson.ObjectIdHex(post["mongolarid"].(string))}
+				s := bson.M{"_id": bson.ObjectIdHex(path.Id)}
 				err := c.Update(s, p)
 				if err != nil {
-					errmessage := fmt.Sprintf("Unable to save path %s by %s: %s", post["mongolarid"].(string),
+					errmessage := fmt.Sprintf("Unable to save path %s by %s: %s", path.Id,
 						w.Request.Host, err.Error())
 					w.SiteConfig.Logger.Error(errmessage)
 					services.AddMessage("There was a problem saving your path.", "Error", w)
@@ -195,16 +177,16 @@ func PathEditor(w *wrapper.Wrapper) {
 					return
 				} else {
 					services.AddMessage("Your path was saved.", "Success", w)
+					dynamic := services.Dynamic{
+						Target:     "pathbar",
+						Controller: "admin/paths",
+						Template:   "admin/path_list.html",
+					}
+					services.SetDynamic(dynamic, w)
+					w.Serve()
+					return
 				}
 			}
-			dynamic := services.Dynamic{
-				Target:     "pathbar",
-				Controller: "admin/paths",
-				Template:   "admin/path_list.html",
-			}
-			services.SetDynamic(dynamic, w)
-			w.Serve()
-			return
 		}
 
 	}
@@ -530,11 +512,7 @@ func ElementEditor(w *wrapper.Wrapper) {
 				w.Serve()
 				return
 			}
-			f.FormData["controller"] = e.Controller
-			f.FormData["title"] = e.Title
-			f.FormData["template"] = e.Template
-			f.FormData["dynamic_id"] = e.DynamicId
-			f.FormData["classes"] = e.Classes
+			f.FormData = e
 		}
 		f.Register(w)
 		w.SetTemplate("admin/form.html")
@@ -627,11 +605,11 @@ func ContentTypeEditor(w *wrapper.Wrapper) {
 			opts = append(opts, opt)
 		}
 		f.AddSelect("type", opts)
+		data := make(map[string]string)
 		if t, ok := e.ControllerValues["type"]; ok {
-			f.FormData["type"] = t.(string)
-		} else {
-			f.FormData["type"] = ""
+			data["type"] = t.(string)
 		}
+		f.FormData = data
 		f.Register(w)
 		w.SetTemplate("admin/form.html")
 		w.SetPayload("form", f)
@@ -754,9 +732,10 @@ func SlugUrlEditor(w *wrapper.Wrapper) {
 			return
 		}
 		f := form.NewForm()
+		data := make(map[string]string)
 		for slug, id := range e.ControllerValues {
 			f.AddText(id.(string), "text")
-			f.FormData[id.(string)] = slug
+			data[id.(string)] = slug
 			e := controller.NewElement()
 			err = e.GetById(id.(string), w)
 			if err != nil {
@@ -769,6 +748,7 @@ func SlugUrlEditor(w *wrapper.Wrapper) {
 			f.AddText(id.(string), "text").AddLabel(e.Title).Required()
 
 		}
+		f.FormData = data
 		f.Register(w)
 		w.SetTemplate("admin/form.html")
 		w.SetPayload("form", f)
@@ -1058,12 +1038,16 @@ func EditContentType(w *wrapper.Wrapper) {
 				}
 				elements = append(elements, element)
 			}
-			f.FormData["elements"] = elements
-			f.FormData["content_type"] = ct.Type
+			data := make(map[string]interface{})
+			data["elements"] = elements
+			data["content_type"] = ct.Type
+			f.FormData = data
 		} else {
+			data := make(map[string]interface{})
 			fd := make([]map[string]string, 0)
-			f.FormData["elements"] = fd
-			f.FormData["content_type"] = ""
+			data["elements"] = fd
+			data["content_type"] = ""
+			f.FormData = data
 		}
 		f.AddText("content_type", "text").AddLabel("Content Type Name")
 		f.AddRepeatSection("elements", "Add another field", FieldFormGroup())
