@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"github.com/mongolar/mongolar/controller"
 	"github.com/mongolar/mongolar/form"
+	"github.com/mongolar/mongolar/models/elements"
+	"github.com/mongolar/mongolar/models/paths"
 	"github.com/mongolar/mongolar/oauthlogin"
 	"github.com/mongolar/mongolar/services"
 	"github.com/mongolar/mongolar/wrapper"
@@ -95,7 +97,7 @@ func (a *AdminMenu) AdminMenu(w *wrapper.Wrapper) {
 }
 
 func AdminPaths(w *wrapper.Wrapper) {
-	pl, err := controller.PathList(w)
+	pl, err := paths.PathList(w)
 	if err != nil {
 		services.AddMessage("There was an error retrieving your site paths", "Error", w)
 		errmessage := fmt.Sprintf("Error getting path list: %s", err.Error())
@@ -125,7 +127,7 @@ func PathEditor(w *wrapper.Wrapper) {
 		f.AddRadio("status", o).AddLabel("Status").Required()
 		f.AddText("path_id", "text").Hidden()
 		if w.APIParams[0] != "new" {
-			p := controller.NewPath()
+			p := paths.NewPath()
 			err := p.GetById(w.APIParams[0], w)
 			if err != nil {
 				errmessage := fmt.Sprintf("Could not retrieve path %s by %s: %s", w.APIParams[0], w.Request.Host, err.Error())
@@ -142,10 +144,10 @@ func PathEditor(w *wrapper.Wrapper) {
 		w.Serve()
 	} else {
 		type PathPost struct {
-			*controller.Path
+			*paths.Path
 			Id string `json:"mongolarid"`
 		}
-		realpath := controller.NewPath()
+		realpath := paths.NewPath()
 		path := PathPost{&realpath, ""}
 		err := form.GetValidFormData(w, &path)
 		if err != nil {
@@ -193,7 +195,7 @@ func PathEditor(w *wrapper.Wrapper) {
 }
 
 func PathElements(w *wrapper.Wrapper) {
-	p := controller.NewPath()
+	p := paths.NewPath()
 	err := p.GetById(w.APIParams[0], w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Path not found to edit for %s by %s ", w.APIParams[0], w.Request.Host)
@@ -215,7 +217,7 @@ func PathElements(w *wrapper.Wrapper) {
 
 func OrphanElements(w *wrapper.Wrapper) {
 	assigned := make([]bson.ObjectId, 0)
-	paths, err := controller.PathList(w)
+	paths, err := paths.PathList(w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Could not retrieve path elements for orphan list: %s", err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
@@ -228,7 +230,7 @@ func OrphanElements(w *wrapper.Wrapper) {
 			assigned = append(assigned, id)
 		}
 	}
-	wrappers := make([]controller.Element, 0)
+	wrappers := make([]elements.WrapperElement, 0)
 	c := w.DbSession.DB("").C("elements")
 	s := bson.M{"controller": "wrapper"}
 	i := c.Find(s).Limit(50).Iter()
@@ -240,16 +242,12 @@ func OrphanElements(w *wrapper.Wrapper) {
 		w.Serve()
 	}
 	for _, wrapper := range wrappers {
-		if _, ok := wrapper.ControllerValues["elements"]; ok {
-			es := reflect.ValueOf(wrapper.ControllerValues["elements"])
-			for i := 0; i < es.Len(); i++ {
-				elementid := es.Index(i)
-				id := bson.ObjectIdHex(elementid.Interface().(string))
-				assigned = append(assigned, id)
-			}
+		for _, eid := range wrapper.Elements {
+			bsonid := bson.ObjectIdHex(eid)
+			assigned = append(assigned, bsonid)
 		}
 	}
-	slugs := make([]controller.Element, 0)
+	slugs := make([]elements.SlugElement, 0)
 	s = bson.M{"controller": "slug"}
 	i = c.Find(s).Limit(50).Iter()
 	err = i.All(&slugs)
@@ -260,13 +258,12 @@ func OrphanElements(w *wrapper.Wrapper) {
 		w.Serve()
 	}
 	for _, slug := range slugs {
-		for _, element := range slug.ControllerValues {
-
-			id := bson.ObjectIdHex(element.(string))
-			assigned = append(assigned, id)
+		for _, eid := range slug.Slugs {
+			bsonid := bson.ObjectIdHex(eid)
+			assigned = append(assigned, bsonid)
 		}
 	}
-	unassigned := new([]controller.Element)
+	unassigned := new([]elements.Element)
 	s = bson.M{"_id": bson.M{"$nin": assigned}}
 	i = c.Find(s).Limit(50).Iter()
 	err = i.All(unassigned)
@@ -283,12 +280,12 @@ func OrphanElements(w *wrapper.Wrapper) {
 }
 
 func Element(w *wrapper.Wrapper) {
-	e := controller.NewElement()
+	e := elements.NewElement()
 	if len(w.APIParams) == 0 {
 		http.Error(w.Writer, "Forbidden", 403)
 		return
 	}
-	err := e.GetById(w.APIParams[0], w)
+	err := elements.GetById(w.APIParams[0], &e, w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", w.APIParams[0], w.Request.Host)
 		w.SiteConfig.Logger.Error(errmessage)
@@ -313,8 +310,8 @@ func MenuEditor(w *wrapper.Wrapper) {
 			http.Error(w.Writer, "Forbidden", 403)
 			return
 		}
-		e := controller.NewElement()
-		err := e.GetById(w.APIParams[0], w)
+		e := elements.NewElement()
+		err := elements.GetById(w.APIParams[0], &e, w)
 		if err != nil {
 			errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", w.APIParams[0], w.Request.Host)
 			w.SiteConfig.Logger.Error(errmessage)
@@ -365,7 +362,7 @@ func MenuEditor(w *wrapper.Wrapper) {
 func Sort(w *wrapper.Wrapper) {
 	if w.Request.Method != "POST" {
 		if w.APIParams[0] == "paths" {
-			p := controller.NewPath()
+			p := paths.NewPath()
 			err := p.GetById(w.APIParams[1], w)
 			if err != nil {
 				errmessage := fmt.Sprintf("Path not found to sort for %s by %s", w.APIParams[1], w.Request.Host)
@@ -382,8 +379,8 @@ func Sort(w *wrapper.Wrapper) {
 			w.Serve()
 			return
 		} else if w.APIParams[0] == "elements" {
-			e := controller.NewElement()
-			err := e.GetById(w.APIParams[1], w)
+			e := elements.NewWrapperElement()
+			err := elements.GetById(w.APIParams[1], &e, w)
 			if err != nil {
 				errmessage := fmt.Sprintf("Element not found to sort for %s by %s.", w.APIParams[1], w.Request.Host)
 				w.SiteConfig.Logger.Error(errmessage)
@@ -391,13 +388,8 @@ func Sort(w *wrapper.Wrapper) {
 				w.Serve()
 				return
 			} else {
-				if es, ok := e.ControllerValues["elements"]; ok {
-					els := reflect.ValueOf(es)
-					if els.Len() > 0 {
-						w.SetPayload("elements", e.ControllerValues["elements"])
-					} else {
-						services.AddMessage("This has no elements assigned yet.", "Error", w)
-					}
+				if len(e.Elements) > 0 {
+					w.SetPayload("elements", e.Elements)
 				} else {
 					services.AddMessage("This has no elements assigned yet.", "Error", w)
 				}
@@ -503,8 +495,8 @@ func ElementEditor(w *wrapper.Wrapper) {
 		f.AddText("classes", "text").AddLabel("Classes")
 		f.AddText("element_id", "text").Hidden()
 		if w.APIParams[0] != "new" {
-			e := controller.NewElement()
-			err := e.GetById(w.APIParams[0], w)
+			e := elements.NewElement()
+			err := elements.GetById(w.APIParams[0], &e, w)
 			if err != nil {
 				errmessage := fmt.Sprintf("Element not found to edit for %s by %s", w.APIParams[0], w.Request.Host)
 				w.SiteConfig.Logger.Error(errmessage)
@@ -525,7 +517,7 @@ func ElementEditor(w *wrapper.Wrapper) {
 		} else {
 			c := w.DbSession.DB("").C("elements")
 			if post["mongolarid"] == "new" {
-				p := controller.Element{
+				p := elements.Element{
 					Controller: post["controller"],
 					DynamicId:  post["dynamic_id"],
 					Template:   post["template"],
@@ -576,8 +568,8 @@ func ElementEditor(w *wrapper.Wrapper) {
 
 func ContentTypeEditor(w *wrapper.Wrapper) {
 	if w.Request.Method != "POST" {
-		e := controller.NewElement()
-		err := e.GetById(w.APIParams[0], w)
+		e := elements.NewElement()
+		err := elements.GetById(w.APIParams[0], &e, w)
 		if err != nil {
 			errmessage := fmt.Sprintf("Element not found to edit for %s by %s", w.APIParams[0], w.Request.Host)
 			w.SiteConfig.Logger.Error(errmessage)
@@ -640,8 +632,8 @@ func ContentTypeEditor(w *wrapper.Wrapper) {
 }
 
 func ContentEditor(w *wrapper.Wrapper) {
-	e := controller.NewElement()
-	err := e.GetById(w.APIParams[0], w)
+	e := elements.NewElement()
+	err := elements.GetById(w.APIParams[0], &e, w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Element not found to edit for %s by %s", w.APIParams[0], w.Request.Host)
 		w.SiteConfig.Logger.Error(errmessage)
@@ -722,8 +714,8 @@ func ContentEditor(w *wrapper.Wrapper) {
 
 func SlugUrlEditor(w *wrapper.Wrapper) {
 	if w.Request.Method != "POST" {
-		e := controller.NewElement()
-		err := e.GetById(w.APIParams[0], w)
+		e := elements.NewElement()
+		err := elements.GetById(w.APIParams[0], &e, w)
 		if err != nil {
 			errmessage := fmt.Sprintf("Element not found to edit for %s by %s", w.APIParams[0], w.Request.Host)
 			w.SiteConfig.Logger.Error(errmessage)
@@ -736,8 +728,8 @@ func SlugUrlEditor(w *wrapper.Wrapper) {
 		for slug, id := range e.ControllerValues {
 			f.AddText(id.(string), "text")
 			data[id.(string)] = slug
-			e := controller.NewElement()
-			err = e.GetById(id.(string), w)
+			e := elements.NewElement()
+			err = elements.GetById(id.(string), &e, w)
 			if err != nil {
 				errmessage := fmt.Sprintf("Content not found %s : %s", w.APIParams[0], err.Error())
 				w.SiteConfig.Logger.Error(errmessage)
@@ -784,7 +776,7 @@ func SlugUrlEditor(w *wrapper.Wrapper) {
 }
 
 func AddChild(w *wrapper.Wrapper) {
-	e := controller.NewElement()
+	e := elements.NewElement()
 	e.MongoId = bson.NewObjectId()
 	e.Title = "New Element"
 	c := w.DbSession.DB("").C("elements")
@@ -846,7 +838,7 @@ func AddChild(w *wrapper.Wrapper) {
 
 func AllElements(w *wrapper.Wrapper) {
 	c := w.DbSession.DB("").C("elements")
-	var es []controller.Element
+	var es []elements.Element
 	err := c.Find(nil).Limit(50).Iter().All(&es)
 	if err != nil {
 		errmessage := fmt.Sprintf("Unable to retrieve a list of all elements: %s", err.Error())
@@ -863,8 +855,8 @@ func AllElements(w *wrapper.Wrapper) {
 func AddExistingChild(w *wrapper.Wrapper) {
 	if w.Request.Method != "POST" {
 		c := w.DbSession.DB("").C("elements")
-		var elements []controller.Element
-		err := c.Find(nil).Limit(50).Iter().All(&elements)
+		var elems []elements.Element
+		err := c.Find(nil).Limit(50).Iter().All(&elems)
 		if err != nil {
 			errmessage := fmt.Sprintf("Unable to retrieve a list of all elements: %s", err.Error())
 			w.SiteConfig.Logger.Error(errmessage)
@@ -873,15 +865,15 @@ func AddExistingChild(w *wrapper.Wrapper) {
 			return
 		}
 		options := make([]map[string]string, 0)
-		for _, element := range elements {
+		for _, element := range elems {
 			option := map[string]string{"name": element.Title, "value": element.MongoId.Hex()}
 			options = append(options, option)
 		}
 		f := form.NewForm()
 		f.AddSelect("element", options).AddLabel("Element").Required()
-		element := controller.NewElement()
+		element := elements.NewElement()
 		if w.APIParams[1] == "elements" {
-			err := element.GetById(w.APIParams[1], w)
+			err := elements.GetById(w.APIParams[1], &element, w)
 			if err != nil {
 				errmessage := fmt.Sprintf("Unable to retrieve a parent element: %s", err.Error())
 				w.SiteConfig.Logger.Error(errmessage)
