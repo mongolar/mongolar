@@ -52,7 +52,9 @@ func (l *LoginMap) Login(w *wrapper.Wrapper) {
 
 func (lo *LoginMap) LoginUrls(w *wrapper.Wrapper) {
 	us := make(map[string]map[string]string)
-	for k, l := range w.SiteConfig.OAuthLogins {
+	oauthlogins := make(map[string]map[string]string)
+	w.SiteConfig.RawConfig.MarshallKey('OAuthLogins', &oauthologins)
+	for k, l := range oauthlogins {
 		c := "http://" + w.Request.Host + "/" + w.SiteConfig.APIEndPoint + "/login/callback/" + k
 		login := lo.Logins[k]
 		login.SetConfig(l, c, lo.State)
@@ -72,15 +74,19 @@ func (lo *LoginMap) Logout(w *wrapper.Wrapper) {
 }
 
 func (lo *LoginMap) Callback(w *wrapper.Wrapper) {
-	if _, ok := w.SiteConfig.OAuthLogins[w.APIParams[0]]; ok {
+	oauthlogins := make(map[string]map[string]string)
+	w.SiteConfig.RawConfig.MarshallKey('OAuthLogins', &oauthologins)
+	loginurls := make(map[string]string)
+	w.SiteConfig.RawConfig.MarshallKey('LoginURLs', &loginurls)
+	if _, ok := oauthlogins[w.APIParams[0]]; ok {
 		if _, ok := lo.Logins[w.APIParams[0]]; ok {
 			s := w.Request.FormValue("state")
-			sc := w.SiteConfig.OAuthLogins[w.APIParams[0]]
+			sc := oauthlogins[w.APIParams[0]]
 			login := lo.Logins[w.APIParams[0]]
 			if lo.State != s {
 				errmessage := fmt.Sprintf("Invalid oauth state, expected %s, got %s", lo.State, s)
 				w.SiteConfig.Logger.Error(errmessage)
-				http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginURLs["failure"], 301)
+				http.Redirect(w.Writer, w.Request, loginurls["failure"], 301)
 				return
 			}
 			login.SetConfig(sc, "", "")
@@ -89,7 +95,7 @@ func (lo *LoginMap) Callback(w *wrapper.Wrapper) {
 			if err != nil {
 				errmessage := fmt.Sprintf("Exchange() failed with %s", err.Error())
 				w.SiteConfig.Logger.Error(errmessage)
-				http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginURLs["failure"], 301)
+				http.Redirect(w.Writer, w.Request, loginurls["failure"], 301)
 				return
 			}
 			u := login.GetUser()
@@ -97,24 +103,24 @@ func (lo *LoginMap) Callback(w *wrapper.Wrapper) {
 			if err != nil {
 				errmessage := fmt.Sprintf("Unable to set user: %s", err.Error())
 				w.SiteConfig.Logger.Error(errmessage)
-				http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginURLs["failure"], 301)
+				http.Redirect(w.Writer, w.Request, loginurls["failure"], 301)
 				return
 			}
 			err = w.SetSessionValue("user_id", u.MongoId)
 			if err != nil {
 				errmessage := fmt.Sprintf("Unable to set user id on session: %s", err.Error())
 				w.SiteConfig.Logger.Error(errmessage)
-				http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginURLs["failure"], 301)
+				http.Redirect(w.Writer, w.Request, loginurls["failure"], 301)
 				return
 			}
 			err = w.SetSessionValue("token", token)
 			if err != nil {
 				errmessage := fmt.Sprintf("Unable to set token on session: %s", err.Error())
 				w.SiteConfig.Logger.Error(errmessage)
-				http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginURLs["failure"], 301)
+				http.Redirect(w.Writer, w.Request, loginurls["failure"], 301)
 				return
 			}
-			http.Redirect(w.Writer, w.Request, w.SiteConfig.LoginURLs["success"], 301)
+			http.Redirect(w.Writer, w.Request, loginurls["success"], 301)
 			return
 		}
 	}

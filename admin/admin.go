@@ -73,8 +73,10 @@ func (a AdminMap) Admin(w *wrapper.Wrapper) {
 func validateAdmin(w *wrapper.Wrapper) bool {
 	user := new(oauthlogin.User)
 	err := user.Get(w)
+	loginurls := make(map[string]string)
+	w.SiteConfig.RawConfig.MarshallKey('LoginURLs', &loginurls)
 	if err != nil {
-		services.Redirect(w.SiteConfig.LoginURLs["login"], w)
+		services.Redirect(loginurls["login"], w)
 		w.Serve()
 		return false
 	}
@@ -85,7 +87,7 @@ func validateAdmin(w *wrapper.Wrapper) bool {
 			}
 		}
 	}
-	services.Redirect(w.SiteConfig.LoginURLs["access_denied"], w)
+	services.Redirect(loginurls["access_denied"], w)
 	w.Serve()
 	return false
 }
