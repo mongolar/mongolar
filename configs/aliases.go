@@ -1,3 +1,6 @@
+// Config Aliases
+// This is a map if site aliases that map to a pointer to a site configuration in the SiteMaps structure
+
 package configs
 
 import (

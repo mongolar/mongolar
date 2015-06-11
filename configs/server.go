@@ -1,3 +1,6 @@
+// Server config loads all the universal server settings so we can load site configurations,
+// write logs, and bind to the correct port.
+
 package configs
 
 import (
