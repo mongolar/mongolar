@@ -1,3 +1,5 @@
+// Site Files
+
 package configs
 
 import (
@@ -9,7 +11,7 @@ import (
 )
 
 // The map to load site files
-type SiteFiles map[int]string
+type SiteFiles []string
 
 // The builder for site files
 func NewSiteFiles() SiteFiles {
@@ -30,10 +32,10 @@ func (s SiteFiles) getSiteConfigFiles() {
 		err := errors.New("No configurations found")
 		log.Fatal(err)
 	}
-	for key, value := range files {
+	for _, value := range files {
 		var filename string
 		fmt.Printf("Found configuration file %v\n", value)
 		_, filename = filepath.Split(value)
-		s[key] = strings.TrimSuffix(filename, ".yaml")
+		s = append(s, strings.TrimSuffix(filename, ".yaml"))
 	}
 }

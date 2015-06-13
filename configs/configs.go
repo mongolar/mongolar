@@ -1,3 +1,5 @@
+// Configs is the main point of entry for configuring server config, site configs and aliases
+
 package configs
 
 import (
@@ -5,7 +7,6 @@ import (
 	"os"
 )
 
-var ServerConfigDirectory string
 var ServerConfig *Server
 
 func init() {
@@ -23,7 +24,7 @@ func init() {
 	log.Fatal(err)
 }
 
-// Wrapper structure for SitesMap and Server
+// Wrapper structure for SitesMapAliases
 type Configs struct {
 	SitesMap SitesMap
 	Aliases  Aliases

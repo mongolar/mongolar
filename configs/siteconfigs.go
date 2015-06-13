@@ -60,13 +60,15 @@ type SiteConfig struct {
 	RawConfig          *viper.Viper
 }
 
-// Constructor for SiteConfig
+// Constructor for SiteConfig, takes config filename as an argument.
 func NewSiteConfig(f string) *SiteConfig {
 	s := SiteConfig{
 		MongoDb: make(map[string]string),
 	}
+	// Marshall config based on filename
 	s.getSiteConfig(f)
-	s.getDbConnection(f)
+	s.getDbConnection()
+	// Set log file based on config filename
 	s.getLogger(f)
 	sort.Strings(s.Controllers)
 	return &s
@@ -89,7 +91,7 @@ func (s *SiteConfig) getSiteConfig(file string) {
 }
 
 // Establish a Database connection and attach it to the site configuration
-func (s *SiteConfig) getDbConnection(f string) {
+func (s *SiteConfig) getDbConnection() {
 	u := "mongodb://" + s.MongoDb["user"] + ":" + s.MongoDb["password"] + "@" + s.MongoDb["host"] + "/" + s.MongoDb["db"]
 	dbs, err := mgo.Dial(u)
 	if err != nil {

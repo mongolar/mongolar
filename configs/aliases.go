@@ -1,5 +1,4 @@
-// Config Aliases
-// This is a map if site aliases that map to a pointer to a site configuration in the SiteMaps structure
+// Aliases are a map of site aliases/domains that map to a pointer to a site configuration in the SiteMaps structure
 
 package configs
 
@@ -20,7 +19,6 @@ func NewAliases(sm SitesMap) Aliases {
 // Itterate over SiteMap and map all domains to their configs
 func (a Aliases) setAliases(sm *SitesMap) {
 	for k, s := range *sm {
-		//TODO check Aliases length, if 0 fatal error
 		for _, alias := range s.Aliases {
 			fmt.Printf("Mapping domain  %v to sit configuration %v\n", alias, k)
 			a[alias] = k

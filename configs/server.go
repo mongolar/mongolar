@@ -8,7 +8,12 @@ import (
 	"log"
 )
 
-// Server Config, only port setting right now, but it will probably grow
+var ServerConfigDirectory string
+
+// Server Config, Includes some base configurations for the Server
+// 	Port: Which port should be served
+// 	SitesDirectory: Where the individual sites folder is located
+// 	Log Directory: The directory where logs are stored
 type Server struct {
 	Port           string
 	SitesDirectory string
@@ -22,7 +27,7 @@ func NewServer() *Server {
 	return s
 }
 
-// Build from config file
+// Marshall server config from Yaml file
 func (s *Server) getServerConfig() {
 	viper.SetConfigName("mongolar")
 	viper.AddConfigPath(ServerConfigDirectory)
