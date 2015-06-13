@@ -74,7 +74,7 @@ func validateAdmin(w *wrapper.Wrapper) bool {
 	user := new(oauthlogin.User)
 	err := user.Get(w)
 	loginurls := make(map[string]string)
-	w.SiteConfig.RawConfig.MarshallKey('LoginURLs', &loginurls)
+	w.SiteConfig.RawConfig.MarshalKey("LoginURLs", &loginurls)
 	if err != nil {
 		services.Redirect(loginurls["login"], w)
 		w.Serve()

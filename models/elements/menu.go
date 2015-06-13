@@ -11,7 +11,7 @@ type MenuElement struct {
 	Element   `bson:"_,inline"`
 }
 
-func NewMenuElement() SlugElement {
+func NewMenuElement() MenuElement {
 	e := NewElement()
 	menuitems := make([]MenuItem, 0)
 	me := MenuElement{Element: e, MenuItems: menuitems}

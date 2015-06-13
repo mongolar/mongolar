@@ -53,7 +53,7 @@ func (l *LoginMap) Login(w *wrapper.Wrapper) {
 func (lo *LoginMap) LoginUrls(w *wrapper.Wrapper) {
 	us := make(map[string]map[string]string)
 	oauthlogins := make(map[string]map[string]string)
-	w.SiteConfig.RawConfig.MarshallKey('OAuthLogins', &oauthologins)
+	w.SiteConfig.RawConfig.MarshalKey("OAuthLogins", &oauthlogins)
 	for k, l := range oauthlogins {
 		c := "http://" + w.Request.Host + "/" + w.SiteConfig.APIEndPoint + "/login/callback/" + k
 		login := lo.Logins[k]
@@ -75,9 +75,9 @@ func (lo *LoginMap) Logout(w *wrapper.Wrapper) {
 
 func (lo *LoginMap) Callback(w *wrapper.Wrapper) {
 	oauthlogins := make(map[string]map[string]string)
-	w.SiteConfig.RawConfig.MarshallKey('OAuthLogins', &oauthologins)
+	w.SiteConfig.RawConfig.MarshalKey("OAuthLogins", &oauthlogins)
 	loginurls := make(map[string]string)
-	w.SiteConfig.RawConfig.MarshallKey('LoginURLs', &loginurls)
+	w.SiteConfig.RawConfig.MarshalKey("LoginURLs", &loginurls)
 	if _, ok := oauthlogins[w.APIParams[0]]; ok {
 		if _, ok := lo.Logins[w.APIParams[0]]; ok {
 			s := w.Request.FormValue("state")

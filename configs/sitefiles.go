@@ -15,7 +15,7 @@ type SiteFiles []string
 
 // The builder for site files
 func NewSiteFiles() SiteFiles {
-	s := make(SiteFiles)
+	s := make(SiteFiles, 0)
 	s.getSiteConfigFiles()
 	return s
 
