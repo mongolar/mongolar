@@ -10,19 +10,9 @@ import (
 	"strings"
 )
 
-// The map to load site files
-type SiteFiles []string
-
 // The builder for site files
-func NewSiteFiles() SiteFiles {
-	s := make(SiteFiles, 0)
-	s.getSiteConfigFiles()
-	return s
-
-}
-
-//Get all enabled config file names
-func (s SiteFiles) getSiteConfigFiles() {
+func NewSiteFiles() []string {
+	s := make([]string, 0)
 	glob := ServerConfig.SitesDirectory + "*.yaml"
 	files, err := filepath.Glob(glob)
 	if err != nil {
@@ -38,4 +28,5 @@ func (s SiteFiles) getSiteConfigFiles() {
 		_, filename = filepath.Split(value)
 		s = append(s, strings.TrimSuffix(filename, ".yaml"))
 	}
+	return s
 }
