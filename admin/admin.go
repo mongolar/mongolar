@@ -4,13 +4,18 @@ package admin
 
 import (
 	"github.com/mongolar/mongolar/controller"
-	"github.com/mongolar/mongolar/oauthlogin"
 	"github.com/mongolar/mongolar/services"
+	"github.com/mongolar/mongolar/user"
 	"github.com/mongolar/mongolar/wrapper"
 	"net/http"
 )
 
 type AdminMap controller.ControllerMap
+
+func GetControllerMap(cm controller.ControllerMap) {
+	amap, _ := NewAdmin()
+	cm["admin"] = amap.Admin
+}
 
 // A series of menu items to render on the admin page
 type AdminMenu struct {
@@ -62,7 +67,7 @@ func (a AdminMap) Admin(w *wrapper.Wrapper) {
 }
 
 func validateAdmin(w *wrapper.Wrapper) bool {
-	user := new(oauthlogin.User)
+	user := new(user.User)
 	err := user.Get(w)
 	loginurls := make(map[string]string)
 	w.SiteConfig.RawConfig.MarshalKey("LoginURLs", &loginurls)

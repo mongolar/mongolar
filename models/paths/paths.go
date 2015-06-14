@@ -1,6 +1,7 @@
 package paths
 
 import (
+	"errors"
 	"github.com/mongolar/mongolar/wrapper"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
@@ -27,6 +28,9 @@ func NewPath() Path {
 
 // Get Path by Id
 func (p *Path) GetById(i string, w *wrapper.Wrapper) error {
+	if !bson.IsObjectIdHex(i) {
+		return errors.New("Invalid Id Hex")
+	}
 	c := w.DbSession.DB("").C("paths")
 	err := c.FindId(bson.ObjectIdHex(i)).One(&p)
 	return err

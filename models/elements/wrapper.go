@@ -1,13 +1,16 @@
 package elements
 
+type WrapperElements struct {
+	Elements []string `bson:"elements" json:"elements"`
+}
 type WrapperElement struct {
-	Element  `bson:"_,inline"`
-	Elements []string `json:"elements"`
+	WrapperElements `bson:"controller_values" json:"content"`
+	Element         `bson:"_,inline"`
 }
 
 func NewWrapperElement() WrapperElement {
 	e := NewElement()
 	els := make([]string, 0)
-	cv := WrapperElement{Element: e, Elements: els}
+	cv := WrapperElement{WrapperElements{Elements: els}, e}
 	return cv
 }

@@ -7,6 +7,7 @@ package main
 
 import (
 	"github.com/mongolar/mongolar/admin"
+	"github.com/mongolar/mongolar/basecontrollers"
 	"github.com/mongolar/mongolar/configs"
 	"github.com/mongolar/mongolar/controller"
 	"github.com/mongolar/mongolar/oauthlogin"
@@ -17,16 +18,10 @@ import (
 )
 
 func main() {
-	amap, _ := admin.NewAdmin()
-	lmap := oauthlogin.NewLoginMap()
 	cm := controller.NewMap()
-	cm["domian_public_value"] = controller.DomainPublicValue
-	cm["path"] = controller.PathValues
-	cm["content"] = controller.ContentValues
-	cm["wrapper"] = controller.WrapperValues
-	cm["slug"] = controller.SlugValues
-	cm["admin"] = amap.Admin
-	cm["login"] = lmap.Login
+	basecontrollers.GetControllerMap(cm)
+	admin.GetControllerMap(cm)
+	oauthlogin.GetControllerMap(cm)
 	Serve(cm)
 }
 

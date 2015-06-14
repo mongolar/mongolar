@@ -4,30 +4,34 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/mongolar/mongolar/controller"
+	"github.com/mongolar/mongolar/user"
 	"github.com/mongolar/mongolar/wrapper"
 	"golang.org/x/oauth2"
-	"gopkg.in/mgo.v2/bson"
 	"net/http"
 )
 
+func GetControllerMap(cm controller.ControllerMap) {
+	lmap := NewLoginMap()
+	cm["login"] = lmap.Login
+}
+
 type LoginMap struct {
 	Controllers controller.ControllerMap
-	Logins      map[string]Login
+	Logins      map[string]OALogin
 	State       string
 }
 
-func NewLoginMap() *LoginMap {
-	lmap := &LoginMap{
+func NewLoginMap() LoginMap {
+	lmap := LoginMap{
 		Controllers: make(controller.ControllerMap),
 	}
 	lmap.Controllers["loginurls"] = lmap.LoginUrls
 	lmap.Controllers["callback"] = lmap.Callback
 	lmap.Controllers["logout"] = lmap.Logout
 	github := NewGitHub()
-	lmap.Logins = map[string]Login{
+	lmap.Logins = map[string]OALogin{
 		"github": github,
 	}
 	lmap.State = StateString()
@@ -128,10 +132,10 @@ func (lo *LoginMap) Callback(w *wrapper.Wrapper) {
 	return
 }
 
-type Login interface {
+type OALogin interface {
 	SetConfig(map[string]string, string, string)
 	GetUrl() string
-	GetUser() *User
+	GetUser() *user.User
 	GetToken(string) (*oauth2.Token, error)
 }
 
@@ -187,10 +191,10 @@ func (gh *GitHub) GetUrl() string {
 	return gh.Config.AuthCodeURL(gh.State, oauth2.AccessTypeOffline)
 }
 
-func (gh *GitHub) GetUser() *User {
+func (gh *GitHub) GetUser() *user.User {
 	client := gh.Config.Client(oauth2.NoContext, gh.Token)
 	test, _ := client.Get("https://api.github.com/user")
-	u := new(User)
+	u := new(user.User)
 	json.NewDecoder(test.Body).Decode(u)
 	u.Type = "github"
 	return u
@@ -203,52 +207,4 @@ func (gh *GitHub) GetToken(code string) (*oauth2.Token, error) {
 		gh.Token = token
 	}
 	return token, err
-}
-
-// move below to new package
-type User struct {
-	MongoId bson.ObjectId `json:"-" bson:"_id"`
-	Email   string        `json:"email" bson:"email"`
-	Id      int           `json:"id" bson:"id"`
-	Name    string        `json:"login" bson:"name"`
-	Type    string        `bson:"type"`
-	Roles   []string      `bson:"roles,omitempty"`
-}
-
-func (u *User) Set(w *wrapper.Wrapper) error {
-	c := w.DbSession.DB("").C("users")
-	tmpuser := new(User)
-	s := bson.M{"id": u.Id, "type": u.Type}
-	err := c.Find(s).One(tmpuser)
-	if err != nil {
-		if err.Error() == "not found" {
-			u.MongoId = bson.NewObjectId()
-			err := c.Insert(u)
-			if err != nil {
-				return err
-			}
-			return nil
-		}
-		return err
-	}
-	u.MongoId = tmpuser.MongoId
-	err = c.Update(bson.M{"_id": u.MongoId}, bson.M{"$set": u})
-	return err
-}
-
-func (u *User) Get(w *wrapper.Wrapper) error {
-	c := w.DbSession.DB("").C("users")
-	var id bson.M
-	w.GetSessionValue("user_id", &id)
-	if id == nil {
-		err := errors.New("User not found")
-		return err
-	}
-	if user_id, ok := id["user_id"]; ok {
-		err := c.Find(bson.M{"_id": user_id}).One(u)
-		return err
-	} else {
-		err := errors.New("User not found")
-		return err
-	}
 }
