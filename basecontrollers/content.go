@@ -15,6 +15,9 @@ func ContentValues(w *wrapper.Wrapper) {
 		contentid = w.APIParams[0]
 	} else {
 		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+		return
+
 	}
 	e := elements.NewContentElement()
 	err := elements.GetValidElement(contentid, "content", &e, w)

@@ -12,6 +12,9 @@ func DomainPublicValue(w *wrapper.Wrapper) {
 		valuekey = w.APIParams[0]
 	} else {
 		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+		return
+
 	}
 	if value, ok := w.SiteConfig.PublicValues[valuekey]; ok {
 		w.SetPayload("domain_value", value)

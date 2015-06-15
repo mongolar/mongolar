@@ -53,7 +53,7 @@ func MenuEditor(w *wrapper.Wrapper) {
 			return
 		}
 		dynamic := services.Dynamic{
-			Target:     "bottomeditor",
+			Target:     "righteditor",
 			Controller: "",
 			Template:   "",
 			Id:         "",

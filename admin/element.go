@@ -23,20 +23,28 @@ func Element(w *wrapper.Wrapper) {
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("This element was not found", "Error", w)
 	} else {
-		w.SetPayload("id", e.MongoId.Hex())
+		w.SetPayload("mongolarid", e.MongoId.Hex())
 		w.SetPayload("title", e.Title)
-		w.SetPayload("controller", e.Controller)
+		w.SetPayload("mongolartype", e.Controller)
+		w.SetDynamicId(e.MongoId.Hex())
 		if e.Controller == "wrapper" {
-			w.SetDynamicId(e.MongoId.Hex())
-		}
-		if c, ok := e.ControllerValues["elements"]; ok {
-			w.SetPayload("elements", c)
+			if _, ok := e.ControllerValues["controller_values"]; ok {
+				if c, ok := e.ControllerValues["controller_values"]["elements"]; ok {
+					w.SetPayload("elements", c)
+				}
+			}
 		}
 	}
 	w.Serve()
 }
 
 func ElementEditor(w *wrapper.Wrapper) {
+	var elementid string
+	if len(w.APIParams) > 0 {
+		elementid = w.APIParams[0]
+	} else {
+		http.Error(w.Writer, "Forbidden", 403)
+	}
 	if w.Request.Method != "POST" {
 		f := form.NewForm()
 		f.AddText("title", "text").AddLabel("Title")
@@ -49,20 +57,29 @@ func ElementEditor(w *wrapper.Wrapper) {
 		}
 		f.AddSelect("controller", op).AddLabel("Controller")
 		f.AddText("template", "text").AddLabel("Template")
-		f.AddText("dynamic_id", "text").AddLabel("Dynamic Id")
+		f.AddText("dyn", "text").AddLabel("Dynamic Id")
 		f.AddText("classes", "text").AddLabel("Classes")
-		f.AddText("element_id", "text").Hidden()
-		if w.APIParams[0] != "new" {
+		f.AddText("id", "text").Hidden()
+		if elementid != "new" {
 			e := elements.NewElement()
-			err := elements.GetById(w.APIParams[0], &e, w)
+			err := elements.GetById(elementid, &e, w)
 			if err != nil {
-				errmessage := fmt.Sprintf("Element not found to edit for %s by %s", w.APIParams[0], w.Request.Host)
+				errmessage := fmt.Sprintf("Element not found to edit for %s by %s", elementid, w.Request.Host, err.Error())
 				w.SiteConfig.Logger.Error(errmessage)
 				services.AddMessage("This element was not found", "Error", w)
 				w.Serve()
 				return
 			}
-			f.FormData = e
+			// Have to do this for namespacing stuff on the AngularJs side.
+			data := map[string]string{
+				"controller": e.Controller,
+				"template":   e.Template,
+				"dyn":        e.DynamicId,
+				"classes":    e.Classes,
+				"id":         e.MongoId.Hex(),
+				"title":      e.Title,
+			}
+			f.FormData = data
 		}
 		f.Register(w)
 		w.SetTemplate("admin/form.html")
@@ -77,7 +94,7 @@ func ElementEditor(w *wrapper.Wrapper) {
 			if post["mongolarid"] == "new" {
 				p := elements.Element{
 					Controller: post["controller"],
-					DynamicId:  post["dynamic_id"],
+					DynamicId:  post["dyn"],
 					Template:   post["template"],
 					Title:      post["title"],
 					Classes:    post["classes"],
@@ -95,7 +112,7 @@ func ElementEditor(w *wrapper.Wrapper) {
 					"$set": bson.M{
 						"template":   post["template"],
 						"title":      post["title"],
-						"dynamic_id": post["dynamic_id"],
+						"dynamic_id": post["dyn"],
 						"controller": post["controller"],
 						"classes":    post["classes"],
 					},

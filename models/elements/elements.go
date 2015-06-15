@@ -8,18 +8,18 @@ import (
 
 //The designated structure for all elements
 type Element struct {
-	MongoId          bson.ObjectId          `bson:"_id,omitempty" json:"mongolarid"`
-	ControllerValues map[string]interface{} `bson:"-" json:"-"`
-	Controller       string                 `bson:"controller" json:"mongolartype"`
-	Template         string                 `bson:"template,omitempty" json:"mongolartemplate"`
-	DynamicId        string                 `bson:"dynamic_id,omitempty" json:"mongolardyn,omitempty"`
-	Title            string                 `bson:"title" json:"-"`
-	Classes          string                 `bson:"classes" json:"classes,omitempty"`
+	MongoId          bson.ObjectId                     `bson:"_id,omitempty" json:"mongolarid"`
+	ControllerValues map[string]map[string]interface{} `bson:"controller_values,inline" json:"-"`
+	Controller       string                            `bson:"controller" json:"mongolartype"`
+	Template         string                            `bson:"template,omitempty" json:"mongolartemplate"`
+	DynamicId        string                            `bson:"dynamic_id,omitempty" json:"mongolardyn,omitempty"`
+	Title            string                            `bson:"title" json:"title"`
+	Classes          string                            `bson:"classes" json:"classes,omitempty"`
 }
 
 // Constructor for elements
 func NewElement() Element {
-	cv := make(map[string]interface{})
+	cv := make(map[string]map[string]interface{})
 	e := Element{ControllerValues: cv}
 	return e
 }

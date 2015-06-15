@@ -15,6 +15,8 @@ func WrapperValues(w *wrapper.Wrapper) {
 		wrapid = w.APIParams[0]
 	} else {
 		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+		return
 	}
 	e := elements.NewWrapperElement()
 	err := elements.GetValidElement(wrapid, "wrapper", &e, w)

@@ -15,6 +15,9 @@ func SlugValues(w *wrapper.Wrapper) {
 		slugid = w.APIParams[0]
 	} else {
 		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+		return
+
 	}
 	es := elements.NewSlugElement()
 	err := elements.GetValidElement(slugid, "slug", &es, w)

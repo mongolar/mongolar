@@ -7,14 +7,24 @@ import (
 	"github.com/mongolar/mongolar/services"
 	"github.com/mongolar/mongolar/wrapper"
 	"gopkg.in/mgo.v2/bson"
+	"net/http"
 )
 
 func SlugUrlEditor(w *wrapper.Wrapper) {
+	var slugid string
+	if len(w.APIParams) > 0 {
+		slugid = w.APIParams[0]
+	} else {
+		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+		return
+	}
+
 	if w.Request.Method != "POST" {
-		e := elements.NewElement()
-		err := elements.GetById(w.APIParams[0], &e, w)
+		e := elements.NewSlugElement()
+		err := elements.GetById(slugid, &e, w)
 		if err != nil {
-			errmessage := fmt.Sprintf("Element not found to edit for %s by %s", w.APIParams[0], w.Request.Host)
+			errmessage := fmt.Sprintf("Element not found to edit for %s by %s", slugid, w.Request.Host)
 			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("This element was not found", "Error", w)
 			w.Serve()
@@ -22,19 +32,19 @@ func SlugUrlEditor(w *wrapper.Wrapper) {
 		}
 		f := form.NewForm()
 		data := make(map[string]string)
-		for slug, id := range e.ControllerValues {
-			f.AddText(id.(string), "text")
-			data[id.(string)] = slug
+		for slug, id := range e.Slugs {
+			f.AddText(id, "text")
+			data[id] = slug
 			e := elements.NewElement()
-			err = elements.GetById(id.(string), &e, w)
+			err = elements.GetById(id, &e, w)
 			if err != nil {
-				errmessage := fmt.Sprintf("Content not found %s : %s", w.APIParams[0], err.Error())
+				errmessage := fmt.Sprintf("Content not found %s : %s", id, err.Error())
 				w.SiteConfig.Logger.Error(errmessage)
 				services.AddMessage("There was a problem loading some slug elements.", "Error", w)
 				w.Serve()
 				return
 			}
-			f.AddText(id.(string), "text").AddLabel(e.Title).Required()
+			f.AddText(id, "text").AddLabel(e.Title).Required()
 
 		}
 		f.FormData = data

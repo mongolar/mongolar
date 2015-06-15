@@ -11,11 +11,19 @@ import (
 )
 
 func ContentTypeEditor(w *wrapper.Wrapper) {
+	var elementid string
+	if len(w.APIParams) > 0 {
+		elementid = w.APIParams[0]
+	} else {
+		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+		return
+	}
 	if w.Request.Method != "POST" {
-		e := elements.NewElement()
-		err := elements.GetById(w.APIParams[0], &e, w)
+		e := elements.NewContentElement()
+		err := elements.GetById(elementid, &e, w)
 		if err != nil {
-			errmessage := fmt.Sprintf("Element not found to edit for %s by %s", w.APIParams[0], w.Request.Host)
+			errmessage := fmt.Sprintf("Element not found to edit for %s by %s", elementid, w.Request.Host)
 			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("This element was not found", "Error", w)
 			w.Serve()
@@ -41,10 +49,7 @@ func ContentTypeEditor(w *wrapper.Wrapper) {
 			opts = append(opts, opt)
 		}
 		f.AddSelect("type", opts)
-		data := make(map[string]string)
-		if t, ok := e.ControllerValues["type"]; ok {
-			data["type"] = t.(string)
-		}
+		data := map[string]string{"type": e.ContentValues.Type}
 		f.FormData = data
 		f.Register(w)
 		w.SetTemplate("admin/form.html")
@@ -76,17 +81,25 @@ func ContentTypeEditor(w *wrapper.Wrapper) {
 }
 
 func ContentEditor(w *wrapper.Wrapper) {
-	e := elements.NewElement()
-	err := elements.GetById(w.APIParams[0], &e, w)
+	var elementid string
+	if len(w.APIParams) > 0 {
+		elementid = w.APIParams[0]
+	} else {
+		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+		return
+	}
+	e := elements.NewContentElement()
+	err := elements.GetById(elementid, &e, w)
 	if err != nil {
-		errmessage := fmt.Sprintf("Element not found to edit for %s by %s", w.APIParams[0], w.Request.Host)
+		errmessage := fmt.Sprintf("Element not found to edit for %s by %s", elementid, w.Request.Host)
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("This element was not found", "Error", w)
 		w.Serve()
 		return
 	}
-	if _, ok := e.ControllerValues["type"]; !ok {
-		errmessage := fmt.Sprintf("No content type set for %s", w.APIParams[0], w.Request.Host)
+	if e.ContentValues.Type == "" {
+		errmessage := fmt.Sprintf("No content type set for %s", elementid, w.Request.Host)
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("This element doesn't have a content type set.  Set a content type to edit values.", "Error", w)
 		w.Serve()
@@ -110,11 +123,7 @@ func ContentEditor(w *wrapper.Wrapper) {
 		}
 		f := form.NewForm()
 		f.Fields = ct.Form
-		if content, ok := e.ControllerValues["content"]; ok {
-			f.FormData = content.(map[string]interface{})
-		} else {
-			f.FormData = make(map[string]interface{})
-		}
+		f.FormData = e.ContentValues.Content
 		f.Register(w)
 		w.SetTemplate("admin/form.html")
 		w.SetPayload("form", f)
