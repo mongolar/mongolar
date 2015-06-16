@@ -1,5 +1,9 @@
 package elements
 
+import (
+	"github.com/mongolar/mongolar/wrapper"
+)
+
 type SlugElement struct {
 	Slugs   map[string]string `bson:"controller_values"`
 	Element `bson:"_,inline"`

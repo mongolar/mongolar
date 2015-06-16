@@ -1,5 +1,9 @@
 package elements
 
+import (
+	"github.com/mongolar/mongolar/wrapper"
+)
+
 type ContentValues struct {
 	Content map[string]interface{} `bson:"content"`
 	Type    string                 `bson:"type"`

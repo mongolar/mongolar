@@ -7,6 +7,13 @@ import (
 type WrapperElements struct {
 	Elements []string `bson:"elements" json:"elements"`
 }
+
+func NewWrapperElements() WrapperElements {
+	els := make([]string, 0)
+	wels := WrapperElements{els}
+	return wels
+}
+
 type WrapperElement struct {
 	WrapperElements `bson:"controller_values" json:"content"`
 	Element         `bson:"_,inline"`
@@ -14,8 +21,8 @@ type WrapperElement struct {
 
 func NewWrapperElement() WrapperElement {
 	e := NewElement()
-	els := make([]string, 0)
-	cv := WrapperElement{WrapperElements{Elements: els}, e}
+	els := NewWrapperElements()
+	cv := WrapperElement{els, e}
 	return cv
 }
 

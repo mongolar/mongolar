@@ -13,122 +13,185 @@ import (
 )
 
 func Sort(w *wrapper.Wrapper) {
-	if w.Request.Method != "POST" {
-		if w.APIParams[0] == "paths" {
-			p := paths.NewPath()
-			err := p.GetById(w.APIParams[1], w)
-			if err != nil {
-				errmessage := fmt.Sprintf("Path not found to sort for %s by %s", w.APIParams[1], w.Request.Host)
-				w.SiteConfig.Logger.Error(errmessage)
-				services.AddMessage("This path was not found", "Error", w)
-				w.Serve()
-				return
-			}
-			if len(p.Elements) == 0 {
-				services.AddMessage("This path has no elements.", "Info", w)
-			}
-			w.SetPayload("elements", p.Elements)
-			w.SetTemplate("admin/element_sorter.html")
-			w.Serve()
-			return
-		} else if w.APIParams[0] == "elements" {
-			e := elements.NewWrapperElement()
-			err := elements.GetById(w.APIParams[1], &e, w)
-			if err != nil {
-				errmessage := fmt.Sprintf("Element not found to sort for %s by %s.", w.APIParams[1], w.Request.Host)
-				w.SiteConfig.Logger.Error(errmessage)
-				services.AddMessage("This element was not found", "Error", w)
-				w.Serve()
-				return
-			} else {
-				if len(e.Elements) > 0 {
-					w.SetPayload("elements", e.Elements)
-				} else {
-					services.AddMessage("This has no elements assigned yet.", "Error", w)
-				}
-				w.SetTemplate("admin/element_sorter.html")
-				w.Serve()
-				return
-			}
-		}
-		http.Error(w.Writer, "Forbidden", 403)
-		return
+	var parenttype string
+	if len(w.APIParams) > 1 {
+		parenttype = w.APIParams[0]
 	} else {
-		post := make(map[string]interface{})
-		err := json.NewDecoder(w.Request.Body).Decode(&post)
-		if err != nil {
-			errmessage := fmt.Sprintf("Unable to marshall sort elements %s by %s: %s", w.APIParams[0], w.Request.Host, err.Error())
-			w.SiteConfig.Logger.Error(errmessage)
-			services.AddMessage("Unable to save elements.", "Error", w)
-			w.Serve()
-			return
-		}
-		if w.APIParams[0] == "paths" {
-			p := bson.M{
-				"$set": bson.M{
-					"elements": post["elements"],
-				},
-			}
-			s := bson.M{"_id": bson.ObjectIdHex(w.APIParams[1])}
-			c := w.DbSession.DB("").C("paths")
-			err := c.Update(s, p)
-			if err != nil {
-				errmessage := fmt.Sprintf("Unable to update path order %s by %s: %s", w.APIParams[0], w.Request.Host, err.Error())
-				w.SiteConfig.Logger.Error(errmessage)
-				services.AddMessage("Unable to save elements.", "Error", w)
-				w.Serve()
-				return
-			}
-			dynamic := services.Dynamic{
-				Target:     "centereditor",
-				Controller: "admin/path_elements",
-				Template:   "admin/path_elements.html",
-				Id:         w.APIParams[1],
-			}
-			services.SetDynamic(dynamic, w)
-			services.AddMessage("You elements have been updated.", "Success", w)
-			w.Serve()
-			return
-
-		} else if w.APIParams[0] == "elements" {
-			post := make(map[string]interface{})
-			err := json.NewDecoder(w.Request.Body).Decode(&post)
-			if err != nil {
-				errmessage := fmt.Sprintf("Unable to marshall element %s by %s: %s", w.APIParams[0], w.Request.Host, err.Error())
-				w.SiteConfig.Logger.Error(errmessage)
-				services.AddMessage("Unable to save elements.", "Error", w)
-				w.Serve()
-				return
-			}
-			p := bson.M{
-				"$set": bson.M{
-					"controller_values.elements": post["elements"],
-				},
-			}
-			s := bson.M{"_id": bson.ObjectIdHex(w.APIParams[1])}
-			c := w.DbSession.DB("").C("elements")
-			err = c.Update(s, p)
-			if err != nil {
-				errmessage := fmt.Sprintf("Unable to update element order %s by %s: %s", w.APIParams[0], w.Request.Host, err.Error())
-				w.SiteConfig.Logger.Error(errmessage)
-				services.AddMessage("Unable to save elements.", "Error", w)
-				w.Serve()
-				return
-			}
-			dynamic := services.Dynamic{
-				Target:     w.APIParams[1],
-				Controller: "admin/element",
-				Template:   "admin/element.html",
-				Id:         w.APIParams[1],
-			}
-			services.SetDynamic(dynamic, w)
-			services.AddMessage("You elements have been updated.", "Success", w)
-			w.Serve()
-			return
-		}
 		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
 		return
 	}
+	w.Shift()
+	switch parenttype {
+	case "elements":
+		if w.Request.Method != "POST" {
+			SortWrapperForm(w)
+			return
+		}
+		SortWrapperSubmit(w)
+		return
+	case "paths":
+		if w.Request.Method != "POST" {
+			SortPathForm(w)
+			return
+		}
+		SortPathSubmit(w)
+		return
+	default:
+		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+	}
+	return
+}
+
+func SortWrapperForm(w *wrapper.Wrapper) {
+	var parentid string
+	if len(w.APIParams) > 0 {
+		parentid = w.APIParams[0]
+	} else {
+		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+		return
+	}
+	e, err := elements.LoadWrapperElement(parentid, w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Element not found to sort for %s by %s.", w.APIParams[1], w.Request.Host)
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("This element was not found", "Error", w)
+		w.Serve()
+		return
+	}
+	if len(e.Elements) > 0 {
+		w.SetPayload("elements", e.Elements)
+	} else {
+		services.AddMessage("This has no elements assigned yet.", "Error", w)
+	}
+	w.SetTemplate("admin/element_sorter.html")
+	w.Serve()
+	return
+
+}
+
+func SortPathForm(w *wrapper.Wrapper) {
+	var parentid string
+	if len(w.APIParams) > 0 {
+		parentid = w.APIParams[0]
+	} else {
+		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+		return
+	}
+	p, err := paths.LoadPath(parentid, w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Path not found to sort for %s by %s.", parentid, w.Request.Host)
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("This element was not found", "Error", w)
+		w.Serve()
+		return
+	} else {
+		if len(p.Elements) > 0 {
+			w.SetPayload("elements", p.Elements)
+		} else {
+			services.AddMessage("This has no elements assigned yet.", "Error", w)
+		}
+		w.SetTemplate("admin/element_sorter.html")
+		w.Serve()
+		return
+	}
+}
+
+func SortWrapperSubmit(w *wrapper.Wrapper) {
+	var parentid string
+	if len(w.APIParams) > 0 {
+		parentid = w.APIParams[0]
+	} else {
+		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+		return
+	}
+	wes := elements.NewWrapperElements()
+	err := json.NewDecoder(w.Request.Body).Decode(&wes)
+	if err != nil {
+		errmessage := fmt.Sprintf("Unable to marshall elements %s by %s: %s", parentid, w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Unable to save elements.", "Error", w)
+		w.Serve()
+		return
+	}
+	we, err := elements.LoadWrapperElement(parentid, w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Element not found to sort for %s by %s.", parentid, w.Request.Host)
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("This element was not found", "Error", w)
+		w.Serve()
+		return
+	}
+	we.WrapperElements = wes
+	we.Save(w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Unable to save wrapper element %s by %s : %s", parentid, w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Could not save parent element.", "Error", w)
+		w.Serve()
+		return
+	}
+	dynamic := services.Dynamic{
+		Target:     w.APIParams[1],
+		Controller: "admin/element",
+		Template:   "admin/element.html",
+		Id:         w.APIParams[1],
+	}
+	services.SetDynamic(dynamic, w)
+	services.AddMessage("You elements have been updated.", "Success", w)
+	w.Serve()
+	return
+}
+
+func SortPathSubmit(w *wrapper.Wrapper) {
+	var parentid string
+	if len(w.APIParams) > 0 {
+		parentid = w.APIParams[0]
+	} else {
+		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+		return
+	}
+	pes := paths.NewPathElements()
+	err := json.NewDecoder(w.Request.Body).Decode(&pes)
+	if err != nil {
+		errmessage := fmt.Sprintf("Unable to marshall elements %s by %s: %s", parentid, w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Unable to save elements.", "Error", w)
+		w.Serve()
+		return
+	}
+	pe, err := paths.LoadPath(parentid, w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Path not found to sort for %s by %s.", parentid, w.Request.Host)
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("This path was not found", "Error", w)
+		w.Serve()
+		return
+	}
+	pe.PathElements = pes
+	err = pe.Save(w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Unable to save path %s by %s : %s", parentid, w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Could not save path.", "Error", w)
+		w.Serve()
+		return
+	}
+	dynamic := services.Dynamic{
+		Target:     "centereditor",
+		Controller: "admin/path_elements",
+		Template:   "admin/path_elements.html",
+		Id:         w.APIParams[1],
+	}
+	services.SetDynamic(dynamic, w)
+	services.AddMessage("You elements have been updated.", "Success", w)
+	w.Serve()
+	return
 }
 
 func AddChild(w *wrapper.Wrapper) {

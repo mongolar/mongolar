@@ -9,28 +9,38 @@ import (
 	"strings"
 )
 
+type PathElements struct {
+	Elements []string `bson:"elements,omitempty,inline" json:"elements,omitempty"`
+}
+
+func NewPathElements() PathElements {
+	e := make([]string, 0)
+	p := PathElements{Elements: e}
+	return p
+}
+
 type Path struct {
 	MongoId  bson.ObjectId `bson:"_id,omitempty" json:"id"`
 	Path     string        `bson:"path" json:"path"`
 	Wildcard bool          `bson:"wildcard" json:"wildcard"`
-	Elements []string      `bson:"elements,omitempty" json:"elements,omitempty"`
 	Template string        `bson:"template" json:"template"`
 	Status   string        `bson:"status" json:"status"`
 	Title    string        `bson:"title" json:"title"`
+	PathElements
 }
 
 // Constructor for paths
 func NewPath() Path {
-	e := make([]string, 0)
+	e := NewPathElements()
 	id := bson.NewObjectId()
-	p := Path{MongoId: id, Elements: e}
+	p := Path{MongoId: id, PathElements: e}
 	return p
 }
 
 // Constructor for existing paths
 func LoadPath(i string, w *wrapper.Wrapper) (Path, error) {
-	e := make([]string, 0)
-	p := Path{Elements: e}
+	e := NewPathElements()
+	p := Path{PathElements: e}
 	err := p.GetById(i, w)
 	return p, err
 }
