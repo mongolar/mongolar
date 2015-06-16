@@ -17,3 +17,9 @@ func NewContentElement() ContentElement {
 	ce := ContentElement{Element: e, ContentValues: contentv}
 	return ce
 }
+
+func LoadContentElement(i string, w *wrapper.Wrapper) (ContentElement, error) {
+	e := NewContentElement()
+	err := GetById(i, e, w)
+	return e, err
+}

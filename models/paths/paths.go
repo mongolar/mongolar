@@ -19,11 +19,42 @@ type Path struct {
 	Title    string        `bson:"title" json:"title"`
 }
 
-// Constructor for elements
+// Constructor for paths
 func NewPath() Path {
 	e := make([]string, 0)
-	p := Path{Elements: e}
+	id := bson.NewObjectId()
+	p := Path{MongoId: id, Elements: e}
 	return p
+}
+
+// Constructor for existing paths
+func LoadPath(i string, w *wrapper.Wrapper) (Path, error) {
+	e := make([]string, 0)
+	p := Path{Elements: e}
+	err := p.GetById(i, w)
+	return p, err
+}
+
+//Save an element in its current state.
+func (p *Path) Save(w *wrapper.Wrapper) error {
+	if !p.MongoId.Valid() {
+		p.MongoId = bson.NewObjectId()
+	}
+	if p.Path == "" {
+		return errors.New("Path required")
+	}
+	if p.Template == "" {
+		return errors.New("Template required")
+	}
+	if p.Status == "" {
+		return errors.New("Status required")
+	}
+	c := w.DbSession.DB("").C("paths")
+	_, err := c.Upsert(p.MongoId, p)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Get Path by Id
@@ -57,6 +88,19 @@ func (p *Path) PathMatch(u string, s string, c *mgo.Collection) (string, error) 
 		break
 	}
 	return strings.Join(rejects, "/"), err
+}
+
+// Add a child element to an existing Path
+func AddChild(pathid string, elementid string, w *wrapper.Wrapper) error {
+	if !bson.IsObjectIdHex(elementid) {
+		return errors.New("Invalid Hex Id")
+	}
+	p, err := LoadPath(pathid, w)
+	if err != nil {
+		return err
+	}
+	p.Elements = append(p.Elements, elementid)
+	return p.Save(w)
 }
 
 // Get all Paths

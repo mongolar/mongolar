@@ -132,11 +132,39 @@ func Sort(w *wrapper.Wrapper) {
 }
 
 func AddChild(w *wrapper.Wrapper) {
+	var parenttype string
+	if len(w.APIParams) > 1 {
+		parenttype = w.APIParams[0]
+	} else {
+		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+		return
+	}
+	w.Shift()
+	switch parenttype {
+	case "elements":
+		AddWrapperChild(w)
+	case "paths":
+		AddPathChild(w)
+	default:
+		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+	}
+	return
+}
+
+func AddWrapperChild(w *wrapper.Wrapper) {
+	var parentid string
+	if len(w.APIParams) > 0 {
+		parentid = w.APIParams[0]
+	} else {
+		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+		return
+	}
 	e := elements.NewElement()
-	e.MongoId = bson.NewObjectId()
 	e.Title = "New Element"
-	c := w.DbSession.DB("").C("elements")
-	err := c.Insert(e)
+	err := e.Save(w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Unable to create new element  by %s : %s", w.Request.Host, err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
@@ -144,46 +172,79 @@ func AddChild(w *wrapper.Wrapper) {
 		w.Serve()
 		return
 	}
-	c = w.DbSession.DB("").C(w.APIParams[0])
-	f := ""
-	if w.APIParams[0] == "elements" {
-		f = "controller_values.elements"
-	} else if w.APIParams[0] == "paths" {
-		f = "elements"
-	} else {
-		errmessage := fmt.Sprintf("Invalid parent item type %s by %s", w.APIParams[0], w.Request.Host)
-		w.SiteConfig.Logger.Error(errmessage)
-		message := fmt.Sprintf("Attempt to assign child to illegal parent %s.", w.APIParams[0])
-		services.AddMessage(message, "Error", w)
-		w.Serve()
-		return
-
-	}
-	i := bson.M{"_id": bson.ObjectIdHex(w.APIParams[1])}
-	err = c.Update(i, bson.M{"$push": bson.M{f: e.MongoId.Hex()}})
+	var parent elements.WrapperElement
+	parent, err = elements.LoadWrapperElement(parentid, w)
 	if err != nil {
-		errmessage := fmt.Sprintf("Unable to add child element %s to %s : %s", e.MongoId.Hex(), w.APIParams[1], err.Error())
+		errmessage := fmt.Sprintf("Unable to loap parent element  by %s : %s", w.Request.Host, err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
-		message := fmt.Sprintf("There was a problem, your elemeent was created but was not assigned to your %s.", w.APIParams[0])
-		services.AddMessage(message, "Error", w)
+		services.AddMessage("Could not load parent element.", "Error", w)
 		w.Serve()
 		return
 	}
-	var dynamic services.Dynamic
-	if w.APIParams[0] == "elements" {
-		dynamic = services.Dynamic{
-			Target:     w.APIParams[1],
-			Controller: "admin/element",
-			Template:   "admin/element.html",
-			Id:         w.APIParams[1],
-		}
-	} else if w.APIParams[0] == "paths" {
-		dynamic = services.Dynamic{
-			Target:     "centereditor",
-			Controller: "admin/path_elements",
-			Template:   "admin/path_elements.html",
-			Id:         w.APIParams[1],
-		}
+	parent.Elements = append(parent.Elements, e.MongoId.Hex())
+	err = parent.Save(w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Unable to loap parent element  by %s : %s", w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Could not load parent element.", "Error", w)
+		w.Serve()
+		return
+	}
+	dynamic := services.Dynamic{
+		Target:     w.APIParams[1],
+		Controller: "admin/element",
+		Template:   "admin/element.html",
+		Id:         w.APIParams[1],
+	}
+	services.SetDynamic(dynamic, w)
+	services.AddMessage("You have added a new element.", "Success", w)
+	w.Serve()
+	return
+
+}
+
+func AddPathChild(w *wrapper.Wrapper) {
+	var parentid string
+	if len(w.APIParams) > 0 {
+		parentid = w.APIParams[0]
+	} else {
+		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+		return
+	}
+	e := elements.NewElement()
+	e.Title = "New Element"
+	err := e.Save(w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Unable to create new element  by %s : %s", w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Could not create a new element.", "Error", w)
+		w.Serve()
+		return
+	}
+	var parent paths.Path
+	parent, err = paths.LoadPath(parentid, w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Unable to loap path  by %s : %s", w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Could not load parent path.", "Error", w)
+		w.Serve()
+		return
+	}
+	parent.Elements = append(parent.Elements, e.MongoId.Hex())
+	err = parent.Save(w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Unable to save path by %s : %s", w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Could not add child element.", "Error", w)
+		w.Serve()
+		return
+	}
+	dynamic := services.Dynamic{
+		Target:     "centereditor",
+		Controller: "admin/path_elements",
+		Template:   "admin/path_elements.html",
+		Id:         w.APIParams[1],
 	}
 	services.SetDynamic(dynamic, w)
 	services.AddMessage("You have added a new element.", "Success", w)

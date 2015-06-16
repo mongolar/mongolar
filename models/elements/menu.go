@@ -17,3 +17,9 @@ func NewMenuElement() MenuElement {
 	me := MenuElement{Element: e, MenuItems: menuitems}
 	return me
 }
+
+func LoadMenuElement(i string, w *wrapper.Wrapper) (MenuElement, error) {
+	e := NewMenuElement()
+	err := GetById(i, e, w)
+	return e, err
+}

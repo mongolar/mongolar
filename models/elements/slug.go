@@ -11,3 +11,9 @@ func NewSlugElement() SlugElement {
 	se := SlugElement{Element: e, Slugs: cv}
 	return se
 }
+
+func LoadSlugElement(i string, w *wrapper.Wrapper) (SlugElement, error) {
+	e := NewSlugElement()
+	err := GetById(i, e, w)
+	return e, err
+}

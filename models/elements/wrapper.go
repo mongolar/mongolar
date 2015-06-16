@@ -1,5 +1,9 @@
 package elements
 
+import (
+	"github.com/mongolar/mongolar/wrapper"
+)
+
 type WrapperElements struct {
 	Elements []string `bson:"elements" json:"elements"`
 }
@@ -13,4 +17,10 @@ func NewWrapperElement() WrapperElement {
 	els := make([]string, 0)
 	cv := WrapperElement{WrapperElements{Elements: els}, e}
 	return cv
+}
+
+func LoadWrapperElement(i string, w *wrapper.Wrapper) (WrapperElement, error) {
+	e := NewWrapperElement()
+	err := GetById(i, e, w)
+	return e, err
 }

@@ -20,8 +20,36 @@ type Element struct {
 // Constructor for elements
 func NewElement() Element {
 	cv := make(map[string]map[string]interface{})
-	e := Element{ControllerValues: cv}
+	id := bson.NewObjectId()
+	e := Element{MongoId: id, ControllerValues: cv}
 	return e
+}
+
+// Constructor for existing paths
+func LoadElement(i string, w *wrapper.Wrapper) (Element, error) {
+	cv := make(map[string]map[string]interface{})
+	e := Element{ControllerValues: cv}
+	err := GetById(i, e, w)
+	return e, err
+}
+
+//Save an element in its current state.
+func (e *Element) Save(w *wrapper.Wrapper) error {
+	if !e.MongoId.Valid() {
+		e.MongoId = bson.NewObjectId()
+	}
+	if e.Controller == "" {
+		return errors.New("Controller required")
+	}
+	if e.Template == "" {
+		return errors.New("Template required")
+	}
+	c := w.DbSession.DB("").C("elements")
+	_, err := c.Upsert(e.MongoId, e)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Query one element
