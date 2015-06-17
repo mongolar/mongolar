@@ -8,28 +8,25 @@ import (
 
 //The designated structure for all elements
 type Element struct {
-	MongoId          bson.ObjectId                     `bson:"_id,omitempty" json:"mongolarid"`
-	ControllerValues map[string]map[string]interface{} `bson:"controller_values,inline" json:"-"`
-	Controller       string                            `bson:"controller" json:"mongolartype"`
-	Template         string                            `bson:"template,omitempty" json:"mongolartemplate"`
-	DynamicId        string                            `bson:"dynamic_id,omitempty" json:"mongolardyn,omitempty"`
-	Title            string                            `bson:"title" json:"title"`
-	Classes          string                            `bson:"classes" json:"classes,omitempty"`
+	MongoId    bson.ObjectId `bson:"_id,omitempty" json:"mongolarid"`
+	Controller string        `bson:"controller" json:"mongolartype"`
+	Template   string        `bson:"template,omitempty" json:"mongolartemplate"`
+	DynamicId  string        `bson:"dynamic_id,omitempty" json:"mongolardyn,omitempty"`
+	Title      string        `bson:"title" json:"title"`
+	Classes    string        `bson:"classes" json:"classes,omitempty"`
 }
 
 // Constructor for elements
 func NewElement() Element {
-	cv := make(map[string]map[string]interface{})
 	id := bson.NewObjectId()
-	e := Element{MongoId: id, ControllerValues: cv}
+	e := Element{MongoId: id}
 	return e
 }
 
 // Constructor for existing paths
 func LoadElement(i string, w *wrapper.Wrapper) (Element, error) {
-	cv := make(map[string]map[string]interface{})
-	e := Element{ControllerValues: cv}
-	err := GetById(i, e, w)
+	var e Element
+	err := GetById(i, &e, w)
 	return e, err
 }
 
@@ -45,7 +42,7 @@ func (e *Element) Save(w *wrapper.Wrapper) error {
 		return errors.New("Template required")
 	}
 	c := w.DbSession.DB("").C("elements")
-	_, err := c.Upsert(e.MongoId, e)
+	_, err := c.UpsertId(e.MongoId, e)
 	if err != nil {
 		return err
 	}

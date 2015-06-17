@@ -10,7 +10,7 @@ import (
 )
 
 type PathElements struct {
-	Elements []string `bson:"elements,omitempty,inline" json:"elements,omitempty"`
+	Elements []string `bson:"elements,omitempty" json:"elements,omitempty"`
 }
 
 func NewPathElements() PathElements {
@@ -20,13 +20,13 @@ func NewPathElements() PathElements {
 }
 
 type Path struct {
-	MongoId  bson.ObjectId `bson:"_id,omitempty" json:"id"`
-	Path     string        `bson:"path" json:"path"`
-	Wildcard bool          `bson:"wildcard" json:"wildcard"`
-	Template string        `bson:"template" json:"template"`
-	Status   string        `bson:"status" json:"status"`
-	Title    string        `bson:"title" json:"title"`
-	PathElements
+	MongoId      bson.ObjectId `bson:"_id,omitempty" json:"id"`
+	Path         string        `bson:"path" json:"path"`
+	Wildcard     bool          `bson:"wildcard" json:"wildcard"`
+	Template     string        `bson:"template" json:"template"`
+	Status       string        `bson:"status" json:"status"`
+	Title        string        `bson:"title" json:"title"`
+	PathElements `bson:",inline"`
 }
 
 // Constructor for paths

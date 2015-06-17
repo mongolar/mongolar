@@ -11,7 +11,7 @@ type ContentValues struct {
 
 type ContentElement struct {
 	ContentValues `bson:"controller_values" json:"content"`
-	Element       `bson:"_,inline"`
+	Element       `bson:",inline"`
 }
 
 func NewContentElement() ContentElement {
@@ -24,6 +24,6 @@ func NewContentElement() ContentElement {
 
 func LoadContentElement(i string, w *wrapper.Wrapper) (ContentElement, error) {
 	e := NewContentElement()
-	err := GetById(i, e, w)
+	err := GetById(i, &e, w)
 	return e, err
 }

@@ -16,7 +16,7 @@ func NewWrapperElements() WrapperElements {
 
 type WrapperElement struct {
 	WrapperElements `bson:"controller_values" json:"content"`
-	Element         `bson:"_,inline"`
+	Element         `bson:",inline"`
 }
 
 func NewWrapperElement() WrapperElement {
@@ -28,6 +28,6 @@ func NewWrapperElement() WrapperElement {
 
 func LoadWrapperElement(i string, w *wrapper.Wrapper) (WrapperElement, error) {
 	e := NewWrapperElement()
-	err := GetById(i, e, w)
+	err := GetById(i, &e, w)
 	return e, err
 }

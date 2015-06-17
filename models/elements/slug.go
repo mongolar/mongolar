@@ -18,6 +18,6 @@ func NewSlugElement() SlugElement {
 
 func LoadSlugElement(i string, w *wrapper.Wrapper) (SlugElement, error) {
 	e := NewSlugElement()
-	err := GetById(i, e, w)
+	err := GetById(i, &e, w)
 	return e, err
 }

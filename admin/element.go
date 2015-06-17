@@ -28,11 +28,13 @@ func Element(w *wrapper.Wrapper) {
 		w.SetPayload("mongolartype", e.Controller)
 		w.SetDynamicId(e.MongoId.Hex())
 		if e.Controller == "wrapper" {
-			if _, ok := e.ControllerValues["controller_values"]; ok {
-				if c, ok := e.ControllerValues["controller_values"]["elements"]; ok {
-					w.SetPayload("elements", c)
-				}
+			we, err := elements.LoadWrapperElement(w.APIParams[0], w)
+			if err != nil {
+				errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", w.APIParams[0], w.Request.Host)
+				w.SiteConfig.Logger.Error(errmessage)
+				services.AddMessage("This element was not found", "Error", w)
 			}
+			w.SetPayload("elements", we.Elements)
 		}
 	}
 	w.Serve()

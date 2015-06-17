@@ -16,14 +16,13 @@ func MenuEditor(w *wrapper.Wrapper) {
 			http.Error(w.Writer, "Forbidden", 403)
 			return
 		}
-		e := elements.NewElement()
-		err := elements.GetById(w.APIParams[0], &e, w)
+		e, err := elements.LoadMenuElement(w.APIParams[0], w)
 		if err != nil {
 			errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", w.APIParams[0], w.Request.Host)
 			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("This element was not found", "Error", w)
 		} else {
-			w.SetPayload("menu", e.ControllerValues)
+			w.SetPayload("menu", e.MenuItems)
 			w.SetPayload("title", e.Title)
 		}
 		w.Serve()
