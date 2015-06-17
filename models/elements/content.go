@@ -14,6 +14,10 @@ type ContentElement struct {
 	Element       `bson:",inline"`
 }
 
+func (ce *ContentElement) Save(w *wrapper.Wrapper) error {
+	return Save(ce.Element.MongoId, ce, w)
+}
+
 func NewContentElement() ContentElement {
 	e := NewElement()
 	c := make(map[string]interface{})

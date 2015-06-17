@@ -19,6 +19,10 @@ type WrapperElement struct {
 	Element         `bson:",inline"`
 }
 
+func (we *WrapperElement) Save(w *wrapper.Wrapper) error {
+	return Save(we.Element.MongoId, we, w)
+}
+
 func NewWrapperElement() WrapperElement {
 	e := NewElement()
 	els := NewWrapperElements()

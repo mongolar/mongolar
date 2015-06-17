@@ -16,6 +16,10 @@ type Element struct {
 	Classes    string        `bson:"classes" json:"classes,omitempty"`
 }
 
+func (e *Element) Save(w *wrapper.Wrapper) error {
+	return Save(e.MongoId, e, w)
+}
+
 // Constructor for elements
 func NewElement() Element {
 	id := bson.NewObjectId()
@@ -31,18 +35,9 @@ func LoadElement(i string, w *wrapper.Wrapper) (Element, error) {
 }
 
 //Save an element in its current state.
-func (e *Element) Save(w *wrapper.Wrapper) error {
-	if !e.MongoId.Valid() {
-		e.MongoId = bson.NewObjectId()
-	}
-	if e.Controller == "" {
-		return errors.New("Controller required")
-	}
-	if e.Template == "" {
-		return errors.New("Template required")
-	}
+func Save(id bson.ObjectId, v interface{}, w *wrapper.Wrapper) error {
 	c := w.DbSession.DB("").C("elements")
-	_, err := c.UpsertId(e.MongoId, e)
+	_, err := c.UpsertId(id, v)
 	if err != nil {
 		return err
 	}

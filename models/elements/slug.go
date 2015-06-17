@@ -9,6 +9,10 @@ type SlugElement struct {
 	Element `bson:"_,inline"`
 }
 
+func (se *SlugElement) Save(w *wrapper.Wrapper) error {
+	return Save(se.Element.MongoId, se, w)
+}
+
 func NewSlugElement() SlugElement {
 	e := NewElement()
 	cv := make(map[string]string)

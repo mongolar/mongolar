@@ -15,6 +15,10 @@ type MenuElement struct {
 	Element   `bson:"_,inline"`
 }
 
+func (me *MenuElement) Save(w *wrapper.Wrapper) error {
+	return Save(me.Element.MongoId, me, w)
+}
+
 func NewMenuElement() MenuElement {
 	e := NewElement()
 	menuitems := make([]MenuItem, 0)
