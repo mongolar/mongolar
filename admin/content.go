@@ -12,6 +12,45 @@ import (
 
 func ContentTypeEditor(w *wrapper.Wrapper) {
 	var elementid string
+	if len(w.APIParams) == 0 {
+		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+		return
+	}
+	if w.Request.Method != "POST" {
+		ContentTypeEditorForm(w)
+		return
+	}
+	ContentTypeEditorSubmit(w)
+	return
+}
+
+func ContentTypeEditorForm(w *wrapper.Wrapper) {
+	elementid = w.APIParams[0]
+	e, err := elements.LoadContentElement(elementid, w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Element not found to edit for %s by %s", elementid, w.Request.Host)
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("This element was not found", "Error", w)
+		w.Serve()
+		return
+	}
+
+}
+func ContentTypeEditorSubmit(w *wrapper.Wrapper) {
+	elementid = w.APIParams[0]
+	e, err := elements.LoadContentElement(elementid, w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Element not found to edit for %s by %s", elementid, w.Request.Host)
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("This element was not found", "Error", w)
+		w.Serve()
+		return
+	}
+
+}
+func ContentTypeEditor(w *wrapper.Wrapper) {
+	var elementid string
 	if len(w.APIParams) > 0 {
 		elementid = w.APIParams[0]
 	} else {
