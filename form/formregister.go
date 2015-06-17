@@ -37,14 +37,6 @@ func GetValidFormData(w *wrapper.Wrapper, post interface{}) error {
 		w.Serve()
 		return errors.New("Could not marshall Post values")
 	}
-	err = json.Unmarshal(p, post)
-	if err != nil {
-		errmessage := fmt.Sprintf("Error processing post values %s: %s", w.Request.Host, err.Error())
-		w.SiteConfig.Logger.Error(errmessage)
-		services.AddMessage("There was an issue processing your form.", "Error", w)
-		w.Serve()
-		return errors.New("Could not marshall Post values")
-	}
 	register, reg_err := GetFormRegister(data["form_id"].(string), w)
 	if reg_err != nil {
 		errmessage := fmt.Sprintf("Invalid or expired form %s: %s", w.Request.Host, err.Error())
@@ -52,6 +44,14 @@ func GetValidFormData(w *wrapper.Wrapper, post interface{}) error {
 		services.AddMessage("Your form was expired, please try again.", "Error", w)
 		w.Serve()
 		return errors.New("Inalid or expired form")
+	}
+	err = json.Unmarshal(p, post)
+	if err != nil {
+		errmessage := fmt.Sprintf("Error processing post values %s: %s", w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("There was an issue processing your form.", "Error", w)
+		w.Serve()
+		return errors.New("Could not marshall Post values")
 	}
 	missing := register.ValidateRequired(data)
 	if len(missing) > 0 {
