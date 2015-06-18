@@ -71,6 +71,15 @@ func GetValidElement(i string, c string, v interface{}, w *wrapper.Wrapper) erro
 	return err
 }
 
+func Delete(id string, w *wrapper.Wrapper) error {
+	if !bson.IsObjectIdHex(id) {
+		return errors.New("Invalid Invalid Hex")
+	}
+	c := w.DbSession.DB("").C("elements")
+	i := bson.M{"_id": bson.ObjectIdHex(id)}
+	return c.Remove(i)
+}
+
 // Get all Elements
 func ElementList(w *wrapper.Wrapper) ([]Element, error) {
 	el := make([]Element, 0)

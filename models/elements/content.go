@@ -28,6 +28,6 @@ func NewContentElement() ContentElement {
 
 func LoadContentElement(i string, w *wrapper.Wrapper) (ContentElement, error) {
 	e := NewContentElement()
-	err := GetById(i, &e, w)
+	err := GetValidElement(i, "content", &e, w)
 	return e, err
 }

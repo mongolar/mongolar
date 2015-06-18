@@ -1,7 +1,9 @@
 package elements
 
 import (
+	"errors"
 	"github.com/mongolar/mongolar/wrapper"
+	"gopkg.in/mgo.v2/bson"
 )
 
 type WrapperElements struct {
@@ -32,6 +34,17 @@ func NewWrapperElement() WrapperElement {
 
 func LoadWrapperElement(i string, w *wrapper.Wrapper) (WrapperElement, error) {
 	e := NewWrapperElement()
-	err := GetById(i, &e, w)
+	err := GetValidElement(i, "wrapper", &e, w)
 	return e, err
+}
+
+func WrapperDeleteAllChild(id string, w *wrapper.Wrapper) error {
+	if !bson.IsObjectIdHex(id) {
+		return errors.New("Invalid Invalid Hex")
+	}
+	c := w.DbSession.DB("").C("elements")
+	s := bson.M{"controller_values.elements": id}
+	d := bson.M{"$pull": bson.M{"controller_values.elements": id}}
+	_, err := c.UpdateAll(s, d)
+	return err
 }

@@ -28,6 +28,6 @@ func NewMenuElement() MenuElement {
 
 func LoadMenuElement(i string, w *wrapper.Wrapper) (MenuElement, error) {
 	e := NewMenuElement()
-	err := GetById(i, &e, w)
+	err := GetValidElement(i, "menu", &e, w)
 	return e, err
 }

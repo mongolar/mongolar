@@ -113,6 +113,27 @@ func AddChild(pathid string, elementid string, w *wrapper.Wrapper) error {
 	return p.Save(w)
 }
 
+func Delete(id string, w *wrapper.Wrapper) error {
+	if !bson.IsObjectIdHex(id) {
+		return errors.New("Invalid Invalid Hex")
+	}
+	c := w.DbSession.DB("").C("paths")
+	i := bson.M{"_id": bson.ObjectIdHex(id)}
+	return c.Remove(i)
+}
+
+func DeleteAllChild(id string, w *wrapper.Wrapper) error {
+	if !bson.IsObjectIdHex(id) {
+		return errors.New("Invalid Invalid Hex")
+	}
+	s := bson.M{"elements": id}
+	d := bson.M{"$pull": bson.M{"elements": id}}
+	c := w.DbSession.DB("").C("paths")
+	_, err := c.UpdateAll(s, d)
+	return err
+
+}
+
 // Get all Paths
 func PathList(w *wrapper.Wrapper) ([]Path, error) {
 	pl := make([]Path, 0)
