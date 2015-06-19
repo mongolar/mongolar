@@ -10,6 +10,7 @@ import (
 
 // The controller function to retrieve elements ids from the path
 func PathValues(w *wrapper.Wrapper) {
+	//TODO: set no cache headers
 	p := paths.NewPath()
 	c := w.DbSession.DB("").C("paths")
 	u := w.Request.Header.Get("CurrentPath")

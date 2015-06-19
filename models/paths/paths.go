@@ -26,7 +26,7 @@ type Path struct {
 	Template     string        `bson:"template" json:"template"`
 	Status       string        `bson:"status" json:"status"`
 	Title        string        `bson:"title" json:"title"`
-	PathElements `bson:",inline"`
+	PathElements `bson:",inline,omitempty"`
 }
 
 // Constructor for paths
