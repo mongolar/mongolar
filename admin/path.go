@@ -6,7 +6,7 @@ import (
 	"github.com/mongolar/mongolar/models/paths"
 	"github.com/mongolar/mongolar/services"
 	"github.com/mongolar/mongolar/wrapper"
-	"gopkg.in/mgo.v2/bson"
+	"net/http"
 )
 
 func AdminPaths(w *wrapper.Wrapper) {
@@ -36,7 +36,7 @@ func PathEditor(w *wrapper.Wrapper) {
 }
 
 func PathEditorForm(w *wrapper.Wrapper) {
-	pathid = w.APIParams[0]
+	pathid := w.APIParams[0]
 	f := form.NewForm()
 	f.AddText("title", "text").AddLabel("Title").Required()
 	f.AddText("path", "text").AddLabel("Path").Required()
@@ -48,8 +48,10 @@ func PathEditorForm(w *wrapper.Wrapper) {
 	}
 	f.AddRadio("status", ops).AddLabel("Status").Required()
 	f.AddText("id", "text").Hidden()
+	var p paths.Path
+	var err error
 	if pathid != "new" {
-		p, err := paths.LoadPath(pathid, w)
+		p, err = paths.LoadPath(pathid, w)
 		if err != nil {
 			errmessage := fmt.Sprintf("Could not retrieve path %s by %s: %s", w.APIParams[0], w.Request.Host, err.Error())
 			w.SiteConfig.Logger.Error(errmessage)
@@ -58,7 +60,7 @@ func PathEditorForm(w *wrapper.Wrapper) {
 			return
 		}
 	} else {
-		p := paths.NewPath()
+		p = paths.NewPath()
 	}
 	f.FormData = p
 	f.Register(w)
@@ -69,18 +71,27 @@ func PathEditorForm(w *wrapper.Wrapper) {
 }
 
 func PathEditorSubmit(w *wrapper.Wrapper) {
-	pathid = w.APIParams[0]
+	pathid := w.APIParams[0]
 	var path paths.Path
+	var err error
 	if pathid != "new" {
-		path = path.LoadPath(pathid, w)
+		path, err = paths.LoadPath(pathid, w)
+		if err != nil {
+			errmessage := fmt.Sprintf("Unable to save path %s by %s: %s", pathid,
+				w.Request.Host, err.Error())
+			w.SiteConfig.Logger.Error(errmessage)
+			services.AddMessage("There was a problem saving your path.", "Error", w)
+			w.Serve()
+			return
+		}
 	}
-	err := form.GetValidFormData(&path)
+	err = form.GetValidFormData(w, &path)
 	if err != nil {
 		return
 	}
-	err = path.Save()
+	err = path.Save(w)
 	if err != nil {
-		errmessage := fmt.Sprintf("Unable to save path %s by %s: %s", path.Id,
+		errmessage := fmt.Sprintf("Unable to save path %s by %s: %s", pathid,
 			w.Request.Host, err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("There was a problem saving your path.", "Error", w)
@@ -105,7 +116,7 @@ func PathElements(w *wrapper.Wrapper) {
 		w.Serve()
 		return
 	}
-	pathid = w.APIParams[0]
+	pathid := w.APIParams[0]
 	p, err := paths.LoadPath(pathid, w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Path not found to edit for %s by %s ", pathid, w.Request.Host)
