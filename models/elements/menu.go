@@ -5,14 +5,14 @@ import (
 )
 
 type MenuItem struct {
-	Title    string      `bson:"title"`
-	Url      string      `bson:"url"`
-	Children interface{} `bson:"menu_items"`
+	Title    string      `bson:"title" json:"title"`
+	Url      string      `bson:"url" json:"url"`
+	Children interface{} `bson:"menu_items" json:"menu_items"`
 }
 
 type MenuElement struct {
 	MenuItems []MenuItem `bson:"controller_values" json:"menu_items"`
-	Element   `bson:"_,inline"`
+	Element   `bson:",inline"`
 }
 
 func (me *MenuElement) Save(w *wrapper.Wrapper) error {

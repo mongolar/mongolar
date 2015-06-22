@@ -34,7 +34,7 @@ func Delete(w *wrapper.Wrapper) {
 }
 
 func DeletePath(w *wrapper.Wrapper) {
-	id := w.APIParams[1]
+	id := w.APIParams[0]
 	err := paths.Delete(id, w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Unable to delete path %s : %s", id, err.Error())
@@ -55,7 +55,7 @@ func DeletePath(w *wrapper.Wrapper) {
 }
 
 func DeleteElement(w *wrapper.Wrapper) {
-	id := w.APIParams[1]
+	id := w.APIParams[0]
 	err := elements.Delete(id, w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Unable to delete %s : %s", id, err.Error())
@@ -81,7 +81,7 @@ func DeleteElement(w *wrapper.Wrapper) {
 		return
 	}
 	dynamic := services.Dynamic{
-		Target:   w.APIParams[1],
+		Target:   id,
 		Template: "default.html",
 	}
 	services.SetDynamic(dynamic, w)

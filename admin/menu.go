@@ -3,6 +3,7 @@ package admin
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/models/elements"
 	"github.com/mongolar/mongolar/services"
 	"github.com/mongolar/mongolar/wrapper"
@@ -21,11 +22,21 @@ func MenuEditor(w *wrapper.Wrapper) {
 			errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", w.APIParams[0], w.Request.Host)
 			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("This element was not found", "Error", w)
+			w.Serve()
+			return
+		}
+		if e.MenuItems == nil {
+			items := make(map[string][]map[string]string)
+			items["menu_items"] = make([]map[string]string, 0)
+			w.SetPayload("menu", items)
 		} else {
 			w.SetPayload("menu", e.MenuItems)
-			w.SetPayload("title", e.Title)
 		}
+		spew.Dump("test")
+		w.SetPayload("title", e.Title)
+		w.SetTemplate("admin/menu_editor.html")
 		w.Serve()
+		return
 	} else {
 		post := make(map[string]interface{})
 		err := json.NewDecoder(w.Request.Body).Decode(&post)

@@ -2,7 +2,6 @@ package admin
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/form"
 	"github.com/mongolar/mongolar/models/contenttypes"
 	"github.com/mongolar/mongolar/models/elements"
@@ -154,8 +153,8 @@ func ContentEditorSubmit(w *wrapper.Wrapper) {
 		return
 	}
 	e.ContentValues.Content = post
-	spew.Dump(e)
-	return
+	delete(e.ContentValues.Content, "mongolartype")
+	delete(e.ContentValues.Content, "mongolarid")
 	err = e.Save(w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Element not saved %s by %s", w.APIParams[0], w.Request.Host)
@@ -166,11 +165,13 @@ func ContentEditorSubmit(w *wrapper.Wrapper) {
 	}
 	services.AddMessage("Element content saved.", "Success", w)
 	dynamic := services.Dynamic{
-		Target:     post["mongolarid"].(string),
-		Id:         post["mongolarid"].(string),
+		Target:     elementid,
+		Id:         elementid,
 		Controller: "admin/element",
 		Template:   "admin/element.html",
 	}
 	services.SetDynamic(dynamic, w)
+	w.Serve()
+	return
 
 }

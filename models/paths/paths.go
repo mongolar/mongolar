@@ -60,7 +60,7 @@ func (p *Path) Save(w *wrapper.Wrapper) error {
 		return errors.New("Status required")
 	}
 	c := w.DbSession.DB("").C("paths")
-	_, err := c.Upsert(p.MongoId, p)
+	_, err := c.Upsert(bson.M{"_id": p.MongoId}, p)
 	if err != nil {
 		return err
 	}

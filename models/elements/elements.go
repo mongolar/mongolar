@@ -37,7 +37,7 @@ func LoadElement(i string, w *wrapper.Wrapper) (Element, error) {
 //Save an element in its current state.
 func Save(id bson.ObjectId, v interface{}, w *wrapper.Wrapper) error {
 	c := w.DbSession.DB("").C("elements")
-	_, err := c.UpsertId(id, v)
+	_, err := c.Upsert(bson.M{"_id": id}, v)
 	if err != nil {
 		return err
 	}
