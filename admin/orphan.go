@@ -1,3 +1,6 @@
+// Orphan elements are a list of elements that have not been asigned to
+// a path, wrapper element, slug element.
+
 package admin
 
 import (
