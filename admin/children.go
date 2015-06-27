@@ -11,6 +11,7 @@ import (
 	"net/http"
 )
 
+// Sort controller to sort path and wrapper children
 func Sort(w *wrapper.Wrapper) {
 	var parenttype string
 	if len(w.APIParams) > 1 {
@@ -43,6 +44,7 @@ func Sort(w *wrapper.Wrapper) {
 	return
 }
 
+// Controller for wrapper element sort form.
 func SortWrapperForm(w *wrapper.Wrapper) {
 	var parentid string
 	if len(w.APIParams) > 0 {
@@ -71,6 +73,7 @@ func SortWrapperForm(w *wrapper.Wrapper) {
 
 }
 
+// Controller for path sort form.
 func SortPathForm(w *wrapper.Wrapper) {
 	var parentid string
 	if len(w.APIParams) > 0 {
@@ -99,6 +102,7 @@ func SortPathForm(w *wrapper.Wrapper) {
 	}
 }
 
+// Controller for wrapper sort submission.
 func SortWrapperSubmit(w *wrapper.Wrapper) {
 	var parentid string
 	if len(w.APIParams) > 0 {
@@ -146,6 +150,7 @@ func SortWrapperSubmit(w *wrapper.Wrapper) {
 	return
 }
 
+// Controller for path sort submission.
 func SortPathSubmit(w *wrapper.Wrapper) {
 	var parentid string
 	if len(w.APIParams) > 0 {
@@ -193,6 +198,7 @@ func SortPathSubmit(w *wrapper.Wrapper) {
 	return
 }
 
+// Controller for adding children to wrapper element or path.
 func AddChild(w *wrapper.Wrapper) {
 	var parenttype string
 	if len(w.APIParams) > 1 {
@@ -215,6 +221,7 @@ func AddChild(w *wrapper.Wrapper) {
 	return
 }
 
+// Controller for adding children to wrapper element.
 func AddWrapperChild(w *wrapper.Wrapper) {
 	parentid := w.APIParams[0]
 	e := elements.NewElement()
@@ -258,6 +265,7 @@ func AddWrapperChild(w *wrapper.Wrapper) {
 
 }
 
+// Controller for adding children to path.
 func AddPathChild(w *wrapper.Wrapper) {
 	parentid := w.APIParams[0]
 	e := elements.NewElement()
@@ -300,6 +308,7 @@ func AddPathChild(w *wrapper.Wrapper) {
 	return
 }
 
+// Controller for adding existing element to wrapper element or path.
 func AddExistingChild(w *wrapper.Wrapper) {
 	var parenttype string
 	if len(w.APIParams) > 1 {
@@ -328,6 +337,7 @@ func AddExistingChild(w *wrapper.Wrapper) {
 	return
 }
 
+// Controller for adding existing element form.
 func AddExistingChildForm(w *wrapper.Wrapper) {
 	elems, err := elements.ElementList(w)
 	if err != nil {
@@ -352,6 +362,7 @@ func AddExistingChildForm(w *wrapper.Wrapper) {
 
 }
 
+// Controller for adding existing element to wrapper element form submission.
 func AddExistingWrapperSubmit(w *wrapper.Wrapper) {
 	parentid := w.APIParams[0]
 	var post map[string]string
@@ -388,6 +399,7 @@ func AddExistingWrapperSubmit(w *wrapper.Wrapper) {
 	w.Serve()
 }
 
+// Controller for adding existing element to path form submission.
 func AddExistingPathSubmit(w *wrapper.Wrapper) {
 	parentid := w.APIParams[0]
 	var post map[string]string

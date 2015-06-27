@@ -10,8 +10,17 @@ import (
 	"net/http"
 )
 
+// Admin Map for controllers
 type AdminMap controller.ControllerMap
 
+// Structure of url links that appear on the admin page.
+func (a *AdminMenu) AdminMenu(w *wrapper.Wrapper) {
+	w.SetContent(a)
+	w.Serve()
+	return
+}
+
+// Package function to return controller map
 func GetControllerMap(cm controller.ControllerMap) {
 	amap, _ := NewAdmin()
 	cm["admin"] = amap.Admin
@@ -66,6 +75,7 @@ func (a AdminMap) Admin(w *wrapper.Wrapper) {
 	}
 }
 
+// Validate admin has admin role.
 func validateAdmin(w *wrapper.Wrapper) bool {
 	user := new(user.User)
 	err := user.Get(w)
@@ -86,10 +96,4 @@ func validateAdmin(w *wrapper.Wrapper) bool {
 	services.Redirect(loginurls["access_denied"], w)
 	w.Serve()
 	return false
-}
-
-func (a *AdminMenu) AdminMenu(w *wrapper.Wrapper) {
-	w.SetContent(a)
-	w.Serve()
-	return
 }

@@ -10,7 +10,11 @@ import (
 
 // The controller function to retrieve elements ids from the path
 func PathValues(w *wrapper.Wrapper) {
-	//TODO: set no cache headers
+	// Request is never url based so we can Never cache this request.
+	// TODO: move no caching into a reusable function.
+	w.Writer.Header().Add("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Writer.Header().Add("Pragma", "no-cache")
+	w.Writer.Header().Add("Expires", "0")
 	p := paths.NewPath()
 	u := w.Request.Header.Get("CurrentPath")
 	qp, err := p.PathMatch(u, "published", w)
