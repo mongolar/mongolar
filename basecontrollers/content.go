@@ -19,8 +19,7 @@ func ContentValues(w *wrapper.Wrapper) {
 		return
 
 	}
-	e := elements.NewContentElement()
-	err := elements.GetValidElement(contentid, "content", &e, w)
+	e, err := elements.LoadContentElement(contentid, w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Content not found %s : %s", contentid, err.Error())
 		w.SiteConfig.Logger.Error(errmessage)

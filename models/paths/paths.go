@@ -3,22 +3,12 @@ package paths
 import (
 	"errors"
 	"github.com/mongolar/mongolar/wrapper"
-	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"path"
 	"strings"
 )
 
-type PathElements struct {
-	Elements []string `bson:"elements,omitempty" json:"elements,omitempty"`
-}
-
-func NewPathElements() PathElements {
-	e := make([]string, 0)
-	p := PathElements{Elements: e}
-	return p
-}
-
+// Path Structure
 type Path struct {
 	MongoId      bson.ObjectId `bson:"_id,omitempty" json:"id"`
 	Path         string        `bson:"path" json:"path"`
@@ -29,6 +19,11 @@ type Path struct {
 	PathElements `bson:",inline,omitempty"`
 }
 
+// PathElements Structure to define the Elements in a path for easy json and bson marshalling.
+type PathElements struct {
+	Elements []string `bson:"elements,omitempty" json:"elements,omitempty"`
+}
+
 // Constructor for paths
 func NewPath() Path {
 	e := NewPathElements()
@@ -37,7 +32,14 @@ func NewPath() Path {
 	return p
 }
 
-// Constructor for existing paths
+// Constructor for path elements.
+func NewPathElements() PathElements {
+	e := make([]string, 0)
+	p := PathElements{Elements: e}
+	return p
+}
+
+// Construct and Get Path by ID
 func LoadPath(i string, w *wrapper.Wrapper) (Path, error) {
 	e := NewPathElements()
 	p := Path{PathElements: e}
@@ -45,7 +47,7 @@ func LoadPath(i string, w *wrapper.Wrapper) (Path, error) {
 	return p, err
 }
 
-//Save an element in its current state.
+//Save a path in its current state.
 func (p *Path) Save(w *wrapper.Wrapper) error {
 	if !p.MongoId.Valid() {
 		p.MongoId = bson.NewObjectId()
@@ -67,7 +69,7 @@ func (p *Path) Save(w *wrapper.Wrapper) error {
 	return nil
 }
 
-// Get Path by Id
+// Get Path by Id on constructed Path
 func (p *Path) GetById(i string, w *wrapper.Wrapper) error {
 	if !bson.IsObjectIdHex(i) {
 		return errors.New("Invalid Id Hex")
@@ -77,15 +79,20 @@ func (p *Path) GetById(i string, w *wrapper.Wrapper) error {
 	return err
 }
 
-// Path matching query
-func (p *Path) PathMatch(u string, s string, c *mgo.Collection) (string, error) {
+// Given a URL and status this query will attempt to find a matching path.
+// First the query qill attempt to implicitly match the url without a wildcard
+// Then it will attempt to match based on the same path value having a wildcard
+// After that it will remove sections of the url each time looking for a wildcard match
+// If it does not find any  matches it retrns the last error.
+func (p *Path) PathMatch(u string, s string, w *wrapper.Wrapper) (string, error) {
+	c := w.DbSession.DB("").C("paths")
 	var rejects []string
-	w := false
+	wildcard := false
 	var err error
 	for {
-		b := bson.M{"path": u, "wildcard": w, "status": s}
+		b := bson.M{"path": u, "wildcard": wildcard, "status": s}
 		err = c.Find(b).One(p)
-		w = true
+		wildcard = true
 		// If query doesnt return anything
 		if err != nil {
 			rejects = append([]string{path.Base(u)}, rejects...)
@@ -113,6 +120,7 @@ func AddChild(pathid string, elementid string, w *wrapper.Wrapper) error {
 	return p.Save(w)
 }
 
+// Delete a path by id.
 func Delete(id string, w *wrapper.Wrapper) error {
 	if !bson.IsObjectIdHex(id) {
 		return errors.New("Invalid Invalid Hex")
@@ -122,6 +130,7 @@ func Delete(id string, w *wrapper.Wrapper) error {
 	return c.Remove(i)
 }
 
+// Delete all references to a child element in all paths by id.
 func DeleteAllChild(id string, w *wrapper.Wrapper) error {
 	if !bson.IsObjectIdHex(id) {
 		return errors.New("Invalid Invalid Hex")

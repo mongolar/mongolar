@@ -19,8 +19,7 @@ func SlugValues(w *wrapper.Wrapper) {
 		return
 
 	}
-	es := elements.NewSlugElement()
-	err := elements.GetValidElement(slugid, "slug", &es, w)
+	es, err := elements.LoadSlugElement(slugid, w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Content not found %s : %s", slugid, err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
@@ -36,8 +35,8 @@ func SlugValues(w *wrapper.Wrapper) {
 		return
 	}
 	id := es.Slugs[w.Request.Header.Get("Slug")]
-	e := elements.NewContentElement()
-	err = elements.GetById(id, &e, w)
+	var e elements.ContentElement
+	e, err = elements.LoadContentElement(id, w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Content not found %s : %s", w.APIParams[0], err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
