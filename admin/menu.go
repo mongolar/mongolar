@@ -3,23 +3,22 @@ package admin
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/models/elements"
 	"github.com/mongolar/mongolar/services"
 	"github.com/mongolar/mongolar/wrapper"
-	"gopkg.in/mgo.v2/bson"
 	"net/http"
 )
 
 func MenuEditor(w *wrapper.Wrapper) {
+	if len(w.APIParams) == 0 {
+		http.Error(w.Writer, "Forbidden", 403)
+		return
+	}
+	menuid := w.APIParams[0]
 	if w.Request.Method != "POST" {
-		if len(w.APIParams) == 0 {
-			http.Error(w.Writer, "Forbidden", 403)
-			return
-		}
-		e, err := elements.LoadMenuElement(w.APIParams[0], w)
+		e, err := elements.LoadMenuElement(menuid, w)
 		if err != nil {
-			errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", w.APIParams[0], w.Request.Host)
+			errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", menuid, w.Request.Host)
 			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("This element was not found", "Error", w)
 			w.Serve()
@@ -30,16 +29,22 @@ func MenuEditor(w *wrapper.Wrapper) {
 			items["menu_items"] = make([]map[string]string, 0)
 			w.SetPayload("menu", items)
 		} else {
-			w.SetPayload("menu", e.MenuItems)
+			w.SetPayload("menu", e)
 		}
-		spew.Dump("test")
 		w.SetPayload("title", e.Title)
 		w.SetTemplate("admin/menu_editor.html")
 		w.Serve()
 		return
 	} else {
-		post := make(map[string]interface{})
-		err := json.NewDecoder(w.Request.Body).Decode(&post)
+		e, err := elements.LoadMenuElement(menuid, w)
+		if err != nil {
+			errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", menuid, w.Request.Host)
+			w.SiteConfig.Logger.Error(errmessage)
+			services.AddMessage("This element was not found", "Error", w)
+			w.Serve()
+			return
+		}
+		err = json.NewDecoder(w.Request.Body).Decode(&e)
 		if err != nil {
 			errmessage := fmt.Sprintf("Unable to update marshall menu elements by %s: %s", w.Request.Host, err.Error())
 			w.SiteConfig.Logger.Error(errmessage)
@@ -47,16 +52,9 @@ func MenuEditor(w *wrapper.Wrapper) {
 			w.Serve()
 			return
 		}
-		p := bson.M{
-			"$set": bson.M{
-				"controller_values": post["menu"],
-			},
-		}
-		s := bson.M{"_id": bson.ObjectIdHex(w.APIParams[1])}
-		c := w.DbSession.DB("").C("elements")
-		err = c.Update(s, p)
+		err = e.Save(w)
 		if err != nil {
-			errmessage := fmt.Sprintf("Unable to update menu element %s by %s: %s", w.APIParams[0], w.Request.Host, err.Error())
+			errmessage := fmt.Sprintf("Unable to update menu element %s by %s: %s", menuid, w.Request.Host, err.Error())
 			w.SiteConfig.Logger.Error(errmessage)
 			services.AddMessage("Unable to save menu element.", "Error", w)
 			w.Serve()

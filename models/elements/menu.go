@@ -12,7 +12,7 @@ type MenuItem struct {
 
 type MenuElement struct {
 	MenuItems []MenuItem `bson:"controller_values" json:"menu_items"`
-	Element   `bson:",inline"`
+	Element   `bson:",inline" json:"-"`
 }
 
 func (me *MenuElement) Save(w *wrapper.Wrapper) error {
