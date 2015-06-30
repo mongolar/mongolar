@@ -12,6 +12,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
+// Controller to retrive a list of all orphaned elements.
 func OrphanElements(w *wrapper.Wrapper) {
 	assigned := make([]bson.ObjectId, 0)
 	paths, err := paths.PathList(w)

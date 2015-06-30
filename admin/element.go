@@ -11,6 +11,7 @@ import (
 	"unicode"
 )
 
+// Controller to render an element in content editor
 func Element(w *wrapper.Wrapper) {
 	e := elements.NewElement()
 	var id string
@@ -52,6 +53,8 @@ func Element(w *wrapper.Wrapper) {
 	w.Serve()
 }
 
+// Controller to edit an elements properties
+// TODO: break this into smaller functions to make it easier to maintain
 func ElementEditor(w *wrapper.Wrapper) {
 	var elementid string
 	if len(w.APIParams) > 0 {
@@ -155,6 +158,7 @@ func ElementEditor(w *wrapper.Wrapper) {
 	return
 }
 
+// Controller to list all elements
 func AllElements(w *wrapper.Wrapper) {
 	c := w.DbSession.DB("").C("elements")
 	var es []elements.Element

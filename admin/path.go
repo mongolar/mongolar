@@ -9,6 +9,7 @@ import (
 	"net/http"
 )
 
+// Controller to list all paths
 func AdminPaths(w *wrapper.Wrapper) {
 	pl, err := paths.PathList(w)
 	if err != nil {
@@ -21,6 +22,7 @@ func AdminPaths(w *wrapper.Wrapper) {
 	w.Serve()
 }
 
+// Controller for editing paths
 func PathEditor(w *wrapper.Wrapper) {
 	if len(w.APIParams) == 0 {
 		http.Error(w.Writer, "Forbidden", 403)
@@ -35,6 +37,7 @@ func PathEditor(w *wrapper.Wrapper) {
 	return
 }
 
+// Controller to present path editor form
 func PathEditorForm(w *wrapper.Wrapper) {
 	pathid := w.APIParams[0]
 	f := form.NewForm()
@@ -70,6 +73,7 @@ func PathEditorForm(w *wrapper.Wrapper) {
 	return
 }
 
+// Controller to handle path editor form submissions.
 func PathEditorSubmit(w *wrapper.Wrapper) {
 	pathid := w.APIParams[0]
 	var path paths.Path
@@ -110,6 +114,7 @@ func PathEditorSubmit(w *wrapper.Wrapper) {
 
 }
 
+// Retrieve a list of elements in a path for content editor.
 func PathElements(w *wrapper.Wrapper) {
 	if len(w.APIParams) == 0 {
 		http.Error(w.Writer, "Forbidden", 403)

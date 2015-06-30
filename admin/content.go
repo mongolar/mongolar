@@ -10,6 +10,7 @@ import (
 	"net/http"
 )
 
+// Controller to change content type for content type element.
 func ContentTypeEditor(w *wrapper.Wrapper) {
 	if len(w.APIParams) == 0 {
 		http.Error(w.Writer, "Forbidden", 403)
@@ -24,6 +25,7 @@ func ContentTypeEditor(w *wrapper.Wrapper) {
 	return
 }
 
+// Controller to ddisplay form to change content type for conteent element
 func ContentTypeEditorForm(w *wrapper.Wrapper) {
 	elementid := w.APIParams[0]
 	e, err := elements.LoadContentElement(elementid, w)
@@ -63,6 +65,7 @@ func ContentTypeEditorForm(w *wrapper.Wrapper) {
 
 }
 
+// Controller to handle submission for content type change form.
 func ContentTypeEditorSubmit(w *wrapper.Wrapper) {
 	elementid := w.APIParams[0]
 	e, err := elements.LoadContentElement(elementid, w)
@@ -94,6 +97,7 @@ func ContentTypeEditorSubmit(w *wrapper.Wrapper) {
 	return
 }
 
+// Controller to edit content in element.
 func ContentEditor(w *wrapper.Wrapper) {
 	if len(w.APIParams) == 0 {
 		http.Error(w.Writer, "Forbidden", 403)
@@ -108,6 +112,7 @@ func ContentEditor(w *wrapper.Wrapper) {
 	return
 }
 
+// Controller for content editing form.
 func ContentEditorForm(w *wrapper.Wrapper) {
 	elementid := w.APIParams[0]
 	e, err := elements.LoadContentElement(elementid, w)
@@ -144,6 +149,7 @@ func ContentEditorForm(w *wrapper.Wrapper) {
 	return
 }
 
+// Controller to handle content editor submission.
 func ContentEditorSubmit(w *wrapper.Wrapper) {
 	elementid := w.APIParams[0]
 	e, err := elements.LoadContentElement(elementid, w)

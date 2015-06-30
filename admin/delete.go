@@ -10,6 +10,7 @@ import (
 	"net/http"
 )
 
+// This controller deletes paths and elements
 func Delete(w *wrapper.Wrapper) {
 	var parenttype string
 	if len(w.APIParams) > 1 {
@@ -34,6 +35,7 @@ func Delete(w *wrapper.Wrapper) {
 	return
 }
 
+// Controller to delete a path
 func DeletePath(w *wrapper.Wrapper) {
 	id := w.APIParams[0]
 	err := paths.Delete(id, w)
@@ -55,6 +57,7 @@ func DeletePath(w *wrapper.Wrapper) {
 	return
 }
 
+// Controller to delete an element and all references to the element
 func DeleteElement(w *wrapper.Wrapper) {
 	id := w.APIParams[0]
 	err := elements.Delete(id, w)

@@ -1,3 +1,4 @@
+//TODO: This editor needs to be rewritten with new model ffor contentypes.
 package admin
 
 import (

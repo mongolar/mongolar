@@ -9,6 +9,8 @@ import (
 	"net/http"
 )
 
+// Controller to edit a menu element
+// TODO: break this into smaller functions
 func MenuEditor(w *wrapper.Wrapper) {
 	if len(w.APIParams) == 0 {
 		http.Error(w.Writer, "Forbidden", 403)
