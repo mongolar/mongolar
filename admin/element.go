@@ -13,13 +13,16 @@ import (
 
 func Element(w *wrapper.Wrapper) {
 	e := elements.NewElement()
+	var id string
 	if len(w.APIParams) == 0 {
 		http.Error(w.Writer, "Forbidden", 403)
 		return
+	} else {
+		id = w.APIParams[0]
 	}
-	err := elements.GetById(w.APIParams[0], &e, w)
+	err := elements.GetById(id, &e, w)
 	if err != nil {
-		errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", w.APIParams[0], w.Request.Host)
+		errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", id, w.Request.Host)
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("This element was not found", "Error", w)
 	} else {
@@ -28,13 +31,22 @@ func Element(w *wrapper.Wrapper) {
 		w.SetPayload("mongolartype", e.Controller)
 		w.SetDynamicId(e.MongoId.Hex())
 		if e.Controller == "wrapper" {
-			we, err := elements.LoadWrapperElement(w.APIParams[0], w)
+			we, err := elements.LoadWrapperElement(id, w)
 			if err != nil {
-				errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", w.APIParams[0], w.Request.Host)
+				errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", id, w.Request.Host)
 				w.SiteConfig.Logger.Error(errmessage)
 				services.AddMessage("This element was not found", "Error", w)
 			}
 			w.SetPayload("elements", we.Elements)
+		}
+		if e.Controller == "slug" {
+			we, err := elements.LoadSlugElement(id, w)
+			if err != nil {
+				errmessage := fmt.Sprintf("Element not found to edit for %s by %s.", id, w.Request.Host)
+				w.SiteConfig.Logger.Error(errmessage)
+				services.AddMessage("This element was not found", "Error", w)
+			}
+			w.SetPayload("elements", we.Slugs)
 		}
 	}
 	w.Serve()

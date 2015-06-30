@@ -57,6 +57,7 @@ func NewAdmin() (*AdminMap, *AdminMenu) {
 		"menu":               MenuEditor,
 		"content_type":       ContentTypeEditor,
 		"orphans":            OrphanElements,
+		"slug_url_editor":    SlugUrlEditor,
 	}
 	return amap, &amenu
 }

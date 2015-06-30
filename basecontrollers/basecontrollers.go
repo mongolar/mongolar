@@ -13,7 +13,7 @@ import (
 // Menu - Returns a Menu for an element tagged as menu.
 
 func GetControllerMap(cm controller.ControllerMap) {
-	cm["domian_public_value"] = DomainPublicValue
+	cm["domain_public_value"] = DomainPublicValue
 	cm["path"] = PathValues
 	cm["content"] = ContentValues
 	cm["wrapper"] = WrapperValues

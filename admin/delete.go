@@ -2,6 +2,7 @@ package admin
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/models/elements"
 	"github.com/mongolar/mongolar/models/paths"
 	"github.com/mongolar/mongolar/services"
@@ -61,24 +62,25 @@ func DeleteElement(w *wrapper.Wrapper) {
 		errmessage := fmt.Sprintf("Unable to delete %s : %s", id, err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("Unable to delete element.", "Error", w)
-		w.Serve()
-		return
 	}
-	elements.WrapperDeleteAllChild(id, w)
+	err = elements.WrapperDeleteAllChild(id, w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Unable to delete reference to element %s : %s", id, err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("Unable to delete all references to your element.", "Error", w)
-		w.Serve()
-		return
+	}
+	err = elements.SlugDeleteAllChild(id, w)
+	spew.Dump(id)
+	if err != nil {
+		errmessage := fmt.Sprintf("Unable to delete reference to element %s : %s", id, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Unable to delete all references to your element.", "Error", w)
 	}
 	err = paths.DeleteAllChild(id, w)
 	if err != nil {
-		errmessage := fmt.Sprintf("Unable to delete reference to %s %s : %s", w.APIParams[0], w.APIParams[1], err.Error())
+		errmessage := fmt.Sprintf("Unable to delete reference to %s : %s", id, err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
 		services.AddMessage("Unable to delete all references to your element.", "Error", w)
-		w.Serve()
-		return
 	}
 	dynamic := services.Dynamic{
 		Target:   id,

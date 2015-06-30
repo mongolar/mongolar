@@ -23,7 +23,7 @@ func Sort(w *wrapper.Wrapper) {
 	}
 	w.Shift()
 	switch parenttype {
-	case "elements":
+	case "wrapper":
 		if w.Request.Method != "POST" {
 			SortWrapperForm(w)
 			return
@@ -139,10 +139,10 @@ func SortWrapperSubmit(w *wrapper.Wrapper) {
 		return
 	}
 	dynamic := services.Dynamic{
-		Target:     w.APIParams[1],
+		Target:     parentid,
 		Controller: "admin/element",
 		Template:   "admin/element.html",
-		Id:         w.APIParams[1],
+		Id:         parentid,
 	}
 	services.SetDynamic(dynamic, w)
 	services.AddMessage("You elements have been updated.", "Success", w)
@@ -210,8 +210,10 @@ func AddChild(w *wrapper.Wrapper) {
 	}
 	w.Shift()
 	switch parenttype {
-	case "elements":
+	case "wrapper":
 		AddWrapperChild(w)
+	case "slug":
+		AddSlugChild(w)
 	case "paths":
 		AddPathChild(w)
 	default:
@@ -262,6 +264,54 @@ func AddWrapperChild(w *wrapper.Wrapper) {
 	services.AddMessage("You have added a new element.", "Success", w)
 	w.Serve()
 	return
+
+}
+
+func AddSlugChild(w *wrapper.Wrapper) {
+	parentid := w.APIParams[0]
+	e := elements.NewElement()
+	e.Title = "New Element"
+	e.Controller = "content"
+	err := e.Save(w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Unable to create new element  by %s : %s", w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Could not create a new element.", "Error", w)
+		w.Serve()
+		return
+	}
+	var parent elements.SlugElement
+	parent, err = elements.LoadSlugElement(parentid, w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Unable to loap parent element  by %s : %s", w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Could not load parent element.", "Error", w)
+		w.Serve()
+		return
+	}
+	if parent.Slugs == nil {
+		slug := map[string]string{e.MongoId.Hex(): e.MongoId.Hex()}
+		parent.Slugs = slug
+	} else {
+		parent.Slugs[e.MongoId.Hex()] = e.MongoId.Hex()
+	}
+	err = parent.Save(w)
+	if err != nil {
+		errmessage := fmt.Sprintf("Unable to save parent element  by %s : %s", w.Request.Host, err.Error())
+		w.SiteConfig.Logger.Error(errmessage)
+		services.AddMessage("Could not save parent element.", "Error", w)
+		w.Serve()
+		return
+	}
+	dynamic := services.Dynamic{
+		Target:     parentid,
+		Controller: "admin/element",
+		Template:   "admin/element.html",
+		Id:         parentid,
+	}
+	services.SetDynamic(dynamic, w)
+	services.AddMessage("You have added a new element.", "Success", w)
+	w.Serve()
 
 }
 
@@ -324,7 +374,7 @@ func AddExistingChild(w *wrapper.Wrapper) {
 	}
 	w.Shift()
 	switch parenttype {
-	case "elements":
+	case "wrapper":
 		AddExistingWrapperSubmit(w)
 		return
 	case "paths":
