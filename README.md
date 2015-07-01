@@ -132,9 +132,20 @@ Controllers:
         - "content"
         - "wrapper"
         - "slug"
+	- "menu"
         - "admin"
         - "domain_public_value"
         - "login"
+
+# This allows you to restrict access to content controllers an element can be assigned.
+# REQUIRED
+ElementControllers: 
+        - "wrapper"
+        - "slug"
+        - "content"
+        - "menu"
+        - "login"
+
 # For the current incarnation of Mongolar this works,
 # but will most likely be changed
 # Stores OAuthlogins, currently only supports github
