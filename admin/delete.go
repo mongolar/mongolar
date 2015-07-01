@@ -2,7 +2,6 @@ package admin
 
 import (
 	"fmt"
-	"github.com/davecgh/go-spew/spew"
 	"github.com/mongolar/mongolar/models/elements"
 	"github.com/mongolar/mongolar/models/paths"
 	"github.com/mongolar/mongolar/services"
@@ -73,7 +72,6 @@ func DeleteElement(w *wrapper.Wrapper) {
 		services.AddMessage("Unable to delete all references to your element.", "Error", w)
 	}
 	err = elements.SlugDeleteAllChild(id, w)
-	spew.Dump(id)
 	if err != nil {
 		errmessage := fmt.Sprintf("Unable to delete reference to element %s : %s", id, err.Error())
 		w.SiteConfig.Logger.Error(errmessage)
