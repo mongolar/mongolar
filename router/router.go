@@ -1,6 +1,7 @@
 package router
 
 import (
+	"fmt"
 	"github.com/mongolar/mongolar/configs"
 	"github.com/mongolar/mongolar/controller"
 	"github.com/mongolar/mongolar/router/jsconfig"
@@ -41,6 +42,8 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		pathvalues = pathvalues[1:]
 		// Set the the site config to an easy to use value.
 		s := ro.Sites[d]
+		logmessage := fmt.Sprintf("Request from accessed  %s : %s", r.URL.Path, r.RemoteAddr)
+		s.Logger.Info(logmessage)
 		switch pathvalues[0] {
 		// Mongolar config js is generated dynamically because it gets passed values from site config and endpoint is variable
 		// TODO move this to a controller
