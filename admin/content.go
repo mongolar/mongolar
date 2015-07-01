@@ -161,6 +161,7 @@ func ContentEditorSubmit(w *wrapper.Wrapper) {
 	e.ContentValues.Content = post
 	delete(e.ContentValues.Content, "mongolartype")
 	delete(e.ContentValues.Content, "mongolarid")
+	delete(e.ContentValues.Content, "form_id")
 	err = e.Save(w)
 	if err != nil {
 		errmessage := fmt.Sprintf("Element not saved %s by %s", w.APIParams[0], w.Request.Host)
