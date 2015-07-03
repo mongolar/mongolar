@@ -136,6 +136,7 @@ Controllers:
         - "admin"
         - "domain_public_value"
         - "login"
+        - "loginurls"
 
 # This allows you to restrict access to content controllers an element can be assigned.
 # REQUIRED
@@ -144,7 +145,7 @@ ElementControllers:
         - "slug"
         - "content"
         - "menu"
-        - "login"
+        - "loginurls"
 
 # For the current incarnation of Mongolar this works,
 # but will most likely be changed

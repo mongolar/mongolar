@@ -190,7 +190,7 @@ func SortPathSubmit(w *wrapper.Wrapper) {
 		Target:     "centereditor",
 		Controller: "admin/path_elements",
 		Template:   "admin/path_elements.html",
-		Id:         w.APIParams[1],
+		Id:         parentid,
 	}
 	services.SetDynamic(dynamic, w)
 	services.AddMessage("You elements have been updated.", "Success", w)

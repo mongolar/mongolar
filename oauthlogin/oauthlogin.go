@@ -15,6 +15,7 @@ import (
 func GetControllerMap(cm controller.ControllerMap) {
 	lmap := NewLoginMap()
 	cm["login"] = lmap.Login
+	cm["loginurls"] = lmap.LoginUrls
 }
 
 type LoginMap struct {

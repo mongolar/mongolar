@@ -64,6 +64,9 @@ func NewAdmin() (*AdminMap, *AdminMenu) {
 
 //Main controller for all admin functions
 func (a AdminMap) Admin(w *wrapper.Wrapper) {
+	w.Writer.Header().Add("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Writer.Header().Add("Pragma", "no-cache")
+	w.Writer.Header().Add("Expires", "0")
 	if c, ok := a[w.APIParams[0]]; ok {
 		if validateAdmin(w) {
 			w.Shift()
