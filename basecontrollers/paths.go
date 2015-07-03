@@ -6,6 +6,7 @@ import (
 	"github.com/mongolar/mongolar/models/paths"
 	"github.com/mongolar/mongolar/services"
 	"github.com/mongolar/mongolar/wrapper"
+	"net/http"
 )
 
 // The controller function to retrieve elements ids from the path
@@ -17,6 +18,11 @@ func PathValues(w *wrapper.Wrapper) {
 	w.Writer.Header().Add("Expires", "0")
 	p := paths.NewPath()
 	u := w.Request.Header.Get("CurrentPath")
+	if u == "" {
+		http.Error(w.Writer, "Forbidden", 403)
+		w.Serve()
+		return
+	}
 	qp, err := p.PathMatch(u, "published", w)
 	if err != nil {
 		if err.Error() == "not found" {
