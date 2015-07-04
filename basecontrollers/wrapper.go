@@ -37,6 +37,7 @@ func WrapperValues(w *wrapper.Wrapper) {
 			v = append(v, e)
 		}
 	}
+	w.SetClasses(e.Classes)
 	w.SetDynamicId(e.DynamicId)
 	w.SetContent(v)
 	w.Serve()

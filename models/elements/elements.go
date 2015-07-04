@@ -13,7 +13,7 @@ type Element struct {
 	Template   string        `bson:"template,omitempty" json:"mongolartemplate"`
 	DynamicId  string        `bson:"dynamic_id,omitempty" json:"mongolardyn,omitempty"`
 	Title      string        `bson:"title" json:"title"`
-	Classes    string        `bson:"classes" json:"classes,omitempty"`
+	Classes    string        `bson:"classes" json:"mongolarclasses,omitempty"`
 }
 
 func (e *Element) Save(w *wrapper.Wrapper) error {
