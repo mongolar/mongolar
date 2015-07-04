@@ -33,8 +33,7 @@ func (u *User) Set(w *wrapper.Wrapper) error {
 		return err
 	}
 	u.MongoId = tmpuser.MongoId
-	err = c.Update(bson.M{"_id": u.MongoId}, bson.M{"$set": u})
-	return err
+	return nil
 }
 
 func (u *User) Get(w *wrapper.Wrapper) error {
