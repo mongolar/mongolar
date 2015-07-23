@@ -25,7 +25,7 @@ func New(f string) *logrus.Logger {
 	if err1 != nil {
 		log.Fatal(err1.Error())
 	}
-	var l = logrus.New()
+	l := logrus.New()
 	l.Out = fi
 	return l
 }
