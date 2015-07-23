@@ -26,6 +26,7 @@ import (
 // Individual Site Configuration Type
 // 	MongoDb: Configuration for MongoDB Connection
 // 	Directory: Directory for html and assets
+// 	AssetsDirectory: Directory for assets, default is assets
 // 	Aliases: Site Aliases/Domains
 // 	SessionExpiration: When to expire a users Session
 // 	TemplateEndpoint: URL where will be stored
@@ -45,6 +46,7 @@ import (
 type SiteConfig struct {
 	MongoDb            map[string]string
 	Directory          string
+	AssetsDirectory	   string
 	Aliases            []string
 	SessionExpiration  time.Duration
 	TemplateEndpoint   string
@@ -64,6 +66,7 @@ type SiteConfig struct {
 func NewSiteConfig(f string) *SiteConfig {
 	s := SiteConfig{
 		MongoDb: make(map[string]string),
+		AssetsDirectory: "assets"
 	}
 	// Marshall config based on filename
 	s.getSiteConfig(f)

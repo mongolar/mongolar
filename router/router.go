@@ -55,7 +55,7 @@ func (ro Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		// All static assets bypass AngularJS and get served as files.
 		// TODO Move this to a controller
-		case "assets":
+		case s.AssetsDirectory:
 			d := s.Directory
 			f := d + r.URL.Path
 			info, err := os.Stat(f)
