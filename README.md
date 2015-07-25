@@ -40,7 +40,7 @@ Every piece of page content (read API request) is individually addressable so if
 MongoDB seems to scale rather well, at least for these purposes.
 
 ## Demo
-I plan to release a demo for this server shortly.  In the demo you will be able to manipulate content and view the results
+Demo can be found [here](http://mongolar.org/demo)
 
 ##Setup
 
