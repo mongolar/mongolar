@@ -1,3 +1,5 @@
+## Note:  Mongolar is going under major revisions to make it a microservice framework, utilizing Etcd and NSQ.
+
 #Mongolar
 
 Mongolar is a AngularJS driven scalable Content Management System written in AngularJS and Go with MongoDB as a backend.
